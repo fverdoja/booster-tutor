@@ -2,6 +2,8 @@
 
 A Discord bot to generate *Magic: the Gathering* (MTG) boosters
 
+![screenshot](screenshot.jpg)
+
 ## Usage
 
 The bot responds to the following commands:
