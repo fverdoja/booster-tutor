@@ -1,12 +1,32 @@
 #!/usr/bin/env python
+import imageio
+import os
+
 
 class MtgCard:
     def __init__(self, card, foil=False):
         self.card = card
         self.foil = foil
 
-    # def get_image(self, size="normal"):
-    #    return image
+    def get_image(self, size="normal", foil=None):
+        sizes = ["large", "normal", "small"]
+        assert(size in sizes)
+
+        scry_id = self.card.identifiers["scryfallId"]
+        img_url = f"https://c1.scryfall.com/file/scryfall-cards/{size}/" \
+                  f"front/{scry_id[0]}/{scry_id[1]}/{scry_id}.jpg"
+        if foil is None:
+            foil = self.foil
+
+        im = imageio.imread(img_url)
+
+        if foil:
+            img_path = os.path.join(os.path.realpath(__file__),
+                                    f"../../img/foil_{size}.png")
+            foil = imageio.imread(img_path)[:, :, 0:3]
+            im = (im * 0.7 + foil * 0.3).astype("uint8")
+
+        return im
 
     def get_arena_format(self):
         return f"1 {self.card.name} ({self.card.setCode}) {self.card.number}"
@@ -14,3 +34,9 @@ class MtgCard:
     def to_str(self):
         foil_str = " (foil)" if self.foil else ""
         return f"{self.card.name}{foil_str}"
+
+    def __eq__(self, other):
+        return self.card == other.card
+
+    def __lt__(self, other):
+        return self.card < other.card

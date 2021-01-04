@@ -46,8 +46,9 @@ class MtgPack:
 
         return True
 
-    # def get_image(self, size="normal"):
-    #    return image
+    def get_images(self, size="normal", foil=None):
+        img = [c.get_image(size, foil) for c in self.cards]
+        return img
 
     def get_arena_format(self):
         ret = ""
