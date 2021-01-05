@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import aiohttp
+import aiofiles
 import imageio
 import os
 
@@ -8,7 +10,7 @@ class MtgCard:
         self.card = card
         self.foil = foil
 
-    def get_image(self, size="normal", foil=None):
+    async def get_image(self, size="normal", foil=None):
         sizes = ["large", "normal", "small"]
         assert(size in sizes)
 
@@ -18,12 +20,20 @@ class MtgCard:
         if foil is None:
             foil = self.foil
 
-        im = imageio.imread(img_url)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(img_url) as resp:
+                resp.raise_for_status()
+                resp_bytes = await resp.read()
+
+        im = imageio.imread(resp_bytes)
 
         if foil:
-            img_path = os.path.join(os.path.realpath(__file__),
-                                    f"../../img/foil_{size}.png")
-            foil = imageio.imread(img_path)[:, :, 0:3]
+            foil_path = os.path.join(os.path.dirname(
+                os.path.realpath(__file__)), "..", "img", f"foil_{size}.png")
+            async with aiofiles.open(foil_path, "rb") as f:
+                content = await f.read()
+            foil = imageio.imread(content)[:, :, 0:3]
+
             im = (im * 0.7 + foil * 0.3).astype("uint8")
 
         return im

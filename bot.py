@@ -5,7 +5,7 @@ import yaml
 import os
 import numpy
 import imageio
-import requests
+import aiohttp
 from io import StringIO, BytesIO
 from mtg_pack_generator.mtg_pack_generator import MtgPackGenerator
 
@@ -20,17 +20,19 @@ historic_sets = ["klr", "akr", "xln", "rix", "dom", "m19", "grn", "rna",
 standard_sets = ["eld", "thb", "iko", "m21", "znr"]
 
 
-def upload_img(file):
+async def upload_img(file):
     '''Upload an image file to imgur.com and returns the link'''
     url = "https://api.imgur.com/3/image"
 
     headers = {"Authorization": f"Client-ID {config['imgur_client_id']}"}
     payload = {'image': file.getvalue()}
 
-    response = requests.request("POST", url, headers=headers, data=payload)
-    assert(response.status_code == requests.codes.ok)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, data=payload) as resp:
+            resp.raise_for_status()
+            resp_json = await resp.json()
 
-    return response.json()["data"]["link"]
+    return resp_json["data"]["link"]
 
 
 def pack_img(im_list):
@@ -102,12 +104,13 @@ async def on_message(message):
                                        embed=embed)
 
         # Then generate the image of the booster content (takes a while)
-        p_img = pack_img(p.get_images(size="normal"))
+        img_list = await p.get_images(size="normal")
+        p_img = pack_img(img_list)
         file = BytesIO()
         imageio.imwrite(file, p_img, format="jpeg")
 
         # Upload it to imgur.com
-        link = upload_img(file)
+        link = await upload_img(file)
 
         # Then edit the message by embedding the link
         embed = discord.Embed(color=discord.Color.dark_green())
