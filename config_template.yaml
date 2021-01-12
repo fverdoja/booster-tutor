@@ -2,3 +2,4 @@
 discord_token: your_discord_bot_token
 imgur_client_id: your_imgur_client_id
 mtgjson_path: /absolute/path/to/AllPrintings.json
+command_prefix: "!"

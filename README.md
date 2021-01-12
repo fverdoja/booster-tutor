@@ -18,6 +18,11 @@ The bot responds to the following commands:
 * `!chaossealed`: generates 6 random historic packs
 * `!help`: shows usage message
 
+While replying to any command, the bot will mention the user who issued it,
+unless the command is followed by a mention, in which case the bot will mention
+that user instead. For example, `!znr @user#1234` has the bot mention
+*user#1234* (instead of you) in its reply.
+
 ## Under the hood
 
 ### Booster data source
@@ -60,9 +65,10 @@ whether a pack should be balanced or not is obtained from the metadata by
 
 ## Credits
 
+* Of course, huge thanks to [mtgjson](https://mtgjson.com)
+* Card images are taken from [Scryfall](https://scryfall.com)
 * Part of my data reading implementation is borrowed from
   [pymtgjson](https://pythonhosted.org/mtgjson)
-* Of course, huge thanks to [mtgjson](https://mtgjson.com)
 * An [interesting
   discussion](https://gist.github.com/fenhl/8d163733ab92ed718d89975127aac152#simulated-collation)
   over a few approaches o color balancing in MTG boosters from where I took
