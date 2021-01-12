@@ -16,9 +16,10 @@ class MtgPackGenerator:
             if hasattr(self.data.sets[s], "booster"):
                 self.sets_with_boosters.append(s)
 
-    def get_pack(self, set, n=1):
+    def get_pack(self, set, n=1, balance=True):
+        iterations = self.max_balancing_iterations if balance else 1
         if n == 1:
-            return self.get_pack_internal(set, self.max_balancing_iterations)
+            return self.get_pack_internal(set, iterations)
         else:
             return [self.get_pack(set) for i in range(n)]
 
@@ -41,8 +42,11 @@ class MtgPackGenerator:
             len(booster_meta["boosters"]), p=boosters_p)]["contents"]
 
         pack_content = []
+        balance = False
         for sheet_name, k in booster.items():
             sheet_meta = booster_meta["sheets"][sheet_name]
+            if "balanceColors" in sheet_meta.keys():
+                balance = balance or sheet_meta["balanceColors"]
 
             cards = list(sheet_meta["cards"].keys())
             cards_p = [x / sheet_meta["totalWeight"]
@@ -59,6 +63,10 @@ class MtgPackGenerator:
             pack_name = None
         pack = MtgPack(pack_content, name=pack_name)
 
+        if not balance:
+            print("Pack should not be balanced, skipping.")
+            iterations = 1
+
         if iterations <= 1 or pack.is_balanced():
             print(f"{set.upper()} pack generated, iterations needed: "
                   f"{str(self.max_balancing_iterations - iterations + 1)}")
@@ -66,7 +74,7 @@ class MtgPackGenerator:
         else:
             return self.get_pack_internal(set, iterations-1)
 
-    def get_random_pack(self, sets=None, n=1, replace=False):
+    def get_random_pack(self, sets=None, n=1, replace=False, balance=True):
         if sets is None:
             sets = self.sets_with_boosters
 
@@ -74,6 +82,6 @@ class MtgPackGenerator:
 
         boosters = choice(sets, size=n, replace=replace)
         if n == 1:
-            return self.get_pack(boosters[0])
+            return self.get_pack(set=boosters[0], balance=balance)
         else:
-            return [self.get_pack(b) for b in boosters]
+            return [self.get_pack(set=b, balance=balance) for b in boosters]

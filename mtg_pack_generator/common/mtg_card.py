@@ -49,4 +49,8 @@ class MtgCard:
         return self.card == other.card
 
     def __lt__(self, other):
-        return self.card < other.card
+        r = ["mythic", "rare", "uncommon", "common"]
+        is_self_basic = "Basic" in self.card.supertypes
+        is_other_basic = "Basic" in other.card.supertypes
+        return (is_self_basic, self.foil, r.index(self.card.rarity)) < \
+            (is_other_basic, other.foil, r.index(other.card.rarity))

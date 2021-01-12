@@ -2,7 +2,7 @@
 
 class MtgPack:
     def __init__(self, cards, set=None, name=None):
-        self.cards = cards
+        self.cards = sorted(cards)
         if set:
             self.set = set
         else:
