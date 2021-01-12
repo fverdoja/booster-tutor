@@ -36,7 +36,7 @@ async def upload_img(file):
                 resp.raise_for_status()
             except(aiohttp.ClientResponseError):
                 return None
-            
+
             resp_json = await resp.json()
 
     return resp_json["data"]["link"]
@@ -78,11 +78,12 @@ async def on_message(message):
     elif command == "!standard":
         p = generator.get_random_pack(standard_sets)
     elif command in [f"!{set}" for set in all_sets]:
-        p = generator.get_pack(command.lstrip("!"))
+        p = generator.get_pack(command.removeprefix("!"))
     elif command == "!chaossealed":
         p_list = generator.get_random_pack(historic_sets, n=6)
     elif command in [f"!{set}sealed" for set in all_sets]:
-        p_list = generator.get_pack(command.lstrip("!").rstrip("sealed"), n=6)
+        p_list = generator.get_pack(
+            command.removeprefix("!").removesuffix("sealed"), n=6)
     elif command == "!help":
         await message.channel.send(
             "you can give it one of the following commands atm:\n"
@@ -124,8 +125,8 @@ async def on_message(message):
         else:
             # ...or by sending an error message if the upload failed
             embed = discord.Embed(
-                description=(u":x: Sorry, it has not been possible to create a "
-                             u"booster image this time..."),
+                description=(u":x: Sorry, it has not been possible to create "
+                             u"a booster image this time..."),
                 color=discord.Color.red()
             )
         await m.edit(embed=embed)
