@@ -140,7 +140,7 @@ async def on_message(message):
             # ...or by sending an error message if the upload failed
             embed = discord.Embed(
                 description=u":x: Sorry, it seems your booster image is lost "
-                            u"in the Blind Eternity...",
+                            u"in the Blind Eternities...",
                 color=discord.Color.red()
             )
         await m.edit(embed=embed)
