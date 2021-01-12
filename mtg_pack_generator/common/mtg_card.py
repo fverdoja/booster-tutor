@@ -15,8 +15,8 @@ class MtgCard:
         assert(size in sizes)
 
         scry_id = self.card.identifiers["scryfallId"]
-        img_url = f"https://c1.scryfall.com/file/scryfall-cards/{size}/" \
-                  f"front/{scry_id[0]}/{scry_id[1]}/{scry_id}.jpg"
+        img_url = f"https://api.scryfall.com/cards/{scry_id}" \
+                  f"?format=image&version={size}"
         if foil is None:
             foil = self.foil
 
