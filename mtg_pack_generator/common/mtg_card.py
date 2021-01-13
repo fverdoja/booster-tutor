@@ -45,12 +45,13 @@ class MtgCard:
         foil_str = " (foil)" if self.foil else ""
         return f"{self.card.name}{foil_str}"
 
+    def pack_sort_key(self):
+        r = ["mythic", "rare", "uncommon", "common"]
+        is_basic = "Basic" in self.card.supertypes
+        return (is_basic, self.foil, r.index(self.card.rarity))
+
     def __eq__(self, other):
         return self.card == other.card
 
     def __lt__(self, other):
-        r = ["mythic", "rare", "uncommon", "common"]
-        is_self_basic = "Basic" in self.card.supertypes
-        is_other_basic = "Basic" in other.card.supertypes
-        return (is_self_basic, self.foil, r.index(self.card.rarity)) < \
-            (is_other_basic, other.foil, r.index(other.card.rarity))
+        return self < other

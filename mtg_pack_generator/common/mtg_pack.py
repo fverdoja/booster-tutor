@@ -2,7 +2,7 @@
 
 class MtgPack:
     def __init__(self, cards, set=None, name=None):
-        self.cards = sorted(cards)
+        self.cards = cards
         if set:
             self.set = set
         else:
@@ -11,6 +11,9 @@ class MtgPack:
             self.name = name
         else:
             self.name = self.set.name
+
+    def sort_by_rarity(self, reverse=False):
+        self.cards.sort(key=lambda x: x.pack_sort_key(), reverse=reverse)
 
     def is_balanced(self):
         common_colors = {"W": 0, "U": 0, "B": 0, "R": 0, "G": 0}
