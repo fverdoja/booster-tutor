@@ -130,3 +130,6 @@ dmypy.json
 
 # local config
 config.yaml
+
+# MTGJSON database
+AllPrintings.json
