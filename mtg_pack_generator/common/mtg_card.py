@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-import aiohttp
-import aiofiles
-import imageio
+
 import os
+
+import aiofiles
+import aiohttp
+import imageio
 
 
 class MtgCard:
@@ -47,8 +49,9 @@ class MtgCard:
 
     def pack_sort_key(self):
         r = ["mythic", "rare", "uncommon", "common"]
-        is_basic = "Basic" in self.card.supertypes
-        return (is_basic, self.foil, r.index(self.card.rarity))
+        is_common_land = "Land" in self.card.types and \
+                         self.card.rarity == "common"
+        return (is_common_land, self.foil, r.index(self.card.rarity))
 
     def __eq__(self, other):
         return self.card == other.card

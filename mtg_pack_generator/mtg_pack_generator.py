@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 from numpy.random import choice
-from .common.mtgjson import CardDb
-from .common.mtg_pack import MtgPack
+
 from .common.mtg_card import MtgCard
+from .common.mtg_pack import MtgPack
+from .common.mtgjson import CardDb
 
 
 class MtgPackGenerator:
@@ -17,11 +18,12 @@ class MtgPackGenerator:
                 self.sets_with_boosters.append(s)
 
     def get_pack(self, set, n=1, balance=True):
-        iterations = self.max_balancing_iterations if balance else 1
         if n == 1:
+            print(f"Generating {set.upper()} pack...")
+            iterations = self.max_balancing_iterations if balance else 1
             return self.get_pack_internal(set, iterations)
         else:
-            return [self.get_pack(set) for i in range(n)]
+            return [self.get_pack(set, balance=balance) for i in range(n)]
 
     def get_pack_internal(self, set, iterations):
         assert(set.upper() in self.data.sets)

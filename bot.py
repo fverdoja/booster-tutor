@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
-import discord
-import yaml
 import os
-import numpy
-import imageio
+from io import BytesIO, StringIO
+
 import aiohttp
-from io import StringIO, BytesIO
+import discord
+import imageio
+import numpy
+import yaml
+
 from mtg_pack_generator.mtg_pack_generator import MtgPackGenerator
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -15,9 +17,9 @@ with open(os.path.join(dir_path, "config.yaml")) as file:
 
 client = discord.Client()
 generator = MtgPackGenerator(config["mtgjson_path"])
-standard_sets = ["eld", "thb", "iko", "m21", "znr"]
+standard_sets = ["eld", "thb", "iko", "m21", "znr", "khm"]
 historic_sets = ["klr", "akr", "xln", "rix", "dom", "m19", "grn", "rna",
-                 "war", "m20", "eld", "thb", "iko", "m21", "znr"]
+                 "war", "m20", "eld", "thb", "iko", "m21", "znr", "khm"]
 all_sets = []
 for s in generator.sets_with_boosters:
     all_sets.append(s.lower())
@@ -58,6 +60,15 @@ def pack_img(im_list):
     row2 = numpy.pad(row2, [[0, 0], [0, pad_amount], [
                      0, 0]], 'constant', constant_values=255)
     return numpy.vstack((row1, row2))
+
+
+def rares_img(im_list):
+    '''Generate an image of the rares in a sealed pool in a row'''
+    assert(len(im_list))
+    row = im_list[0]
+    for i in range(1, len(im_list)):
+        row = numpy.hstack((row, im_list[i]))
+    return row
 
 
 @client.event
@@ -116,8 +127,8 @@ async def on_message(message):
         p.sort_by_rarity()
         # First send the booster text with a loading message for the image
         embed = discord.Embed(
-            description=u":hourglass: Summoning your booster image from the "
-                        u"aether...",
+            description=u":hourglass: Summoning a vision of your booster from "
+                        u"the aether...",
             color=discord.Color.orange()
         )
         m = await message.channel.send(f"**{p.name}**\n"
@@ -135,13 +146,16 @@ async def on_message(message):
         link = await upload_img(file)
         if link:
             # Edit the message by embedding the link...
-            embed = discord.Embed(color=discord.Color.dark_green())
+            embed = discord.Embed(
+                color=discord.Color.dark_green(),
+                description=link
+            )
             embed.set_image(url=link)
         else:
             # ...or by sending an error message if the upload failed
             embed = discord.Embed(
-                description=u":x: Sorry, it seems your booster image is lost "
-                            u"in the Blind Eternities...",
+                description=u":x: Sorry, it seems your booster is lost in the "
+                            u"Blind Eternities...",
                 color=discord.Color.red()
             )
         await m.edit(embed=embed)
@@ -154,11 +168,48 @@ async def on_message(message):
             pool = pool + f"{p.get_arena_format()}\n"
         sets = sets + ""
         file = StringIO(pool)
-        await message.channel.send(f"**Sealed pool**\n"
-                                   f"{member.mention}\n"
-                                   f"Content: [{sets.rstrip(', ')}]",
-                                   file=discord.File(
-                                       file,
-                                       filename=f"{member.nick}_pool.txt"))
 
-client.run(config["discord_token"])
+        # First send the pool content with a loading message for the image
+        embed = discord.Embed(
+            description=u":hourglass: Summoning a vision of your rares from "
+                        u"the aether...",
+            color=discord.Color.orange()
+        )
+        m = await message.channel.send(f"**Sealed pool**\n"
+                                       f"{member.mention}\n"
+                                       f"Content: [{sets.rstrip(', ')}]",
+                                       embed=embed,
+                                       file=discord.File(
+                                           file,
+                                           filename=f"{member.nick}_pool.txt"))
+
+        # Then generate the image of the rares in the pool (takes a while)
+        img_list = []
+        for p in p_list:
+            for c in p.cards:
+                if c.card.rarity in ["rare", "mythic"]:
+                    img_list.append(await c.get_image(size="normal"))
+        r_img = rares_img(img_list)
+        r_file = BytesIO()
+        imageio.imwrite(r_file, r_img, format="jpeg")
+
+        # Upload it to imgur.com
+        link = await upload_img(r_file)
+        if link:
+            # Edit the message by embedding the link...
+            embed = discord.Embed(
+                color=discord.Color.dark_green(),
+                description=link
+            )
+            embed.set_image(url=link)
+        else:
+            # ...or by sending an error message if the upload failed
+            embed = discord.Embed(
+                description=u":x: Sorry, it seems your rares are lost in the "
+                            u"Blind Eternities...",
+                color=discord.Color.red()
+            )
+        await m.edit(embed=embed)
+
+if __name__ == "__main__":
+    client.run(config["discord_token"])
