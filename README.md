@@ -71,7 +71,7 @@ whether a pack should be balanced or not is obtained from the metadata by
   [pymtgjson](https://pythonhosted.org/mtgjson)
 * An [interesting
   discussion](https://gist.github.com/fenhl/8d163733ab92ed718d89975127aac152#simulated-collation)
-  over a few approaches o color balancing in MTG boosters from where I took
+  over a few approaches on color balancing in MTG boosters from where I took
   *Reuben's algorithm*
 * *Wizards of the Coast*, *Magic: The Gathering*, and their logos are
   trademarks of Wizards of the Coast LLC in the United States and other
