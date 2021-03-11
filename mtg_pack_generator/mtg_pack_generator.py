@@ -12,6 +12,7 @@ class MtgPackGenerator:
                  max_balancing_iterations=100):
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
+        self.fix_iko()
         self.sets_with_boosters = []
         for s in self.data.sets:
             if hasattr(self.data.sets[s], "booster"):
@@ -44,32 +45,49 @@ class MtgPackGenerator:
             len(booster_meta["boosters"]), p=boosters_p)]["contents"]
 
         pack_content = []
+        pack_backup = []
+
         balance = False
         for sheet_name, k in booster.items():
             sheet_meta = booster_meta["sheets"][sheet_name]
             if "balanceColors" in sheet_meta.keys():
                 balance = balance or sheet_meta["balanceColors"]
+                num_of_backups = 20
+            else:
+                num_of_backups = 0
 
             cards = list(sheet_meta["cards"].keys())
             cards_p = [x / sheet_meta["totalWeight"]
                        for x in sheet_meta["cards"].values()]
 
-            picks = choice(cards, size=k, replace=False, p=cards_p)
+            picks = choice(cards, size=k + num_of_backups,
+                           replace=False, p=cards_p)
+
+            pick_i = 0
             for card_id in picks:
-                pack_content.append(MtgCard(
-                    self.data.cards_by_id[card_id], sheet_meta["foil"]))
+                if pick_i < k:
+                    pack_content.append(MtgCard(
+                        self.data.cards_by_id[card_id], sheet_meta["foil"]))
+                else:
+                    pack_backup.append(MtgCard(
+                        self.data.cards_by_id[card_id], sheet_meta["foil"]))
+                pick_i += 1
+            pack_content = self.replace_promos(pack_content)
+            pack_backup = self.replace_promos(pack_backup)
 
         if "name" in booster_meta:
             pack_name = booster_meta["name"]
         else:
             pack_name = None
-        pack = MtgPack(pack_content, name=pack_name)
+        if not len(pack_backup):
+            pack_backup = None
+        pack = MtgPack(pack_content, backup=pack_backup, name=pack_name)
 
         if not balance:
             print("Pack should not be balanced, skipping.")
             iterations = 1
 
-        if iterations <= 1 or pack.is_balanced():
+        if iterations <= 1 or pack.is_balanced(rebalance=True):
             print(f"{set.upper()} pack generated, iterations needed: "
                   f"{str(self.max_balancing_iterations - iterations + 1)}")
             return pack
@@ -87,3 +105,18 @@ class MtgPackGenerator:
             return self.get_pack(set=boosters[0], balance=balance)
         else:
             return [self.get_pack(set=b, balance=balance) for b in boosters]
+
+    def fix_iko(self):
+        iko = self.data.sets["IKO"]
+        iko.booster["default"]["sheets"]["common"]["balanceColors"] = True
+
+    def replace_promos(self, cards):
+        res = []
+        for c in cards:
+            if hasattr(c.card, "promoTypes"):
+                base_id = c.card.variations[0]
+                res.append(MtgCard(self.data.cards_by_id[base_id], c.foil))
+                print(f"Replaced Promo {c.card.name}")
+            else:
+                res.append(c)
+        return res
