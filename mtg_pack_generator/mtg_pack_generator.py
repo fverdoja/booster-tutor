@@ -44,8 +44,7 @@ class MtgPackGenerator:
         booster = booster_meta["boosters"][choice(
             len(booster_meta["boosters"]), p=boosters_p)]["contents"]
 
-        pack_content = []
-        pack_backup = []
+        pack_content = {}
 
         balance = False
         for sheet_name, k in booster.items():
@@ -64,24 +63,32 @@ class MtgPackGenerator:
                            replace=False, p=cards_p)
 
             pick_i = 0
+            slot_content = []
+            slot_backup = []
             for card_id in picks:
                 if pick_i < k:
-                    pack_content.append(MtgCard(
+                    slot_content.append(MtgCard(
                         self.data.cards_by_id[card_id], sheet_meta["foil"]))
                 else:
-                    pack_backup.append(MtgCard(
+                    slot_backup.append(MtgCard(
                         self.data.cards_by_id[card_id], sheet_meta["foil"]))
                 pick_i += 1
-            pack_content = self.replace_promos(pack_content)
-            pack_backup = self.replace_promos(pack_backup)
+            slot_content = self.replace_promos(slot_content)
+            slot_backup = self.replace_promos(slot_backup)
+
+            slot = {"cards": slot_content}
+            slot["balance"] = "balanceColors" in sheet_meta.keys()
+            if num_of_backups:
+                slot["backups"] = slot_backup
+
+            pack_content[sheet_name] = slot
 
         if "name" in booster_meta:
             pack_name = booster_meta["name"]
         else:
             pack_name = None
-        if not len(pack_backup):
-            pack_backup = None
-        pack = MtgPack(pack_content, backup=pack_backup, name=pack_name)
+
+        pack = MtgPack(pack_content, name=pack_name)
 
         if not balance:
             print("Pack should not be balanced, skipping.")

@@ -124,7 +124,6 @@ async def on_message(message):
         )
 
     if p:
-        p.sort_by_rarity()
         # First send the booster text with a loading message for the image
         embed = discord.Embed(
             description=u":hourglass: Summoning a vision of your booster from "
@@ -163,7 +162,6 @@ async def on_message(message):
         pool = ""
         sets = ""
         for p in p_list:
-            p.sort_by_rarity()
             sets = sets + f"{p.set.code}, "
             pool = pool + f"{p.get_arena_format()}\n"
         sets = sets + ""
