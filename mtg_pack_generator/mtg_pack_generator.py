@@ -73,8 +73,6 @@ class MtgPackGenerator:
                     slot_backup.append(MtgCard(
                         self.data.cards_by_id[card_id], sheet_meta["foil"]))
                 pick_i += 1
-            slot_content = self.replace_promos(slot_content)
-            slot_backup = self.replace_promos(slot_backup)
 
             slot = {"cards": slot_content}
             slot["balance"] = "balanceColors" in sheet_meta.keys()
@@ -116,14 +114,3 @@ class MtgPackGenerator:
     def fix_iko(self):
         iko = self.data.sets["IKO"]
         iko.booster["default"]["sheets"]["common"]["balanceColors"] = True
-
-    def replace_promos(self, cards):
-        res = []
-        for c in cards:
-            if hasattr(c.card, "promoTypes"):
-                base_id = c.card.variations[0]
-                res.append(MtgCard(self.data.cards_by_id[base_id], c.foil))
-                print(f"Replaced Promo {c.card.name}")
-            else:
-                res.append(c)
-        return res

@@ -41,7 +41,11 @@ class MtgCard:
         return im
 
     def get_arena_format(self):
-        return f"1 {self.card.name} ({self.card.setCode}) {self.card.number}"
+        if hasattr(self.card, "promoTypes"):
+            number = self.card.variations[0].number
+        else:
+            number = self.card.number
+        return f"1 {self.card.name} ({self.card.setCode}) {number}"
 
     def to_str(self):
         foil_str = " (foil)" if self.foil else ""

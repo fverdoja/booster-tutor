@@ -48,7 +48,7 @@ class CardProxy(JSONProxy):
 
     @property
     def ascii_name(self):
-        """Simplified name (ascii characters, lowercase) for card.""" 
+        """Simplified name (ascii characters, lowercase) for card."""
         return getattr(self, 'asciiName', self.name.lower())
 
     def __eq__(self, other):
@@ -149,6 +149,12 @@ class CardDb(object):
                     continue
 
                 self.cards_by_id[card.uuid] = card
+
+        for card_id in self.cards_by_id:
+            card = self.cards_by_id[card_id]
+            if hasattr(card, "variations"):
+                var_ids = card.variations
+                card.variations = [self.cards_by_id[i] for i in var_ids]
 
     @classmethod
     def from_file(cls, db_file=ALL_SETS_PATH):
