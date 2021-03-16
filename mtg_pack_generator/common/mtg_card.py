@@ -41,7 +41,8 @@ class MtgCard:
         return im
 
     def get_arena_format(self):
-        if hasattr(self.card, "promoTypes"):
+        if hasattr(self.card, "promoTypes") \
+                and hasattr(self.card, "variations"):
             number = self.card.variations[0].number
         else:
             number = self.card.number
@@ -52,7 +53,7 @@ class MtgCard:
         return f"{self.card.name}{foil_str}"
 
     def pack_sort_key(self):
-        r = ["mythic", "rare", "uncommon", "common"]
+        r = ["mythic", "rare", "uncommon", "common", "special"]
         is_common_land = "Land" in self.card.types and \
                          self.card.rarity == "common"
         return (is_common_land, self.foil, r.index(self.card.rarity))
