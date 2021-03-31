@@ -35,11 +35,7 @@ async def upload_img(file):
 
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, data=payload) as resp:
-            try:
-                resp.raise_for_status()
-            except(aiohttp.ClientResponseError):
-                return None
-
+            resp.raise_for_status()
             resp_json = await resp.json()
 
     return resp_json["data"]["link"]
@@ -71,6 +67,19 @@ def rares_img(im_list):
     return row
 
 
+def emoji(name, guild=None):
+    '''Returns an emoji if it exists on the server or empty string otherwise'''
+    for e in guild.emojis if guild else client.emojis:
+        if e.name == name:
+            return str(e)
+    return ""
+
+
+def set_symbol_link(code, size="large", rarity="M"):
+    return f"https://gatherer.wizards.com/Handlers/Image.ashx?" \
+           f"type=symbol&size={size}&rarity={rarity}&set={code.lower()}"
+
+
 @client.event
 async def on_ready():
     print(f"{client.user} has connected to Discord!")
@@ -91,7 +100,7 @@ async def on_message(message):
     else:
         member = message.author
 
-    p = p_list = None
+    p = p_list = em = None
     if command == "random":
         p = generator.get_random_pack()
     elif command == "historic":
@@ -101,8 +110,10 @@ async def on_message(message):
     elif command in all_sets:
         p = generator.get_pack(command)
     elif command == "chaossealed":
+        em = emoji("CHAOS", message.guild) + " "
         p_list = generator.get_random_pack(historic_sets, n=6)
     elif command.removesuffix("sealed") in all_sets:
+        em = emoji(command.removesuffix("sealed").upper(), message.guild) + " "
         p_list = generator.get_pack(command.removesuffix("sealed"), n=6)
     elif command == "help":
         await message.channel.send(
@@ -130,33 +141,37 @@ async def on_message(message):
                         u"the aether...",
             color=discord.Color.orange()
         )
-        m = await message.channel.send(f"**{p.name}**\n"
+        em = emoji(p.set.code.upper(), message.guild) + " "
+
+        m = await message.channel.send(f"**{em.lstrip()}{p.name}**\n"
                                        f"{member.mention}\n"
                                        f"```\n{p.get_arena_format()}\n```",
                                        embed=embed)
 
-        # Then generate the image of the booster content (takes a while)
-        img_list = await p.get_images(size="normal")
-        p_img = pack_img(img_list)
-        file = BytesIO()
-        imageio.imwrite(file, p_img, format="jpeg")
+        try:
+            # Then generate the image of the booster content (takes a while)
+            img_list = await p.get_images(size="normal")
+            p_img = pack_img(img_list)
+            file = BytesIO()
+            imageio.imwrite(file, p_img, format="jpeg")
 
-        # Upload it to imgur.com
-        link = await upload_img(file)
-        if link:
-            # Edit the message by embedding the link...
-            embed = discord.Embed(
-                color=discord.Color.dark_green(),
-                description=link
-            )
-            embed.set_image(url=link)
-        else:
-            # ...or by sending an error message if the upload failed
+            # Upload it to imgur.com
+            link = await upload_img(file)
+        except aiohttp.ClientResponseError:
+            # Send an error message if the upload failed...
             embed = discord.Embed(
                 description=u":x: Sorry, it seems your booster is lost in the "
                             u"Blind Eternities...",
                 color=discord.Color.red()
             )
+        else:
+            # ...or edit the message by embedding the link
+            embed = discord.Embed(
+                color=discord.Color.dark_green(),
+                description=link
+            )
+            embed.set_image(url=link)
+
         await m.edit(embed=embed)
     elif p_list:
         pool = ""
@@ -173,7 +188,7 @@ async def on_message(message):
                         u"the aether...",
             color=discord.Color.orange()
         )
-        m = await message.channel.send(f"**Sealed pool**\n"
+        m = await message.channel.send(f"**{em.lstrip()}Sealed pool**\n"
                                        f"{member.mention}\n"
                                        f"Content: [{sets.rstrip(', ')}]",
                                        embed=embed,
@@ -181,32 +196,34 @@ async def on_message(message):
                                            file,
                                            filename=f"{member.nick}_pool.txt"))
 
-        # Then generate the image of the rares in the pool (takes a while)
-        img_list = []
-        for p in p_list:
-            for c in p.cards:
-                if c.card.rarity in ["rare", "mythic"]:
-                    img_list.append(await c.get_image(size="normal"))
-        r_img = rares_img(img_list)
-        r_file = BytesIO()
-        imageio.imwrite(r_file, r_img, format="jpeg")
+        try:
+            # Then generate the image of the rares in the pool (takes a while)
+            img_list = []
+            for p in p_list:
+                for c in p.cards:
+                    if c.card.rarity in ["rare", "mythic"]:
+                        img_list.append(await c.get_image(size="normal"))
+            r_img = rares_img(img_list)
+            r_file = BytesIO()
+            imageio.imwrite(r_file, r_img, format="jpeg")
 
-        # Upload it to imgur.com
-        link = await upload_img(r_file)
-        if link:
-            # Edit the message by embedding the link...
-            embed = discord.Embed(
-                color=discord.Color.dark_green(),
-                description=link
-            )
-            embed.set_image(url=link)
-        else:
-            # ...or by sending an error message if the upload failed
+            # Upload it to imgur.com
+            link = await upload_img(r_file)
+        except aiohttp.ClientResponseError:
+            # Send an error message if the upload failed...
             embed = discord.Embed(
                 description=u":x: Sorry, it seems your rares are lost in the "
                             u"Blind Eternities...",
                 color=discord.Color.red()
             )
+        else:
+            # ...or edit the message by embedding the link
+            embed = discord.Embed(
+                color=discord.Color.dark_green(),
+                description=link
+            )
+            embed.set_image(url=link)
+
         await m.edit(embed=embed)
 
 if __name__ == "__main__":
