@@ -17,7 +17,7 @@ with open(os.path.join(dir_path, "config.yaml")) as file:
 
 client = discord.Client()
 generator = MtgPackGenerator(config["mtgjson_path"])
-standard_sets = ["eld", "thb", "iko", "m21", "znr", "khm"]
+standard_sets = ["eld", "thb", "iko", "m21", "znr", "khm", "stx"]
 historic_sets = ["klr", "akr", "xln", "rix", "dom", "m19", "grn", "rna",
                  "war", "m20", "eld", "thb", "iko", "m21", "znr", "khm"]
 all_sets = []

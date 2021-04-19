@@ -12,6 +12,26 @@ class MtgCard:
         self.card = card
         self.foil = foil
 
+    def mana(self):
+        colors = ["W", "U", "B", "R", "G"]
+
+        if hasattr(self.card, "manaCost"):
+            cost = self.card.manaCost.lstrip("{").rstrip("}").split("}{")
+            mana = [c for c in colors if c in cost]
+            if not mana:
+                hybrid = []
+                for symbol in cost:
+                    if "/" in symbol:
+                        hybrid.extend(symbol.split("/"))
+                hybrid_colors = [c for c in colors if c in hybrid]
+                if len(hybrid_colors) == 2:
+                    mana = [hybrid_colors[0] + hybrid_colors[1]]
+                else:
+                    mana = hybrid_colors
+        else:
+            mana = self.card.colors
+        return mana
+
     async def get_image(self, size="normal", foil=None):
         sizes = ["large", "normal", "small"]
         assert(size in sizes)
@@ -41,7 +61,7 @@ class MtgCard:
         return im
 
     def get_arena_format(self):
-        if hasattr(self.card, "promoTypes") \
+        if self.card.setCode != "STA" and hasattr(self.card, "promoTypes") \
                 and hasattr(self.card, "variations"):
             number = self.card.variations[0].number
         else:

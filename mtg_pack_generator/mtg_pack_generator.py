@@ -13,7 +13,6 @@ class MtgPackGenerator:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
         self.fix_iko()
-        self.fix_tsr()
         self.sets_with_boosters = []
         for s in self.data.sets:
             if hasattr(self.data.sets[s], "booster"):
@@ -115,11 +114,3 @@ class MtgPackGenerator:
     def fix_iko(self):
         iko = self.data.sets["IKO"]
         iko.booster["default"]["sheets"]["common"]["balanceColors"] = True
-
-    def fix_tsr(self):
-        tsr = self.data.sets["TSR"]
-        sp_id = "a3c3fe16-2020-5591-bbee-a69dde075e97"
-        tsr.booster["default"]["sheets"]["common"]["totalWeight"] = 121
-        tsr.booster["default"]["sheets"]["common"]["cards"].pop(sp_id)
-        tsr.booster["default"]["sheets"]["uncommon"]["totalWeight"] = 100
-        tsr.booster["default"]["sheets"]["uncommon"]["cards"][sp_id] = 1
