@@ -19,7 +19,8 @@ client = discord.Client()
 generator = MtgPackGenerator(config["mtgjson_path"])
 standard_sets = ["eld", "thb", "iko", "m21", "znr", "khm", "stx"]
 historic_sets = ["klr", "akr", "xln", "rix", "dom", "m19", "grn", "rna",
-                 "war", "m20", "eld", "thb", "iko", "m21", "znr", "khm"]
+                 "war", "m20", "eld", "thb", "iko", "m21", "znr", "khm",
+                 "stx"]
 all_sets = []
 for s in generator.sets_with_boosters:
     all_sets.append(s.lower())
@@ -222,6 +223,45 @@ async def on_message(message):
                 color=discord.Color.dark_green(),
                 description=link
             )
+            embed.set_image(url=link)
+
+        await m.edit(embed=embed)
+
+    if command == "test":
+        if len(argv) > 1:
+            p = generator.get_pack(argv[1])
+        else:
+            p = generator.get_random_pack()
+
+        # First send the booster text with a loading message for the image
+        set_link = set_symbol_link(p.set.code)
+        embed = discord.Embed(
+            type="rich",
+            # title=p.name,
+            description=f"```\n{p.get_arena_format()}\n```",
+            color=discord.Color.orange()
+        )
+        embed.set_author(name=f"{p.name}", icon_url=set_link)
+        # embed.set_thumbnail(url=set_link)
+
+        m = await message.channel.send(f"{member.mention}", embed=embed)
+
+        try:
+            # Then generate the image of the booster content (takes a while)
+            img_list = await p.get_images(size="normal")
+            p_img = pack_img(img_list)
+            file = BytesIO()
+            imageio.imwrite(file, p_img, format="jpeg")
+
+            # Upload it to imgur.com
+            link = await upload_img(file)
+        except aiohttp.ClientResponseError:
+            # Send an error message if the upload failed...
+            embed.color = discord.Color.red()
+            embed.description += u"\n:x: Sorry, it seems your booster is " \
+                                 u"lost in the Blind Eternities..."
+        else:
+            embed.color = discord.Color.dark_green()
             embed.set_image(url=link)
 
         await m.edit(embed=embed)
