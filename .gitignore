@@ -132,4 +132,12 @@ dmypy.json
 config.yaml
 
 # MTGJSON database
-AllPrintings.json
+AllPrintings*.json
+
+# data/binary folders
+data
+pools
+img
+
+# test notebooks
+*.ipynb

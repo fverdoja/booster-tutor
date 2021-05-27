@@ -181,7 +181,7 @@ async def on_message(message):
             sets = sets + f"{p.set.code}, "
             pool = pool + f"{p.get_arena_format()}\n"
         sets = sets + ""
-        file = StringIO(pool)
+        file = StringIO(pool.replace("\n", "\r\n"))
 
         # First send the pool content with a loading message for the image
         embed = discord.Embed(
