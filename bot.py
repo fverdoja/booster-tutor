@@ -15,8 +15,11 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(dir_path, "config.yaml")) as file:
     config = yaml.load(file, Loader=yaml.FullLoader)
 
+jmp = config["jmp_decklists_path"] if "jmp_decklists_path" in config else None
+
 client = discord.Client()
-generator = MtgPackGenerator(config["mtgjson_path"])
+generator = MtgPackGenerator(path_to_mtgjson=config["mtgjson_path"],
+                             path_to_jmp=jmp, jmp_arena=True)
 standard_sets = ["eld", "thb", "iko", "m21", "znr", "khm", "stx"]
 historic_sets = ["klr", "akr", "xln", "rix", "dom", "m19", "grn", "rna",
                  "war", "m20", "eld", "thb", "iko", "m21", "znr", "khm",
@@ -108,6 +111,9 @@ async def on_message(message):
         p = generator.get_random_pack(historic_sets)
     elif command == "standard":
         p = generator.get_random_pack(standard_sets)
+    elif command == "jmp":
+        if jmp is not None:
+            p = generator.get_random_jmp_deck()
     elif command in all_sets:
         p = generator.get_pack(command)
     elif command == "chaossealed":
@@ -116,6 +122,10 @@ async def on_message(message):
     elif command.removesuffix("sealed") in all_sets:
         em = emoji(command.removesuffix("sealed").upper(), message.guild) + " "
         p_list = generator.get_pack(command.removesuffix("sealed"), n=6)
+    elif command == "jmpsealed":
+        if jmp is not None:
+            em = emoji("JMP", message.guild)
+            p_list = generator.get_random_jmp_deck(n=3)
     elif command == "help":
         await message.channel.send(
             "You can give me one of the following commands:\n"

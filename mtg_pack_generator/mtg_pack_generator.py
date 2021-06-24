@@ -9,9 +9,12 @@ from .common.mtgjson import CardDb
 
 class MtgPackGenerator:
     def __init__(self, path_to_mtgjson="data/AllPrintings.json",
+                 path_to_jmp=None, jmp_arena=False,
                  max_balancing_iterations=100):
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
+        if path_to_jmp is not None:
+            self.import_jmp(path_to_jmp, arena=jmp_arena)
         self.fix_iko()
         self.sets_with_boosters = []
         for s in self.data.sets:
@@ -111,6 +114,60 @@ class MtgPackGenerator:
         else:
             return [self.get_pack(set=b, balance=balance) for b in boosters]
 
+    def get_random_jmp_deck(self, n=1, replace=True):
+        jmp_decks = self.data.sets["JMP"].decks
+        decks = choice(jmp_decks, size=n, replace=replace)
+        packs = []
+        for d in decks:
+            print("Generating JMP pack...")
+            cards = [MtgCard(c) for c in d["mainBoard"]]
+            content = {"deck": {"cards": cards, "balance": False}}
+            packs.append(
+                MtgPack(content, set=self.data.sets["JMP"], name=d["name"]))
+            print(f"{d['name']} (JMP) pack generated")
+        if n == 1:
+            return packs[0]
+        else:
+            return packs
+
     def fix_iko(self):
         iko = self.data.sets["IKO"]
         iko.booster["default"]["sheets"]["common"]["balanceColors"] = True
+
+    def import_jmp(self, path_to_jmp, arena=False):
+        self.data.add_decks_from_folder(path_to_jmp + "decks/")
+        if arena:
+            replacements = {
+                "Chain Lightning": "Lightning Strike",
+                "Lightning Bolt": "Lightning Strike",
+                "Ball Lightning": "Lightning Serpent",
+                "Ajani's Chosen": "Archon of Sun's Grace",
+                "Angelic Arbiter": "Serra's Guardian",
+                "Draconic Roar": "Scorching Dragonfire",
+                "Goblin Lore": "Goblin Oriflamme",
+                "Flametongue Kavu": "Fanatic of Mogis",
+                "Exhume": "Bond of Revival",
+                "Fa'adiyah Seer": "Dryad Greenseeker",
+                "Mausoleum Turnkey": "Audacious Thief",
+                "Path to Exile": "Banishing Light",
+                "Read the Runes": "Gadwick, the Wizened",
+                "Reanimate": "Doomed Necromancer",
+                "Rhystic Study": "Teferi's Ageless Insight",
+                "Sheoldred, Whispering One": "Carnifex Demon",
+                "Scourge of Nel Toth": "Woe Strider",
+                "Scrounging Bandar": "Pollenbright Druid",
+                "Thought Scour": "Weight of Memory",
+                "Time to Feed": "Prey Upon"
+            }
+            m21 = self.data.sets["M21"].cards_by_name
+            ajmp = self.data.sets["AJMP"].cards_by_name
+            for d in self.data.sets["JMP"].decks:
+                for i, c in enumerate(d["mainBoard"]):
+                    if c.name in replacements:
+                        r = replacements[c.name]
+                        if r in m21:
+                            card = m21[r]
+                        else:
+                            card = ajmp[r]
+                            card.setCode = "JMP"
+                        d["mainBoard"][i] = card
