@@ -2,9 +2,9 @@
 
 from numpy.random import choice
 
-from .common.mtg_card import MtgCard
-from .common.mtg_pack import MtgPack
-from .common.mtgjson import CardDb
+from boostertutor.models.mtg_card import MtgCard
+from boostertutor.models.mtg_pack import MtgPack
+from boostertutor.models.mtgjson import CardDb
 
 
 class MtgPackGenerator:

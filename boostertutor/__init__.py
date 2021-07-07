@@ -9,10 +9,10 @@ import imageio
 import numpy
 import yaml
 
-from mtg_pack_generator.mtg_pack_generator import MtgPackGenerator
+from boostertutor.generator import MtgPackGenerator
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-with open(os.path.join(dir_path, "config.yaml")) as file:
+with open(os.path.join(dir_path, "..", "config.yaml")) as file:
     config = yaml.load(file, Loader=yaml.FullLoader)
 
 jmp = config["jmp_decklists_path"] if "jmp_decklists_path" in config else None
@@ -236,6 +236,3 @@ async def on_message(message):
             embed.set_image(url=link)
 
         await m.edit(embed=embed)
-
-if __name__ == "__main__":
-    client.run(config["discord_token"])
