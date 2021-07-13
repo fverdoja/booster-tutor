@@ -21,15 +21,16 @@ class MtgPackGenerator:
             if hasattr(self.data.sets[s], "booster"):
                 self.sets_with_boosters.append(s)
 
-    def get_pack(self, set, n=1, balance=True):
+    def get_pack(self, set, n=1, balance=True, log=True):
         if n == 1:
-            print(f"Generating {set.upper()} pack...")
+            if log:
+                print(f"Generating {set.upper()} pack...")
             iterations = self.max_balancing_iterations if balance else 1
-            return self.get_pack_internal(set, iterations)
+            return self.get_pack_internal(set, iterations, log=log)
         else:
-            return [self.get_pack(set, balance=balance) for i in range(n)]
+            return [self.get_pack(set, balance=balance, log=log) for i in range(n)]
 
-    def get_pack_internal(self, set, iterations):
+    def get_pack_internal(self, set, iterations, log=True):
         assert(set.upper() in self.data.sets)
 
         booster = self.data.sets[set.upper()].booster
@@ -92,17 +93,19 @@ class MtgPackGenerator:
         pack = MtgPack(pack_content, name=pack_name)
 
         if not balance:
-            print("Pack should not be balanced, skipping.")
+            if log:
+                print("Pack should not be balanced, skipping.")
             iterations = 1
 
-        if iterations <= 1 or pack.is_balanced(rebalance=True):
-            print(f"{set.upper()} pack generated, iterations needed: "
-                  f"{str(self.max_balancing_iterations - iterations + 1)}")
+        if iterations <= 1 or pack.is_balanced(rebalance=True, log=log):
+            if log:
+                print(f"{set.upper()} pack generated, iterations needed: "
+                      f"{str(self.max_balancing_iterations - iterations + 1)}")
             return pack
         else:
-            return self.get_pack_internal(set, iterations-1)
+            return self.get_pack_internal(set, iterations-1, log=log)
 
-    def get_random_pack(self, sets=None, n=1, replace=False, balance=True):
+    def get_random_pack(self, sets=None, n=1, replace=False, balance=True, log=True):
         if sets is None:
             sets = self.sets_with_boosters
 
@@ -110,21 +113,23 @@ class MtgPackGenerator:
 
         boosters = choice(sets, size=n, replace=replace)
         if n == 1:
-            return self.get_pack(set=boosters[0], balance=balance)
+            return self.get_pack(set=boosters[0], balance=balance, log=log)
         else:
-            return [self.get_pack(set=b, balance=balance) for b in boosters]
+            return [self.get_pack(set=b, balance=balance, log=log) for b in boosters]
 
-    def get_random_jmp_deck(self, n=1, replace=True):
+    def get_random_jmp_deck(self, n=1, replace=True, log=True):
         jmp_decks = self.data.sets["JMP"].decks
         decks = choice(jmp_decks, size=n, replace=replace)
         packs = []
         for d in decks:
-            print("Generating JMP pack...")
+            if log:
+                print("Generating JMP pack...")
             cards = [MtgCard(c) for c in d["mainBoard"]]
             content = {"deck": {"cards": cards, "balance": False}}
             packs.append(
                 MtgPack(content, set=self.data.sets["JMP"], name=d["name"]))
-            print(f"{d['name']} (JMP) pack generated")
+            if log:
+                print(f"{d['name']} (JMP) pack generated")
         if n == 1:
             return packs[0]
         else:

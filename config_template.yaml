@@ -4,3 +4,4 @@ imgur_client_id: your_imgur_client_id
 mtgjson_path: /absolute/path/to/AllPrintings.json
 jmp_decklists_path: /absolute/path/to/JMP/  # delete this line to exclude JMP
 command_prefix: "!"
+pack_logging: True # enable or disable stdout logging of pack generation
