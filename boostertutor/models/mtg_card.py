@@ -60,6 +60,9 @@ class MtgCard:
 
         return im
 
+    def get_json(self):
+        return {"name": f"{self.card.name}", "count": 1}
+
     def get_arena_format(self):
         if self.card.setCode != "STA" and hasattr(self.card, "promoTypes") \
                 and hasattr(self.card, "variations"):

@@ -173,6 +173,13 @@ class MtgPack:
         img = [await c.get_image(size, foil) for c in self.cards]
         return img
 
+    def get_json(self):
+        ret = []
+        for card in self.cards:
+            ret.append(card.get_json())
+
+        return ret
+
     def get_arena_format(self):
         ret = ""
         for card in self.cards:

@@ -30,6 +30,18 @@ for s in generator.sets_with_boosters:
     all_sets.append(s.lower())
 prefix = config["command_prefix"]
 
+async def pool_to_sealeddeck(pool):
+    '''Upload a sealed pool to sealeddeck.tech and returns the id'''
+    url = "https://tutor.sealeddeck.tech/api/pool"
+    
+    deck = {"sideboard": pool}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=deck) as resp:
+            resp.raise_for_status()
+            resp_json = await resp.json()
+
+    return resp_json["poolId"]
 
 async def upload_img(file):
     '''Upload an image file to imgur.com and returns the link'''
@@ -189,12 +201,14 @@ async def on_message(message):
     elif p_list:
         pool = ""
         sets = ""
+        json_pool = []
         for p in p_list:
-            sets = sets + f"{p.set.code}, "
-            pool = pool + f"{p.get_arena_format()}\n"
+            sets += f"{p.set.code}, "
+            pool += f"{p.get_arena_format()}\n"
+            json_pool += p.get_json()
         sets = sets + ""
         file = StringIO(pool.replace("\n", "\r\n"))
-
+        
         # First send the pool content with a loading message for the image
         embed = discord.Embed(
             description=u":hourglass: Summoning a vision of your rares from "
@@ -208,6 +222,16 @@ async def on_message(message):
                                        file=discord.File(
                                            file,
                                            filename=f"{member.nick}_pool.txt"))
+
+        content = m.content
+        try:
+            sealeddeck_id = await pool_to_sealeddeck(json_pool)
+        except aiohttp.ClientResponseError as e:
+            print(f"Sealeddeck error: {e}")
+            content += "\n\n**Sealeddeck.tech:** Error\n"
+        else:
+            content += f"\n\n**Sealeddeck.tech link:** " \
+                       f"https://tutor.sealeddeck.tech/{sealeddeck_id}"
 
         try:
             # Then generate the image of the rares in the pool (takes a while)
@@ -237,4 +261,4 @@ async def on_message(message):
             )
             embed.set_image(url=link)
 
-        await m.edit(embed=embed)
+        await m.edit(content=content, embed=embed)
