@@ -38,7 +38,9 @@ class MtgPack:
 
             if slot["balance"]:  # commons
                 # Pack must have at least 1 common card of each color
-                if not self.balanced_commons(slot_name, rebalance=rebalance, log=log):
+                if not self.balanced_commons(slot_name,
+                                             rebalance=rebalance,
+                                             log=log):
                     if log:
                         print("Discarded pack: 1 color commons")
                     if log:
