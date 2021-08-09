@@ -71,7 +71,7 @@ whether a pack should be balanced or not is obtained from the metadata by
 * Of course, huge thanks to [mtgjson](https://mtgjson.com)
 * Card images are taken from [Scryfall](https://scryfall.com)
 * Thanks to [Sealeddeck.tech](https://sealeddeck.tech) for working with me on
-  integrating Booster Tutor with their tool.
+  integrating Booster Tutor with their tool
 * Part of my data reading implementation is borrowed from
   [pymtgjson](https://pythonhosted.org/mtgjson)
 * An [interesting
