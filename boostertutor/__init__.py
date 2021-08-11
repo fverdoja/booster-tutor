@@ -33,7 +33,7 @@ prefix = config["command_prefix"]
 
 async def pool_to_sealeddeck(pool, sealeddeck_id=None):
     '''Upload a sealed pool to sealeddeck.tech and returns the id'''
-    url = "https://tutor.sealeddeck.tech/api/pool"
+    url = "https://sealeddeck.tech/api/pools"
 
     deck = {"sideboard": pool}
     if sealeddeck_id:
@@ -218,7 +218,7 @@ async def on_message(message):
                         f"{message.author.mention}\n"
                         f"The pack has been added to the pool.\n\n"
                         f"**Updated sealeddeck.tech pool**\n"
-                        f"link: https://tutor.sealeddeck.tech/{new_id}\n"
+                        f"link: https://sealeddeck.tech/{new_id}\n"
                         f"ID: `{new_id}`"
                     )
                 await m.edit(content=content)
@@ -295,9 +295,11 @@ async def on_message(message):
             content += "\n\n**Sealeddeck.tech:** Error\n"
         else:
             content += f"\n\n**Sealeddeck.tech link:** " \
-                       f"https://tutor.sealeddeck.tech/{sealeddeck_id}" \
+                       f"https://sealeddeck.tech/{sealeddeck_id}" \
                        f"\n**Sealeddeck.tech ID:** " \
                        f"`{sealeddeck_id}`"
+
+        await m.edit(content=content)
 
         try:
             # Then generate the image of the rares in the pool (takes a while)
@@ -327,4 +329,4 @@ async def on_message(message):
             )
             embed.set_image(url=link)
 
-        await m.edit(content=content, embed=embed)
+        await m.edit(embed=embed)
