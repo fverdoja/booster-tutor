@@ -150,9 +150,6 @@ async def on_message(message):
             p = generator.get_random_jmp_deck(log=log)
     elif command in all_sets:
         p = generator.get_pack(command, log=log)
-    elif command == "poty":
-        em = emoji("LeaguePlayeroftheYear", message.guild) + " "
-        p_list = [generator.get_pack(set, log=log) for set in historic_sets]
     elif command == "chaossealed":
         em = emoji("CHAOS", message.guild) + " "
         p_list = generator.get_random_pack(historic_sets, n=6, log=log)
