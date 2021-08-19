@@ -62,30 +62,38 @@ async def upload_img(file):
     return resp_json["data"]["link"]
 
 
-def pack_img(im_list):
-    '''Generate an image of the cards in a pack over two rows'''
+def cards_img(im_list, max_length_row=10):
+    '''Generate an image of the cards in im_list'''
     assert(len(im_list))
-    cards_per_row = int(numpy.ceil(len(im_list) / 2))
-    row1 = im_list[0]
-    row2 = im_list[cards_per_row]
-    for i in range(1, len(im_list)):
-        if i < cards_per_row:
-            row1 = numpy.hstack((row1, im_list[i]))
-        if i > cards_per_row:
-            row2 = numpy.hstack((row2, im_list[i]))
-    pad_amount = row1.shape[1]-row2.shape[1]
-    row2 = numpy.pad(row2, [[0, 0], [0, pad_amount], [
-                     0, 0]], 'constant', constant_values=255)
-    return numpy.vstack((row1, row2))
+    num_rows = int(numpy.ceil(len(im_list) / max_length_row))
+    cards_per_row = int(numpy.ceil(len(im_list) / num_rows))
+
+    cards = None
+    for row_i in range(num_rows):
+        offset = row_i * cards_per_row
+        row = im_list[offset]
+        num_cards = min(len(im_list) - offset, cards_per_row)
+        for i in range(1 + offset, num_cards + offset):
+            row = numpy.hstack((row, im_list[i]))
+        if cards is None:
+            cards = row
+        else:
+            pad_amount = cards.shape[1]-row.shape[1]
+            assert(pad_amount >= 0)
+            row = numpy.pad(row, [[0, 0], [0, pad_amount], [
+                0, 0]], 'constant', constant_values=255)
+            cards = numpy.vstack((cards, row))
+    return cards
+
+
+def pack_img(im_list):
+    '''Generate an image of the cards in a pack'''
+    return cards_img(im_list)
 
 
 def rares_img(im_list):
-    '''Generate an image of the rares in a sealed pool in a row'''
-    assert(len(im_list))
-    row = im_list[0]
-    for i in range(1, len(im_list)):
-        row = numpy.hstack((row, im_list[i]))
-    return row
+    '''Generate an image of the rares in a sealed pool'''
+    return cards_img(im_list)
 
 
 def arena_to_json(arena_list):
