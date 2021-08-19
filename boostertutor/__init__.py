@@ -62,10 +62,10 @@ async def upload_img(file):
     return resp_json["data"]["link"]
 
 
-def cards_img(im_list, max_length_row=10):
+def cards_img(im_list, max_row_length=10):
     '''Generate an image of the cards in im_list'''
     assert(len(im_list))
-    num_rows = int(numpy.ceil(len(im_list) / max_length_row))
+    num_rows = int(numpy.ceil(len(im_list) / max_row_length))
     cards_per_row = int(numpy.ceil(len(im_list) / num_rows))
 
     cards = None
@@ -150,6 +150,9 @@ async def on_message(message):
             p = generator.get_random_jmp_deck(log=log)
     elif command in all_sets:
         p = generator.get_pack(command, log=log)
+    elif command == "poty":
+        em = emoji("LeaguePlayeroftheYear", message.guild) + " "
+        p_list = [generator.get_pack(set, log=log) for set in historic_sets]
     elif command == "chaossealed":
         em = emoji("CHAOS", message.guild) + " "
         p_list = generator.get_random_pack(historic_sets, n=6, log=log)
