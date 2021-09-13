@@ -163,24 +163,25 @@ async def on_message(message):
             p_list = generator.get_random_jmp_deck(n=3, log=log)
     elif command == "help":
         await message.channel.send(
-            "You can give me one of the following commands:\n"
-            "> `!random`: generates a random pack from the whole history "
-            "of Magic\n"
-            "> `!historic`: generates a random historic pack\n"
-            "> `!standard`: generates a random standard pack\n"
-            "> `!{setcode}`: generates a pack from the indicated set "
-            "(e.g., `!znr` generates a *Zendikar Rising* pack)\n"
-            "> `!{setcode}sealed`: generates 6 packs from the indicated set "
-            "(e.g., `!znrsealed` generates 6 *Zendikar Rising* packs)\n"
-            "> `!chaossealed`: generates 6 random historic packs\n"
-            "> `!addpack xyz123`: if issued replying to a pack I have "
-            "generated, adds that pack to the previously generated "
-            "sealeddeck.tech pool with ID `xyz123`\n"
-            "> `!help`: shows this message\n"
-            "While replying to any command, I will mention the user who "
-            "issued it, unless the command is followed by a mention, in which "
-            "case I will mention that user instead. For example, `!znr @user` "
-            "has me mention *user* (instead of you) in my reply."
+            f"You can give me one of the following commands:\n"
+            f"> `{prefix}random`: generates a random pack from the whole "
+            f"history of Magic\n"
+            f"> `{prefix}historic`: generates a random historic pack\n"
+            f"> `{prefix}standard`: generates a random standard pack\n"
+            f"> `{prefix}{{setcode}}`: generates a pack from the indicated set "
+            f"(e.g., `{prefix}znr` generates a *Zendikar Rising* pack)\n"
+            f"> `{prefix}{{setcode}}sealed`: generates 6 packs from the "
+            f"indicated set (e.g., `{prefix}znrsealed` generates 6 *Zendikar "
+            f"Rising* packs)\n"
+            f"> `{prefix}chaossealed`: generates 6 random historic packs\n"
+            f"> `{prefix}addpack xyz123`: if issued replying to a pack I have "
+            f"generated, adds that pack to the previously generated "
+            f"sealeddeck.tech pool with ID `xyz123`\n"
+            f"> `{prefix}help`: shows this message\n"
+            f"While replying to any command, I will mention the user who "
+            f"issued it, unless the command is followed by a mention, in which "
+            f"case I will mention that user instead. For example, `{prefix}znr "
+            f"@user` has me mention *user* (instead of you) in my reply."
         )
     elif command == "addpack":
         if len(argv) != 2 or not message.reference:
@@ -188,7 +189,7 @@ async def on_message(message):
                 f"{message.author.mention}\n"
                 "To add a pack to the sealeddeck.tech pool `xyz123`, reply to "
                 "my message with the pack content with the command "
-                "`!addpack xyz123`"
+                f"`{prefix}addpack xyz123`"
             )
         else:
             ref = await message.channel.fetch_message(
