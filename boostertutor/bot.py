@@ -21,10 +21,10 @@ log = config["pack_logging"] if "pack_logging" in config else True
 client = discord.Client()
 generator = MtgPackGenerator(path_to_mtgjson=config["mtgjson_path"],
                              path_to_jmp=jmp, jmp_arena=True)
-standard_sets = ["eld", "thb", "iko", "m21", "znr", "khm", "stx", "afr"]
+standard_sets = ["znr", "khm", "stx", "afr", "mid"]
 historic_sets = ["klr", "akr", "xln", "rix", "dom", "m19", "grn", "rna",
                  "war", "m20", "eld", "thb", "iko", "m21", "znr", "khm",
-                 "stx", "afr"]
+                 "stx", "afr", "mid"]
 all_sets = []
 for s in generator.sets_with_boosters:
     all_sets.append(s.lower())
