@@ -26,6 +26,25 @@ unless the command is followed by a mention, in which case the bot will mention
 that user instead. For example, `!znr @user#1234` has the bot mention
 *user#1234* (instead of you) in its reply.
 
+## Host your own bot
+
+To host your own bot you will need a Discord token and an Imgur client ID. Once
+you have procured those for yourself, follow these steps:
+
+* Make a `config.yaml` file (see `config_template.yaml` for help)
+
+* Download MTGJson data by running:
+
+```bash
+  python -m boostertutor.utils.mtgjson_downloader
+```
+
+* Run the bot:
+
+```bash
+  python -m boostertutor
+```
+
 ## Under the hood
 
 ### Booster data source
