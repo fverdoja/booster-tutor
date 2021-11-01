@@ -28,7 +28,7 @@ jobs:
         flake8 .
 
   test:
-    name: Run test
+    name: Run tests
     runs-on: ubuntu-latest
 
     steps:
