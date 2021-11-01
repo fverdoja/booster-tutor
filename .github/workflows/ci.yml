@@ -31,6 +31,20 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 .
+    - name: Make config file
+      run: |
+        echo "discord_token: xxx" > config.yaml
+        echo "imgur_client_id: yyy" >> config.yaml
+        echo "mtgjson_path: data/AllPrintings.json" >> config.yaml
+        echo "mtgjson_path: data/JMP" >> config.yaml
+        echo "set_img_path: boostertutor/img/sets/" >> config.yaml
+        echo "command_prefix: !" >> config.yaml
+        echo "pack_logging: True" >> config.yaml
+    - name: Download data
+      run: |
+        mkdir data
+        mkdir data/JMP
+        python utils/mtgjson_downloader.py
     - name: Test with pytest
       run: |
         pytest
