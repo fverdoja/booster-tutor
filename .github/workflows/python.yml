@@ -7,7 +7,7 @@ on: [push, pull_request]
 
 jobs:
   check:
-
+    name: Code check
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +28,7 @@ jobs:
         flake8 .
 
   test:
+    name: Run test
     runs-on: ubuntu-latest
 
     steps:
