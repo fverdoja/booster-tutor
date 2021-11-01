@@ -36,7 +36,7 @@ jobs:
         echo "discord_token: xxx" > config.yaml
         echo "imgur_client_id: yyy" >> config.yaml
         echo "mtgjson_path: data/AllPrintings.json" >> config.yaml
-        echo "mtgjson_path: data/JMP" >> config.yaml
+        echo "jmp_decklists_path: data/JMP" >> config.yaml
         echo "set_img_path: boostertutor/img/sets/" >> config.yaml
         echo "command_prefix: !" >> config.yaml
         echo "pack_logging: True" >> config.yaml
