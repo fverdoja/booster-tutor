@@ -41,7 +41,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Make dummy file
+    - name: Make config file
       run: |
         echo "discord_token: ${{ secrets.DISCORD_TOKEN }}" > config.yaml
         echo "imgur_client_id: ${{ secrets.IMGUR_CLIENT_ID }}" >> config.yaml
@@ -53,7 +53,7 @@ jobs:
     - name: Download data
       run: |
         mkdir -p data/JMP
-        python utils/mtgjson_downloader.py
+        python -m boostertutor.utils.mtgjson_downloader
     - name: Test with pytest
       run: |
         pytest
