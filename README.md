@@ -38,6 +38,7 @@ you have procured those for yourself, follow these steps:
 ```bash
   python -m boostertutor.utils.mtgjson_downloader
 ```
+
 * Run the bot:
 
 ```bash
