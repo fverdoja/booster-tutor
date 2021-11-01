@@ -40,6 +40,7 @@ you have procured those for yourself, follow these steps:
 ```
 
 * Run the bot:
+
 ```bash
   python -m boostertutor
 ```
