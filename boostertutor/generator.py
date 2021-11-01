@@ -8,9 +8,13 @@ from boostertutor.models.mtgjson import CardDb
 
 
 class MtgPackGenerator:
-    def __init__(self, path_to_mtgjson="data/AllPrintings.json",
-                 path_to_jmp=None, jmp_arena=False,
-                 max_balancing_iterations=100):
+    def __init__(
+        self,
+        path_to_mtgjson="data/AllPrintings.json",
+        path_to_jmp=None,
+        jmp_arena=False,
+        max_balancing_iterations=100,
+    ):
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
         if path_to_jmp is not None:
@@ -28,10 +32,12 @@ class MtgPackGenerator:
             iterations = self.max_balancing_iterations if balance else 1
             return self.get_pack_internal(set, iterations, log=log)
         else:
-            return [self.get_pack(set, balance=balance, log=log) for i in range(n)]
+            return [
+                self.get_pack(set, balance=balance, log=log) for i in range(n)
+            ]
 
     def get_pack_internal(self, set, iterations, log=True):
-        assert(set.upper() in self.data.sets)
+        assert set.upper() in self.data.sets
 
         booster = self.data.sets[set.upper()].booster
         if "default" in booster:
@@ -42,11 +48,14 @@ class MtgPackGenerator:
             booster_type = next(iter(booster))
             booster_meta = booster[booster_type]
 
-        boosters_p = [x["weight"] / booster_meta["boostersTotalWeight"]
-                      for x in booster_meta["boosters"]]
+        boosters_p = [
+            x["weight"] / booster_meta["boostersTotalWeight"]
+            for x in booster_meta["boosters"]
+        ]
 
-        booster = booster_meta["boosters"][choice(
-            len(booster_meta["boosters"]), p=boosters_p)]["contents"]
+        booster = booster_meta["boosters"][
+            choice(len(booster_meta["boosters"]), p=boosters_p)
+        ]["contents"]
 
         pack_content = {}
 
@@ -60,22 +69,31 @@ class MtgPackGenerator:
                 num_of_backups = 0
 
             cards = list(sheet_meta["cards"].keys())
-            cards_p = [x / sheet_meta["totalWeight"]
-                       for x in sheet_meta["cards"].values()]
+            cards_p = [
+                x / sheet_meta["totalWeight"]
+                for x in sheet_meta["cards"].values()
+            ]
 
-            picks = choice(cards, size=k + num_of_backups,
-                           replace=False, p=cards_p)
+            picks = choice(
+                cards, size=k + num_of_backups, replace=False, p=cards_p
+            )
 
             pick_i = 0
             slot_content = []
             slot_backup = []
             for card_id in picks:
                 if pick_i < k:
-                    slot_content.append(MtgCard(
-                        self.data.cards_by_id[card_id], sheet_meta["foil"]))
+                    slot_content.append(
+                        MtgCard(
+                            self.data.cards_by_id[card_id], sheet_meta["foil"]
+                        )
+                    )
                 else:
-                    slot_backup.append(MtgCard(
-                        self.data.cards_by_id[card_id], sheet_meta["foil"]))
+                    slot_backup.append(
+                        MtgCard(
+                            self.data.cards_by_id[card_id], sheet_meta["foil"]
+                        )
+                    )
                 pick_i += 1
 
             slot = {"cards": slot_content}
@@ -99,23 +117,30 @@ class MtgPackGenerator:
 
         if iterations <= 1 or pack.is_balanced(rebalance=True, log=log):
             if log:
-                print(f"{set.upper()} pack generated, iterations needed: "
-                      f"{str(self.max_balancing_iterations - iterations + 1)}")
+                print(
+                    f"{set.upper()} pack generated, iterations needed: "
+                    f"{str(self.max_balancing_iterations - iterations + 1)}"
+                )
             return pack
         else:
-            return self.get_pack_internal(set, iterations-1, log=log)
+            return self.get_pack_internal(set, iterations - 1, log=log)
 
-    def get_random_pack(self, sets=None, n=1, replace=False, balance=True, log=True):
+    def get_random_pack(
+        self, sets=None, n=1, replace=False, balance=True, log=True
+    ):
         if sets is None:
             sets = self.sets_with_boosters
 
-        assert(replace or n <= len(sets))
+        assert replace or n <= len(sets)
 
         boosters = choice(sets, size=n, replace=replace)
         if n == 1:
             return self.get_pack(set=boosters[0], balance=balance, log=log)
         else:
-            return [self.get_pack(set=b, balance=balance, log=log) for b in boosters]
+            return [
+                self.get_pack(set=b, balance=balance, log=log)
+                for b in boosters
+            ]
 
     def get_random_jmp_deck(self, n=1, replace=True, log=True):
         jmp_decks = self.data.sets["JMP"].decks
@@ -127,7 +152,8 @@ class MtgPackGenerator:
             cards = [MtgCard(c) for c in d["mainBoard"]]
             content = {"deck": {"cards": cards, "balance": False}}
             packs.append(
-                MtgPack(content, set=self.data.sets["JMP"], name=d["name"]))
+                MtgPack(content, set=self.data.sets["JMP"], name=d["name"])
+            )
             if log:
                 print(f"{d['name']} (JMP) pack generated")
         if n == 1:
@@ -162,7 +188,7 @@ class MtgPackGenerator:
                 "Scourge of Nel Toth": "Woe Strider",
                 "Scrounging Bandar": "Pollenbright Druid",
                 "Thought Scour": "Weight of Memory",
-                "Time to Feed": "Prey Upon"
+                "Time to Feed": "Prey Upon",
             }
             m21 = self.data.sets["M21"].cards_by_name
             ajmp = self.data.sets["AJMP"].cards_by_name

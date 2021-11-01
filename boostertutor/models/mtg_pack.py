@@ -38,9 +38,9 @@ class MtgPack:
 
             if slot["balance"]:  # commons
                 # Pack must have at least 1 common card of each color
-                if not self.balanced_commons(slot_name,
-                                             rebalance=rebalance,
-                                             log=log):
+                if not self.balanced_commons(
+                    slot_name, rebalance=rebalance, log=log
+                ):
                     if log:
                         print("Discarded pack: 1 color commons")
                     if log:
@@ -62,8 +62,10 @@ class MtgPack:
                     if log:
                         print(card_names)
                     return False
-            elif not slot["cards"][0].foil \
-                    and slot["cards"][0].card.rarity == "uncommon":
+            elif (
+                not slot["cards"][0].foil
+                and slot["cards"][0].card.rarity == "uncommon"
+            ):
                 # Pack must never have more than 2 uncommons of the same color
                 if self.max_cards_per_color(slot_name) > 2:
                     if log:
@@ -96,7 +98,7 @@ class MtgPack:
 
     def balanced_commons(self, slot_name, rebalance=False, log=True):
         slot = self.content[slot_name]
-        assert(not rebalance or "backups" in slot)
+        assert not rebalance or "backups" in slot
 
         (_, common_counts) = self.count_cards_colors(slot["cards"])
 
@@ -115,15 +117,16 @@ class MtgPack:
         (bkp_colors, bkp_counts) = self.count_cards_colors(slot["backups"])
 
         missing_colors = [
-            c for (c, v) in common_counts.items() if c != "C" and v == 0]
+            c for (c, v) in common_counts.items() if c != "C" and v == 0
+        ]
 
         if missing_colors:
             color = missing_colors[0]
             if bkp_counts[color]:
-                max_count = max(common_counts.items(),
-                                key=lambda x: x[1])[1]
-                swap_colors = [k for k in common_counts
-                               if common_counts[k] == max_count]
+                max_count = max(common_counts.items(), key=lambda x: x[1])[1]
+                swap_colors = [
+                    k for k in common_counts if common_counts[k] == max_count
+                ]
                 if len(swap_colors) > 1 and "C" in swap_colors:
                     swap_colors.remove("C")
                 if max_count > 1:
@@ -131,10 +134,12 @@ class MtgPack:
                     swap = common_colors[swap_color].pop()
                     bkp = bkp_colors[color].pop()
 
-                    slot["cards"] = [bkp if c is swap else c
-                                     for c in slot["cards"]]
-                    slot["backups"] = [c for c in slot["backups"]
-                                       if c is not bkp]
+                    slot["cards"] = [
+                        bkp if c is swap else c for c in slot["cards"]
+                    ]
+                    slot["backups"] = [
+                        c for c in slot["backups"] if c is not bkp
+                    ]
                     if log:
                         print(f"Rebalancing: {color} -> {swap_color}")
                     return self.rebalance_commons(slot, log=log)

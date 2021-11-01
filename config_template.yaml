@@ -1,7 +1,22 @@
 # copy, rename to 'config.yaml', and fill with your data
+
+### API TOKENS ###
+# Your Discord bot API token
 discord_token: your_discord_bot_token
+# To generate pack images a imgur client id is needed
 imgur_client_id: your_imgur_client_id
+
+###### PATHS #####
+# Check utils folder for scripts to download what the bot needs to work
+# Path to the AllPrintings.json file downloaded from MTGjson
 mtgjson_path: /absolute/path/to/AllPrintings.json
-jmp_decklists_path: /absolute/path/to/JMP/  # delete this line to exclude JMP
+# comment to exclude JMP
+jmp_decklists_path: /absolute/path/to/JMP/
+# comment to exclude set images
+set_img_path: /absolute/path/to/img/sets/
+
+## OTHER CONFIG ##
+# Discord messages using this prefix will be read by the bot as commands
 command_prefix: "!"
-pack_logging: True # enable or disable stdout logging of pack generation
+# enable or disable stdout logging of pack generation
+pack_logging: True

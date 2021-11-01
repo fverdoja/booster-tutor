@@ -19,12 +19,31 @@ jmp = config["jmp_decklists_path"] if "jmp_decklists_path" in config else None
 log = config["pack_logging"] if "pack_logging" in config else True
 
 client = discord.Client()
-generator = MtgPackGenerator(path_to_mtgjson=config["mtgjson_path"],
-                             path_to_jmp=jmp, jmp_arena=True)
+generator = MtgPackGenerator(
+    path_to_mtgjson=config["mtgjson_path"], path_to_jmp=jmp, jmp_arena=True
+)
 standard_sets = ["znr", "khm", "stx", "afr", "mid"]
-historic_sets = ["klr", "akr", "xln", "rix", "dom", "m19", "grn", "rna",
-                 "war", "m20", "eld", "thb", "iko", "m21", "znr", "khm",
-                 "stx", "afr", "mid"]
+historic_sets = [
+    "klr",
+    "akr",
+    "xln",
+    "rix",
+    "dom",
+    "m19",
+    "grn",
+    "rna",
+    "war",
+    "m20",
+    "eld",
+    "thb",
+    "iko",
+    "m21",
+    "znr",
+    "khm",
+    "stx",
+    "afr",
+    "mid",
+]
 all_sets = []
 for s in generator.sets_with_boosters:
     all_sets.append(s.lower())
@@ -32,7 +51,7 @@ prefix = config["command_prefix"]
 
 
 async def pool_to_sealeddeck(pool, sealeddeck_id=None):
-    '''Upload a sealed pool to sealeddeck.tech and returns the id'''
+    """Upload a sealed pool to sealeddeck.tech and returns the id"""
     url = "https://sealeddeck.tech/api/pools"
 
     deck = {"sideboard": pool}
@@ -48,11 +67,11 @@ async def pool_to_sealeddeck(pool, sealeddeck_id=None):
 
 
 async def upload_img(file):
-    '''Upload an image file to imgur.com and returns the link'''
+    """Upload an image file to imgur.com and returns the link"""
     url = "https://api.imgur.com/3/image"
 
     headers = {"Authorization": f"Client-ID {config['imgur_client_id']}"}
-    payload = {'image': file.getvalue()}
+    payload = {"image": file.getvalue()}
 
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, data=payload) as resp:
@@ -63,8 +82,8 @@ async def upload_img(file):
 
 
 def cards_img(im_list, max_row_length=10):
-    '''Generate an image of the cards in im_list'''
-    assert(len(im_list))
+    """Generate an image of the cards in im_list"""
+    assert len(im_list)
     num_rows = int(numpy.ceil(len(im_list) / max_row_length))
     cards_per_row = int(numpy.ceil(len(im_list) / num_rows))
 
@@ -78,21 +97,25 @@ def cards_img(im_list, max_row_length=10):
         if cards is None:
             cards = row
         else:
-            pad_amount = cards.shape[1]-row.shape[1]
-            assert(pad_amount >= 0)
-            row = numpy.pad(row, [[0, 0], [0, pad_amount], [
-                0, 0]], 'constant', constant_values=255)
+            pad_amount = cards.shape[1] - row.shape[1]
+            assert pad_amount >= 0
+            row = numpy.pad(
+                row,
+                [[0, 0], [0, pad_amount], [0, 0]],
+                "constant",
+                constant_values=255,
+            )
             cards = numpy.vstack((cards, row))
     return cards
 
 
 def pack_img(im_list):
-    '''Generate an image of the cards in a pack'''
+    """Generate an image of the cards in a pack"""
     return cards_img(im_list)
 
 
 def rares_img(im_list):
-    '''Generate an image of the rares in a sealed pool'''
+    """Generate an image of the rares in a sealed pool"""
     return cards_img(im_list)
 
 
@@ -106,7 +129,7 @@ def arena_to_json(arena_list):
 
 
 def emoji(name, guild=None):
-    '''Returns an emoji if it exists on the server or empty string otherwise'''
+    """Returns an emoji if it exists on the server or empty string otherwise"""
     for e in guild.emojis if guild else client.emojis:
         if e.name == name:
             return str(e)
@@ -114,8 +137,10 @@ def emoji(name, guild=None):
 
 
 def set_symbol_link(code, size="large", rarity="M"):
-    return f"https://gatherer.wizards.com/Handlers/Image.ashx?" \
-           f"type=symbol&size={size}&rarity={rarity}&set={code.lower()}"
+    return (
+        f"https://gatherer.wizards.com/Handlers/Image.ashx?"
+        f"type=symbol&size={size}&rarity={rarity}&set={code.lower()}"
+    )
 
 
 @client.event
@@ -131,7 +156,7 @@ async def on_message(message):
         return
 
     argv = message.content.removeprefix(prefix).split()
-    assert(len(argv))
+    assert len(argv)
     command = argv[0].lower()
     if len(message.mentions):
         member = message.mentions[0]
@@ -156,7 +181,8 @@ async def on_message(message):
     elif command.removesuffix("sealed") in all_sets:
         em = emoji(command.removesuffix("sealed").upper(), message.guild) + " "
         p_list = generator.get_pack(
-            command.removesuffix("sealed"), n=6, log=log)
+            command.removesuffix("sealed"), n=6, log=log
+        )
     elif command == "jmpsealed":
         if jmp is not None:
             em = emoji("JMP", message.guild)
@@ -168,8 +194,8 @@ async def on_message(message):
             f"history of Magic\n"
             f"> `{prefix}historic`: generates a random historic pack\n"
             f"> `{prefix}standard`: generates a random standard pack\n"
-            f"> `{prefix}{{setcode}}`: generates a pack from the indicated set "
-            f"(e.g., `{prefix}znr` generates a *Zendikar Rising* pack)\n"
+            f"> `{prefix}{{setcode}}`: generates a pack from the indicated "
+            f"set (e.g., `{prefix}znr` generates a *Zendikar Rising* pack)\n"
             f"> `{prefix}{{setcode}}sealed`: generates 6 packs from the "
             f"indicated set (e.g., `{prefix}znrsealed` generates 6 *Zendikar "
             f"Rising* packs)\n"
@@ -179,9 +205,10 @@ async def on_message(message):
             f"sealeddeck.tech pool with ID `xyz123`\n"
             f"> `{prefix}help`: shows this message\n"
             f"While replying to any command, I will mention the user who "
-            f"issued it, unless the command is followed by a mention, in which "
-            f"case I will mention that user instead. For example, `{prefix}znr "
-            f"@user` has me mention *user* (instead of you) in my reply."
+            f"issued it, unless the command is followed by a mention, in "
+            f"which case I will mention that user instead. For example, "
+            f"`{prefix}znr @user` has me mention *user* (instead of you) in "
+            f"my reply."
         )
     elif command == "addpack":
         if len(argv) != 2 or not message.reference:
@@ -193,7 +220,8 @@ async def on_message(message):
             )
         else:
             ref = await message.channel.fetch_message(
-                message.reference.message_id)
+                message.reference.message_id
+            )
             if ref.author != client.user or len(ref.content.split("```")) < 2:
                 await message.channel.send(
                     f"{message.author.mention}\n"
@@ -235,16 +263,18 @@ async def on_message(message):
     if p:
         # First send the booster text with a loading message for the image
         embed = discord.Embed(
-            description=u":hourglass: Summoning a vision of your booster from "
-                        u"the aether...",
-            color=discord.Color.orange()
+            description=":hourglass: Summoning a vision of your booster from "
+            "the aether...",
+            color=discord.Color.orange(),
         )
         em = emoji(p.set.code.upper(), message.guild) + " "
 
-        m = await message.channel.send(f"**{em.lstrip()}{p.name}**\n"
-                                       f"{member.mention}\n"
-                                       f"```\n{p.get_arena_format()}\n```",
-                                       embed=embed)
+        m = await message.channel.send(
+            f"**{em.lstrip()}{p.name}**\n"
+            f"{member.mention}\n"
+            f"```\n{p.get_arena_format()}\n```",
+            embed=embed,
+        )
 
         try:
             # Then generate the image of the booster content (takes a while)
@@ -258,15 +288,14 @@ async def on_message(message):
         except aiohttp.ClientResponseError:
             # Send an error message if the upload failed...
             embed = discord.Embed(
-                description=u":x: Sorry, it seems your booster is lost in the "
-                            u"Blind Eternities...",
-                color=discord.Color.red()
+                description=":x: Sorry, it seems your booster is lost in the "
+                "Blind Eternities...",
+                color=discord.Color.red(),
             )
         else:
             # ...or edit the message by embedding the link
             embed = discord.Embed(
-                color=discord.Color.dark_green(),
-                description=link
+                color=discord.Color.dark_green(), description=link
             )
             embed.set_image(url=link)
 
@@ -284,17 +313,17 @@ async def on_message(message):
 
         # First send the pool content with a loading message for the image
         embed = discord.Embed(
-            description=u":hourglass: Summoning a vision of your rares from "
-                        u"the aether...",
-            color=discord.Color.orange()
+            description=":hourglass: Summoning a vision of your rares from "
+            "the aether...",
+            color=discord.Color.orange(),
         )
-        m = await message.channel.send(f"**{em.lstrip()}Sealed pool**\n"
-                                       f"{member.mention}\n"
-                                       f"Content: [{sets.rstrip(', ')}]",
-                                       embed=embed,
-                                       file=discord.File(
-                                           file,
-                                           filename=f"{member.nick}_pool.txt"))
+        m = await message.channel.send(
+            f"**{em.lstrip()}Sealed pool**\n"
+            f"{member.mention}\n"
+            f"Content: [{sets.rstrip(', ')}]",
+            embed=embed,
+            file=discord.File(file, filename=f"{member.nick}_pool.txt"),
+        )
 
         content = m.content
         try:
@@ -303,10 +332,12 @@ async def on_message(message):
             print(f"Sealeddeck error: {e}")
             content += "\n\n**Sealeddeck.tech:** Error\n"
         else:
-            content += f"\n\n**Sealeddeck.tech link:** " \
-                       f"https://sealeddeck.tech/{sealeddeck_id}" \
-                       f"\n**Sealeddeck.tech ID:** " \
-                       f"`{sealeddeck_id}`"
+            content += (
+                f"\n\n**Sealeddeck.tech link:** "
+                f"https://sealeddeck.tech/{sealeddeck_id}"
+                f"\n**Sealeddeck.tech ID:** "
+                f"`{sealeddeck_id}`"
+            )
 
         await m.edit(content=content)
 
@@ -326,15 +357,14 @@ async def on_message(message):
         except aiohttp.ClientResponseError:
             # Send an error message if the upload failed...
             embed = discord.Embed(
-                description=u":x: Sorry, it seems your rares are lost in the "
-                            u"Blind Eternities...",
-                color=discord.Color.red()
+                description=":x: Sorry, it seems your rares are lost in the "
+                "Blind Eternities...",
+                color=discord.Color.red(),
             )
         else:
             # ...or edit the message by embedding the link
             embed = discord.Embed(
-                color=discord.Color.dark_green(),
-                description=link
+                color=discord.Color.dark_green(), description=link
             )
             embed.set_image(url=link)
 
