@@ -16,6 +16,11 @@ def generator():
 
 
 @pytest.fixture
+def four_set_list():
+    return ["MB1", "APC", "MIR", "AKR"]
+
+
+@pytest.fixture
 def unbalanced_pack(generator):
     m20 = generator.data.sets["M20"].cards_by_ascii_name
     content = {

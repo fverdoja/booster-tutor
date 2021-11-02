@@ -40,7 +40,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest
+        pip install pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Make config file
       run: |
@@ -57,4 +57,4 @@ jobs:
         python -m boostertutor.utils.mtgjson_downloader
     - name: Test with pytest
       run: |
-        pytest
+        pytest --cov=boostertutor --cov-report term-missing:skip-covered
