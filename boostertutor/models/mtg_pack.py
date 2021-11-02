@@ -24,6 +24,9 @@ class MtgPack:
         cards.sort(key=lambda x: x.pack_sort_key())
         return cards
 
+    def can_be_balanced(self):
+        return any([slot["balance"] for slot in self.content.values()])
+
     def is_balanced(self, rebalance=False, log=True):
         # Pack must never have duplicates (foil excluded)
         if self.has_duplicates():

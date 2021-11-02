@@ -20,10 +20,19 @@ def test_pack_list(generator):
     assert all([pack.set.code == "ZNR" for pack in p_list])
 
 
+def test_all_packs(generator):
+    p_list = [generator.get_pack(set) for set in generator.sets_with_boosters]
+    assert all(
+        [
+            not p.can_be_balanced() or p.is_balanced(rebalance=False)
+            for p in p_list
+        ]
+    )
+
+
 def test_random_pack(generator):
     p = generator.get_random_pack()
-    assert len(p.cards) == 15
-    assert p.is_balanced(rebalance=False)
+    assert p.set.code in generator.sets_with_boosters
 
 
 def test_random_packs_from_set_list(generator, four_set_list):
