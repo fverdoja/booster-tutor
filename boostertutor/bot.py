@@ -44,9 +44,7 @@ historic_sets = [
     "afr",
     "mid",
 ]
-all_sets = []
-for s in generator.sets_with_boosters:
-    all_sets.append(s.lower())
+all_sets = [s.lower() for s in generator.sets_with_boosters]
 prefix = config["command_prefix"]
 
 
@@ -163,7 +161,8 @@ async def on_message(message):
     else:
         member = message.author
 
-    p = p_list = em = None
+    p = p_list = None
+    em = ""
     if command == "random":
         p = generator.get_random_pack(log=log)
     elif command == "historic":
