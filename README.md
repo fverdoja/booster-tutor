@@ -39,6 +39,10 @@ you have procured those for yourself, follow these steps:
   python -m boostertutor.utils.mtgjson_downloader
 ```
 
+For the first run you might want to download JMP decks as well to allow the bot
+to be able to generate them. To download JMP decks, add the `--jmp` parameter
+to the previous command.
+
 * Run the bot:
 
 ```bash
