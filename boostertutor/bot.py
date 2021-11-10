@@ -22,7 +22,7 @@ client = discord.Client()
 generator = MtgPackGenerator(
     path_to_mtgjson=config["mtgjson_path"], path_to_jmp=jmp, jmp_arena=True
 )
-standard_sets = ["znr", "khm", "stx", "afr", "mid"]
+standard_sets = ["znr", "khm", "stx", "afr", "mid", "vow"]
 historic_sets = [
     "klr",
     "akr",
@@ -43,6 +43,7 @@ historic_sets = [
     "stx",
     "afr",
     "mid",
+    "vow",
 ]
 all_sets = [s.lower() for s in generator.sets_with_boosters]
 prefix = config["command_prefix"]
