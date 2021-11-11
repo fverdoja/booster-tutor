@@ -33,7 +33,7 @@ class MtgPack:
             if log:
                 print("Discarded pack: duplicates")
             if log:
-                print(self.to_str())
+                print(self)
             return False
 
         for slot_name, slot in self.content.items():
@@ -197,9 +197,9 @@ class MtgPack:
 
         return ret.strip()
 
-    def to_str(self):
+    def __str__(self):
         ret = ""
         for card in self.cards:
-            ret += f"{card.to_str()}\n"
+            ret += str(card) + "\n"
 
         return ret.strip()

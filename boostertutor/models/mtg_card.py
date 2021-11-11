@@ -80,10 +80,6 @@ class MtgCard:
             number = self.card.number
         return f"1 {self.card.name} ({self.card.setCode}) {number}"
 
-    def to_str(self):
-        foil_str = " (foil)" if self.foil else ""
-        return f"{self.card.name}{foil_str}"
-
     def pack_sort_key(self):
         r = ["mythic", "rare", "uncommon", "common", "special"]
         is_common_land = (
@@ -96,3 +92,10 @@ class MtgCard:
 
     def __lt__(self, other):
         return self < other
+
+    def __str__(self):
+        foil_str = " (foil)" if self.foil else ""
+        return f"{self.card.name} ({self.card.setCode}){foil_str}"
+
+    def __repr__(self):
+        return f"<boostertutor.models.mtg_card.MtgCard: {str(self)}>"
