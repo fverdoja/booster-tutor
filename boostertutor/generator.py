@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+from typing import Optional, Sequence
 
 from numpy.random import choice
 
@@ -10,11 +10,11 @@ from boostertutor.models.mtgjson import CardDb
 class MtgPackGenerator:
     def __init__(
         self,
-        path_to_mtgjson="data/AllPrintings.json",
-        path_to_jmp=None,
-        jmp_arena=False,
-        max_balancing_iterations=100,
-    ):
+        path_to_mtgjson: str = "data/AllPrintings.json",
+        path_to_jmp: Optional[str] = None,
+        jmp_arena: bool = False,
+        max_balancing_iterations: int = 100,
+    ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
         if path_to_jmp is not None:
@@ -25,18 +25,22 @@ class MtgPackGenerator:
             if hasattr(self.data.sets[s], "booster"):
                 self.sets_with_boosters.append(s)
 
-    def get_pack(self, set, n=1, balance=True, log=True):
-        if n == 1:
-            if log:
-                print(f"Generating {set.upper()} pack...")
-            iterations = self.max_balancing_iterations if balance else 1
-            return self.get_pack_internal(set, iterations, log=log)
-        else:
-            return [
-                self.get_pack(set, balance=balance, log=log) for i in range(n)
-            ]
+    def get_packs(
+        self, set: str, n: int = 1, balance: bool = True, log: bool = True
+    ) -> Sequence[MtgPack]:
+        return [self.get_pack(set, balance=balance, log=log) for _ in range(n)]
 
-    def get_pack_internal(self, set, iterations, log=True):
+    def get_pack(
+        self, set: str, balance: bool = True, log: bool = True
+    ) -> MtgPack:
+        if log:
+            print(f"Generating {set.upper()} pack...")
+        iterations = self.max_balancing_iterations if balance else 1
+        return self._get_pack_internal(set, iterations, log=log)
+
+    def _get_pack_internal(
+        self, set: str, iterations: int, log: bool = True
+    ) -> MtgPack:
         assert set.upper() in self.data.sets
 
         booster = self.data.sets[set.upper()].booster
@@ -97,7 +101,9 @@ class MtgPackGenerator:
                 pick_i += 1
 
             slot = {"cards": slot_content}
-            slot["balance"] = "balanceColors" in sheet_meta.keys()
+            slot["balance"] = (
+                "balanceColors" in sheet_meta.keys()  # type: ignore
+            )
             if num_of_backups:
                 slot["backups"] = slot_backup
 
@@ -123,26 +129,29 @@ class MtgPackGenerator:
                 )
             return pack
         else:
-            return self.get_pack_internal(set, iterations - 1, log=log)
+            return self._get_pack_internal(set, iterations - 1, log=log)
 
-    def get_random_pack(
-        self, sets=None, n=1, replace=False, balance=True, log=True
-    ):
+    def get_random_packs(
+        self,
+        sets: Optional[Sequence[str]] = None,
+        n: int = 1,
+        replace: bool = False,
+        balance: bool = True,
+        log: bool = True,
+    ) -> Sequence[MtgPack]:
         if sets is None:
             sets = self.sets_with_boosters
 
         assert replace or n <= len(sets)
 
         boosters = choice(sets, size=n, replace=replace)
-        if n == 1:
-            return self.get_pack(set=boosters[0], balance=balance, log=log)
-        else:
-            return [
-                self.get_pack(set=b, balance=balance, log=log)
-                for b in boosters
-            ]
+        return [
+            self.get_pack(set=b, balance=balance, log=log) for b in boosters
+        ]
 
-    def get_random_jmp_deck(self, n=1, replace=True, log=True):
+    def get_random_jmp_decks(
+        self, n: int = 1, replace: bool = True, log: bool = True
+    ) -> Sequence[MtgPack]:
         jmp_decks = self.data.sets["JMP"].decks
         decks = choice(jmp_decks, size=n, replace=replace)
         packs = []
@@ -156,16 +165,13 @@ class MtgPackGenerator:
             )
             if log:
                 print(f"{d['name']} (JMP) pack generated")
-        if n == 1:
-            return packs[0]
-        else:
-            return packs
+        return packs
 
-    def fix_iko(self):
+    def fix_iko(self) -> None:
         iko = self.data.sets["IKO"]
         iko.booster["default"]["sheets"]["common"]["balanceColors"] = True
 
-    def import_jmp(self, path_to_jmp, arena=False):
+    def import_jmp(self, path_to_jmp: str, arena: bool = False) -> None:
         self.data.add_decks_from_folder(path_to_jmp + "decks/")
         if arena:
             replacements = {

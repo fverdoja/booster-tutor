@@ -1,10 +1,18 @@
-#!/usr/bin/env python
-
 from random import choice
+from typing import Optional, Sequence
+
+import numpy as np
+from boostertutor.models.mtg_card import MtgCard
+from boostertutor.models.mtgjson import SetProxy
 
 
 class MtgPack:
-    def __init__(self, content, set=None, name=None):
+    def __init__(
+        self,
+        content: dict,
+        set: Optional[SetProxy] = None,
+        name: Optional[str] = None,
+    ):
         self.content = content
         if set:
             self.set = set
@@ -16,7 +24,7 @@ class MtgPack:
             self.name = self.set.name
 
     @property
-    def cards(self):
+    def cards(self) -> Sequence[MtgCard]:
         cards = []
         for slot in self.content.values():
             for card in slot["cards"]:
@@ -24,10 +32,10 @@ class MtgPack:
         cards.sort(key=lambda x: x.pack_sort_key())
         return cards
 
-    def can_be_balanced(self):
+    def can_be_balanced(self) -> bool:
         return any([slot["balance"] for slot in self.content.values()])
 
-    def is_balanced(self, rebalance=False, log=True):
+    def is_balanced(self, rebalance: bool = False, log: bool = True) -> bool:
         # Pack must never have duplicates (foil excluded)
         if self.has_duplicates():
             if log:
@@ -78,12 +86,21 @@ class MtgPack:
                     return False
         return True
 
-    def has_duplicates(self):
+    def has_duplicates(self) -> bool:
         cards_names = [c.card.name for c in self.cards if not c.foil]
         return len(cards_names) != len(set(cards_names))
 
-    def count_cards_colors(self, card_list, count_hybrids=True):
-        colors = {"W": [], "U": [], "B": [], "R": [], "G": [], "C": []}
+    def count_cards_colors(
+        self, card_list: Sequence[MtgCard], count_hybrids: bool = True
+    ) -> tuple[dict[str, list[MtgCard]], dict[str, int]]:
+        colors: dict[str, list[MtgCard]] = {
+            "W": [],
+            "U": [],
+            "B": [],
+            "R": [],
+            "G": [],
+            "C": [],
+        }
         for card in card_list:
             if len(card.mana()) == 1:
                 # hybrid cards go in two colors
@@ -99,7 +116,9 @@ class MtgPack:
         counts = {k: len(v) for (k, v) in colors.items()}
         return (colors, counts)
 
-    def balanced_commons(self, slot_name, rebalance=False, log=True):
+    def balanced_commons(
+        self, slot_name: str, rebalance: bool = False, log: bool = True
+    ) -> bool:
         slot = self.content[slot_name]
         assert not rebalance or "backups" in slot
 
@@ -115,7 +134,9 @@ class MtgPack:
                 return False
         return True
 
-    def rebalance_commons(self, slot, log=True):
+    def rebalance_commons(
+        self, slot: dict[str, Sequence[MtgCard]], log: bool = True
+    ) -> bool:
         (common_colors, common_counts) = self.count_cards_colors(slot["cards"])
         (bkp_colors, bkp_counts) = self.count_cards_colors(slot["backups"])
 
@@ -159,7 +180,7 @@ class MtgPack:
             print(f"Rebalanced: commons {common_counts}")
         return True
 
-    def max_cards_per_color(self, slot_name=None):
+    def max_cards_per_color(self, slot_name: Optional[str] = None) -> int:
         if slot_name is not None:
             cards = self.content[slot_name]["cards"]
         else:
@@ -168,7 +189,7 @@ class MtgPack:
         (_, counts) = self.count_cards_colors(cards)
         return max(counts.values())
 
-    def contains_creature(self, slot_name=None):
+    def contains_creature(self, slot_name: Optional[str] = None) -> bool:
         if slot_name is not None:
             cards = self.content[slot_name]["cards"]
         else:
@@ -179,25 +200,27 @@ class MtgPack:
                 return True
         return False
 
-    async def get_images(self, size="normal", foil=None):
+    async def get_images(
+        self, size: str = "normal", foil: bool = None
+    ) -> np.ndarray:
         img = [await c.get_image(size, foil) for c in self.cards]
         return img
 
-    def get_json(self):
+    def get_json(self) -> Sequence[dict]:
         ret = []
         for card in self.cards:
             ret.append(card.get_json())
 
         return ret
 
-    def get_arena_format(self):
+    def get_arena_format(self) -> str:
         ret = ""
         for card in self.cards:
             ret += f"{card.get_arena_format()}\n"
 
         return ret.strip()
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret = ""
         for card in self.cards:
             ret += str(card) + "\n"

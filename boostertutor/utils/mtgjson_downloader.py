@@ -11,7 +11,7 @@ mtgjson_url = "https://mtgjson.com/api/v5/AllPrintings.json"
 deckfile_url = "https://mtgjson.com/api/v5/AllDeckFiles.zip"
 
 
-def download_file(url: str, path: Path):
+def download_file(url: str, path: Path) -> None:
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with Path.open(path, "wb") as f:
@@ -21,7 +21,7 @@ def download_file(url: str, path: Path):
 
 def download_mtgjson_data(
     file: str, url: str = mtgjson_url, backup: bool = True
-):
+) -> None:
     fp = Path(file)
     if backup and fp.is_file():
         fp.rename(Path(fp.parent, "AllPrintings_last.json"))
@@ -33,7 +33,7 @@ def download_jmp_decks(
     temp_dir: str = ".",
     url: str = deckfile_url,
     backup: bool = False,
-):
+) -> None:
     temp_path = Path(temp_dir) / "temp_decks"
     fn = "AllDeckFiles.zip"
     try:
@@ -59,28 +59,19 @@ def download_jmp_decks(
         shutil.rmtree(temp_path)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Downloads MTGJSON data.")
-    parser.add_argument(
-        "--jmp", help="download JMP decks", action="store_true"
-    )
-    parser.add_argument(
-        "--jmp-backup", help="backup old JMP decks", action="store_true"
-    )
-    args = parser.parse_args()
-
+def main(jmp: bool, jmp_backup: bool) -> None:
     print("Reading config...")
 
     with open("config.yaml") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
-    download_jmp = args.jmp and "jmp_decklists_path" in config
+    download_jmp = jmp and "jmp_decklists_path" in config
 
     print(f"MTGjson data will be downloaded in: {config['mtgjson_path']}")
     if download_jmp:
         print(
             f"JMP decks will be downloaded in: {config['jmp_decklists_path']}"
         )
-        if args.jmp_backup:
+        if jmp_backup:
             jmp_backup_path = (
                 Path(config["jmp_decklists_path"]).parent / "JMP_last/"
             )
@@ -95,6 +86,16 @@ if __name__ == "__main__":
 
     if download_jmp:
         print("Beginning JMP decks download...")
-        download_jmp_decks(
-            dir=config["jmp_decklists_path"], backup=args.jmp_backup
-        )
+        download_jmp_decks(dir=config["jmp_decklists_path"], backup=jmp_backup)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Downloads MTGJSON data.")
+    parser.add_argument(
+        "--jmp", help="download JMP decks", action="store_true"
+    )
+    parser.add_argument(
+        "--jmp-backup", help="backup old JMP decks", action="store_true"
+    )
+    args = parser.parse_args()
+    main(args.jmp, args.jmp_backup)

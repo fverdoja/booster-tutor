@@ -1,12 +1,11 @@
-#!/usr/bin/env python
-
 import os
 from io import BytesIO, StringIO
+from typing import Optional, Sequence, Union
 
 import aiohttp
 import discord
 import imageio
-import numpy
+import numpy as np
 import yaml
 
 from boostertutor.generator import MtgPackGenerator
@@ -15,8 +14,10 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(dir_path, "..", "config.yaml")) as file:
     config = yaml.load(file, Loader=yaml.FullLoader)
 
-jmp = config["jmp_decklists_path"] if "jmp_decklists_path" in config else None
-log = config["pack_logging"] if "pack_logging" in config else True
+jmp: Optional[str] = (
+    config["jmp_decklists_path"] if "jmp_decklists_path" in config else None
+)
+log: bool = config["pack_logging"] if "pack_logging" in config else True
 
 client = discord.Client()
 generator = MtgPackGenerator(
@@ -45,15 +46,17 @@ historic_sets = [
     "mid",
     "vow",
 ]
-all_sets = [s.lower() for s in generator.sets_with_boosters]
-prefix = config["command_prefix"]
+all_sets: list[str] = [s.lower() for s in generator.sets_with_boosters]
+prefix: str = config["command_prefix"]
 
 
-async def pool_to_sealeddeck(pool, sealeddeck_id=None):
+async def pool_to_sealeddeck(
+    pool: Sequence[dict], sealeddeck_id: Optional[str] = None
+) -> str:
     """Upload a sealed pool to sealeddeck.tech and returns the id"""
     url = "https://sealeddeck.tech/api/pools"
 
-    deck = {"sideboard": pool}
+    deck: dict[str, Union[Sequence[dict], str]] = {"sideboard": pool}
     if sealeddeck_id:
         deck["poolId"] = sealeddeck_id
 
@@ -65,7 +68,7 @@ async def pool_to_sealeddeck(pool, sealeddeck_id=None):
     return resp_json["poolId"]
 
 
-async def upload_img(file):
+async def upload_img(file: np.ndarray) -> str:
     """Upload an image file to imgur.com and returns the link"""
     url = "https://api.imgur.com/3/image"
 
@@ -80,11 +83,13 @@ async def upload_img(file):
     return resp_json["data"]["link"]
 
 
-def cards_img(im_list, max_row_length=10):
+def cards_img(
+    im_list: Sequence[np.ndarray], max_row_length: int = 10
+) -> np.ndarray:
     """Generate an image of the cards in im_list"""
     assert len(im_list)
-    num_rows = int(numpy.ceil(len(im_list) / max_row_length))
-    cards_per_row = int(numpy.ceil(len(im_list) / num_rows))
+    num_rows = int(np.ceil(len(im_list) / max_row_length))
+    cards_per_row = int(np.ceil(len(im_list) / num_rows))
 
     cards = None
     for row_i in range(num_rows):
@@ -92,33 +97,33 @@ def cards_img(im_list, max_row_length=10):
         row = im_list[offset]
         num_cards = min(len(im_list) - offset, cards_per_row)
         for i in range(1 + offset, num_cards + offset):
-            row = numpy.hstack((row, im_list[i]))
+            row = np.hstack((row, im_list[i]))
         if cards is None:
             cards = row
         else:
             pad_amount = cards.shape[1] - row.shape[1]
             assert pad_amount >= 0
-            row = numpy.pad(
+            row = np.pad(
                 row,
                 [[0, 0], [0, pad_amount], [0, 0]],
                 "constant",
                 constant_values=255,
             )
-            cards = numpy.vstack((cards, row))
+            cards = np.vstack((cards, row))
     return cards
 
 
-def pack_img(im_list):
+def pack_img(im_list: Sequence[np.ndarray]) -> np.ndarray:
     """Generate an image of the cards in a pack"""
     return cards_img(im_list)
 
 
-def rares_img(im_list):
+def rares_img(im_list: Sequence[np.ndarray]) -> np.ndarray:
     """Generate an image of the rares in a sealed pool"""
     return cards_img(im_list)
 
 
-def arena_to_json(arena_list):
+def arena_to_json(arena_list: str) -> Sequence[dict]:
     json_list = []
     for line in arena_list.split("\n"):
         count, card = line.split(" ", 1)
@@ -127,7 +132,7 @@ def arena_to_json(arena_list):
     return json_list
 
 
-def emoji(name, guild=None):
+def emoji(name: str, guild: Optional[discord.Guild] = None) -> str:
     """Returns an emoji if it exists on the server or empty string otherwise"""
     for e in guild.emojis if guild else client.emojis:
         if e.name == name:
@@ -135,7 +140,7 @@ def emoji(name, guild=None):
     return ""
 
 
-def set_symbol_link(code, size="large", rarity="M"):
+def set_symbol_link(code: str, size: str = "large", rarity: str = "M") -> str:
     return (
         f"https://gatherer.wizards.com/Handlers/Image.ashx?"
         f"type=symbol&size={size}&rarity={rarity}&set={code.lower()}"
@@ -143,12 +148,12 @@ def set_symbol_link(code, size="large", rarity="M"):
 
 
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     print(f"{client.user} has connected to Discord!")
 
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message) -> None:
     if message.author == client.user:
         return
     if not message.content.startswith(prefix):
@@ -165,28 +170,28 @@ async def on_message(message):
     p = p_list = None
     em = ""
     if command == "random":
-        p = generator.get_random_pack(log=log)
+        p = generator.get_random_packs(log=log)[0]
     elif command == "historic":
-        p = generator.get_random_pack(historic_sets, log=log)
+        p = generator.get_random_packs(historic_sets, log=log)[0]
     elif command == "standard":
-        p = generator.get_random_pack(standard_sets, log=log)
+        p = generator.get_random_packs(standard_sets, log=log)[0]
     elif command == "jmp":
         if jmp is not None:
-            p = generator.get_random_jmp_deck(log=log)
+            p = generator.get_random_jmp_decks(log=log)[0]
     elif command in all_sets:
         p = generator.get_pack(command, log=log)
     elif command == "chaossealed":
         em = emoji("CHAOS", message.guild) + " "
-        p_list = generator.get_random_pack(historic_sets, n=6, log=log)
+        p_list = generator.get_random_packs(historic_sets, n=6, log=log)
     elif command.removesuffix("sealed") in all_sets:
         em = emoji(command.removesuffix("sealed").upper(), message.guild) + " "
-        p_list = generator.get_pack(
+        p_list = generator.get_packs(
             command.removesuffix("sealed"), n=6, log=log
         )
     elif command == "jmpsealed":
         if jmp is not None:
             em = emoji("JMP", message.guild)
-            p_list = generator.get_random_jmp_deck(n=3, log=log)
+            p_list = generator.get_random_jmp_decks(n=3, log=log)
     elif command == "help":
         await message.channel.send(
             f"You can give me one of the following commands:\n"
@@ -280,11 +285,11 @@ async def on_message(message):
             # Then generate the image of the booster content (takes a while)
             img_list = await p.get_images(size="normal")
             p_img = pack_img(img_list)
-            file = BytesIO()
-            imageio.imwrite(file, p_img, format="jpeg")
+            img_file = BytesIO()
+            imageio.imwrite(img_file, p_img, format="jpeg")
 
             # Upload it to imgur.com
-            link = await upload_img(file)
+            link = await upload_img(img_file)
         except aiohttp.ClientResponseError:
             # Send an error message if the upload failed...
             embed = discord.Embed(
@@ -303,13 +308,13 @@ async def on_message(message):
     elif p_list:
         pool = ""
         sets = ""
-        json_pool = []
+        json_pool: list[dict] = []
         for p in p_list:
             sets += f"{p.set.code}, "
             pool += f"{p.get_arena_format()}\n"
             json_pool += p.get_json()
         sets = sets + ""
-        file = StringIO(pool.replace("\n", "\r\n"))
+        pool_file = StringIO(pool.replace("\n", "\r\n"))
 
         # First send the pool content with a loading message for the image
         embed = discord.Embed(
@@ -322,7 +327,7 @@ async def on_message(message):
             f"{member.mention}\n"
             f"Content: [{sets.rstrip(', ')}]",
             embed=embed,
-            file=discord.File(file, filename=f"{member.nick}_pool.txt"),
+            file=discord.File(pool_file, filename=f"{member.nick}_pool.txt"),
         )
 
         content = m.content

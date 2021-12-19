@@ -1,25 +1,23 @@
-from collections import OrderedDict
-from functools import total_ordering
-import json
 import io
-from operator import itemgetter
+import json
 import os
 import zipfile
+from collections import OrderedDict
+from functools import total_ordering
+from operator import itemgetter
+from types import SimpleNamespace
+from typing import Sequence
 
 import requests
 import six
 
-from .jsonproxy import JSONProxy
-
 ALL_SETS_URL = "https://mtgjson.com/json/All.json"
-
 ALL_SETS_ZIP_URL = ALL_SETS_URL + ".zip"
-
 ALL_SETS_PATH = os.path.join(os.path.dirname(__file__), "AllSets.json")
 
 
 @total_ordering
-class CardProxy(JSONProxy):
+class CardProxy(SimpleNamespace):
     """A wrapper for a card dictionary.
 
     Provides additional methods and attributes onto the plain data from
@@ -31,31 +29,38 @@ class CardProxy(JSONProxy):
     color/type/card name.
     """
 
+    def __init__(self, data: dict) -> None:
+        super().__init__(**data)
+
     @property
-    def img_url(self):
+    def img_url(self) -> str:
         """`Gatherer <https://gatherer.wizards.com>` image link."""
         return (
             "https://gatherer.wizards.com/Handlers/Image.ashx"
             "?multiverseid={}&type=card"
-        ).format(self.identifiers["multiverseId"])
+        ).format(self.identifiers.multiverseId)
 
     @property
-    def gatherer_url(self):
+    def gatherer_url(self) -> str:
         """`Gatherer <https://gatherer.wizards.com>` card details link."""
         return (
             "https://gatherer.wizards.com/Pages/Card/Details.aspx"
             "?multiverseid={}"
-        ).format(self.identifiers["multiverseId"])
+        ).format(self.identifiers.multiverseId)
 
     @property
-    def ascii_name(self):
+    def ascii_name(self) -> str:
         """Simplified name (ascii characters, lowercase) for card."""
         return getattr(self, "asciiName", self.name.lower())
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CardProxy):
+            return NotImplemented
         return self.name == other.name
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, CardProxy):
+            return NotImplemented
         if self.set != other.set:
             return self.set < other.set
 
@@ -67,7 +72,7 @@ class CardProxy(JSONProxy):
             pass  # not comparable, no valid integer number
 
         # try creating a pseudo collectors number
-        def _getcol(c):
+        def _getcol(c: "CardProxy") -> str:
             if hasattr(c, "colors") and len(c.colors) > 0:
                 if len(c.colors) > 1:
                     return "M"
@@ -88,24 +93,18 @@ class CardProxy(JSONProxy):
 
 
 @total_ordering
-class SetProxy(JSONProxy):
+class SetProxy(SimpleNamespace):
     """Wraps set dictionary with additional methods and attributes. Also
     subject to total ordering based on release date.
     """
 
-    def __lt__(self, other):
-        return self.releaseDate < other.releaseDate
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __init__(self, data):
-        super(SetProxy, self).__init__(data)
+    def __init__(self, data) -> None:
+        super().__init__(**data)
         self.cards_by_name = {}
         self.cards_by_ascii_name = {}
 
         cards = []
-        for c in self.cards:
+        for c in self.cards:  # type: ignore
             card = CardProxy(c)
             card.set = self
 
@@ -115,8 +114,18 @@ class SetProxy(JSONProxy):
 
         self.cards = sorted(cards)
 
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, SetProxy):
+            return NotImplemented
+        return self.releaseDate < other.releaseDate
 
-class CardDb(object):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SetProxy):
+            return NotImplemented
+        return self.name == other.name
+
+
+class CardDb:
     """The central object of the library. Upon instantiation, reads card data
     into memory and creates various indices to allow easy card retrieval. The
     data passed in is kept in memory and wrapped in a friendly interface.
@@ -127,7 +136,7 @@ class CardDb(object):
 
     :param db_dict: Deserializied mtgjson.com ``AllSets.json``."""
 
-    def __init__(self, db_dict):
+    def __init__(self, db_dict: dict) -> None:
         self._card_db = db_dict["data"]
 
         self.cards_by_id = {}
@@ -158,20 +167,20 @@ class CardDb(object):
                 card.variations = [self.cards_by_id[i] for i in var_ids]
 
     @classmethod
-    def from_file(cls, db_file=ALL_SETS_PATH):
+    def from_file(cls, db_file: str = ALL_SETS_PATH) -> "CardDb":
         """Reads card data from a JSON-file.
 
         :param db_file: A file-like object or a path.
         :return: A new :class:`~mtgjson.CardDb` instance.
         """
         if callable(getattr(db_file, "read", None)):
-            return cls(json.load(db_file))
+            return cls(json.load(db_file))  # type: ignore
 
         with io.open(db_file, encoding="utf8") as inp:
             return cls(json.load(inp))
 
     @classmethod
-    def from_url(cls, db_url=ALL_SETS_ZIP_URL):
+    def from_url(cls, db_url: str = ALL_SETS_ZIP_URL) -> "CardDb":
         """Load card data from a URL.
 
         Uses :func:`requests.get` to fetch card data. Also handles zipfiles.
@@ -184,16 +193,21 @@ class CardDb(object):
 
         if r.headers["content-type"] == "application/json":
             return cls(json.loads(r.text))
-
-        if r.headers["content-type"] == "application/zip":
+        elif r.headers["content-type"] == "application/zip":
             with zipfile.ZipFile(six.BytesIO(r.content), "r") as zf:
                 names = zf.namelist()
                 assert len(names) == 1, "One datafile in ZIP"
                 return cls.from_file(
-                    io.TextIOWrapper(zf.open(names[0]), encoding="utf8")
+                    io.TextIOWrapper(
+                        zf.open(names[0]), encoding="utf8"
+                    )  # type: ignore
                 )
+        else:
+            raise TypeError(
+                f"Unsupported content-type {r.headers['content-type']}"
+            )
 
-    def add_decks_from_folder(self, deck_path):
+    def add_decks_from_folder(self, deck_path: str) -> None:
         file_list = [f for f in os.listdir(deck_path) if f.endswith(".json")]
         for deck_file in file_list:
             with open(deck_path + deck_file) as f:
@@ -206,14 +220,14 @@ class CardDb(object):
 
             set = self.sets[deck["code"]]
             if not hasattr(set, "decks"):
-                set._get_raw_data()["decks"] = []
+                set.__dict__["decks"] = []
             set.decks.append(deck)
 
-    def replace_cards(self, list):
-        cards = []
-        for c in list:
+    def replace_cards(self, card_list: Sequence[dict]) -> Sequence[CardProxy]:
+        cards: list[CardProxy] = []
+        for c in card_list:
             n = c["count"] if "count" in c else 1
-            for i in range(n):
+            for _ in range(n):
                 cards.append(self.cards_by_id[c["uuid"]])
 
         return cards
