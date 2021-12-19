@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black flake8 mypy
+        pip install black flake8 mypy types-PyYAML types-requests types-aiofiles types-six
     - name: Check with black
       run: |
         black --check .
