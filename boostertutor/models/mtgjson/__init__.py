@@ -65,8 +65,8 @@ class CardProxy(SimpleNamespace):
             return self.set < other.set
 
         try:
-            mynum = int(getattr(self, "number", None))
-            othernum = int(getattr(other, "number", None))
+            mynum = int(getattr(self, "number", None))  # type: ignore
+            othernum = int(getattr(other, "number", None))  # type: ignore
             return mynum < othernum
         except (TypeError, ValueError):
             pass  # not comparable, no valid integer number
