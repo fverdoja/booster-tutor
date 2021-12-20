@@ -39,7 +39,7 @@ class MtgCard:
         sizes = ["large", "normal", "small"]
         assert size in sizes
 
-        scry_id = self.card.identifiers.scryfallId
+        scry_id = self.card.identifiers["scryfallId"]
         img_url = (
             f"https://api.scryfall.com/cards/{scry_id}"
             f"?format=image&version={size}"
