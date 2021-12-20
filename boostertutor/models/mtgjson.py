@@ -9,7 +9,6 @@ from types import SimpleNamespace
 from typing import Sequence
 
 import requests
-import six
 
 ALL_SETS_URL = "https://mtgjson.com/json/All.json"
 ALL_SETS_ZIP_URL = ALL_SETS_URL + ".zip"
@@ -145,9 +144,7 @@ class CardDb:
         self.sets = OrderedDict()
 
         # sort sets by release date
-        sets = sorted(
-            six.itervalues(self._card_db), key=itemgetter("releaseDate")
-        )
+        sets = sorted(self._card_db.values(), key=itemgetter("releaseDate"))
         for _set in sets:
             s = SetProxy(_set)
             self.sets[s.code] = s
@@ -194,7 +191,7 @@ class CardDb:
         if r.headers["content-type"] == "application/json":
             return cls(json.loads(r.text))
         elif r.headers["content-type"] == "application/zip":
-            with zipfile.ZipFile(six.BytesIO(r.content), "r") as zf:
+            with zipfile.ZipFile(io.BytesIO(r.content), "r") as zf:
                 names = zf.namelist()
                 assert len(names) == 1, "One datafile in ZIP"
                 return cls.from_file(

@@ -20,7 +20,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install black flake8 mypy pytest
-        pip install types-PyYAML types-requests types-aiofiles types-six
+        pip install types-PyYAML types-requests types-aiofiles
     - name: Check with black
       run: |
         black --check .
