@@ -18,9 +18,8 @@ jobs:
         python-version: "3.9.1"
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install black flake8 mypy pytest
-        pip install types-PyYAML types-requests types-aiofiles
+        pip install --upgrade pip
+        pip install -r requirements-dev.txt
     - name: Check with black
       run: |
         black --check .
@@ -43,9 +42,9 @@ jobs:
         python-version: "3.9.1"
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-cov
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
     - name: Make config file
       run: |
         echo "discord_token: ${{ secrets.DISCORD_TOKEN }}" > config.yaml

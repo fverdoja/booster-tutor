@@ -7,8 +7,8 @@ import requests
 import yaml
 
 # configs
-mtgjson_url = "https://mtgjson.com/api/v5/AllPrintings.json"
-deckfile_url = "https://mtgjson.com/api/v5/AllDeckFiles.zip"
+MTGJSON_URL = "https://mtgjson.com/api/v5/AllPrintings.json"
+DECKFILE_URL = "https://mtgjson.com/api/v5/AllDeckFiles.zip"
 
 
 def download_file(url: str, path: Path) -> None:
@@ -20,7 +20,7 @@ def download_file(url: str, path: Path) -> None:
 
 
 def download_mtgjson_data(
-    file: str, url: str = mtgjson_url, backup: bool = True
+    file: str, url: str = MTGJSON_URL, backup: bool = True
 ) -> None:
     fp = Path(file)
     if backup and fp.is_file():
@@ -31,7 +31,7 @@ def download_mtgjson_data(
 def download_jmp_decks(
     dir: str,
     temp_dir: str = ".",
-    url: str = deckfile_url,
+    url: str = DECKFILE_URL,
     backup: bool = False,
 ) -> None:
     temp_path = Path(temp_dir) / "temp_decks"
@@ -45,7 +45,8 @@ def download_jmp_decks(
 
         path = Path(dir)
         if backup and path.exists():
-            shutil.rmtree(path.parent / "JMP_last")
+            if (path.parent / "JMP_last").exists():
+                shutil.rmtree(path.parent / "JMP_last")
             path.rename(path.parent / "JMP_last")
 
         if not path.exists():
@@ -86,7 +87,11 @@ def main(jmp: bool, jmp_backup: bool) -> None:
 
     if download_jmp:
         print("Beginning JMP decks download...")
-        download_jmp_decks(dir=config["jmp_decklists_path"], backup=jmp_backup)
+        download_jmp_decks(
+            dir=config["jmp_decklists_path"],
+            temp_dir=Path(config["jmp_decklists_path"]).parent.as_posix(),
+            backup=jmp_backup,
+        )
 
 
 if __name__ == "__main__":

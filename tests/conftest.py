@@ -1,3 +1,8 @@
+import json
+from io import BytesIO
+from pathlib import Path
+from zipfile import ZipFile
+
 import pytest
 import yaml
 from boostertutor.generator import MtgPackGenerator
@@ -6,7 +11,7 @@ from boostertutor.models.mtg_pack import MtgPack
 
 
 @pytest.fixture(scope="session")
-def generator():
+def generator() -> MtgPackGenerator:
     with open("config.yaml") as file:
         conf = yaml.load(file, Loader=yaml.FullLoader)
     jmp = conf["jmp_decklists_path"] if "jmp_decklists_path" in conf else None
@@ -16,12 +21,12 @@ def generator():
 
 
 @pytest.fixture
-def four_set_list():
+def four_set_list() -> list[str]:
     return ["MB1", "APC", "MIR", "AKR"]
 
 
 @pytest.fixture
-def unbalanced_pack(generator):
+def unbalanced_pack(generator: MtgPackGenerator) -> MtgPack:
     m20 = generator.data.sets["M20"].cards_by_ascii_name
     content = {
         "basicOrCommonLand": {
@@ -59,3 +64,36 @@ def unbalanced_pack(generator):
     }
     p = MtgPack(content)
     return p
+
+
+@pytest.fixture
+def zip_one() -> BytesIO:
+    content = BytesIO()
+    with ZipFile(content, "w") as zip:
+        zip.writestr("deck1_JMP.json", json.dumps({"deck1": True}))
+    content.seek(0)
+    return content
+
+
+@pytest.fixture
+def zip_two() -> BytesIO:
+    content = BytesIO()
+    with ZipFile(content, "w") as zip:
+        zip.writestr("deck2_JMP.json", json.dumps({"deck2": True}))
+    content.seek(0)
+    return content
+
+
+@pytest.fixture
+def config_mock(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_config(*args, **kargs):
+        return {
+            "discord_token": "0000",
+            "imgur_client_id": "0000",
+            "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
+            "jmp_decklists_path": (tmp_path / "JMP/").as_posix(),
+            "command_prefix": "!",
+            "pack_logging": True,
+        }
+
+    monkeypatch.setattr(yaml, "load", test_config)

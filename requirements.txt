@@ -2,6 +2,5 @@ aiofiles==0.6.0
 discord.py==1.7.3
 imageio==2.9.0
 numpy==1.19.4
-pytest==6.2.4
 PyYAML==6.0
 requests==2.25.1

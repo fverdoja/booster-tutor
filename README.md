@@ -28,6 +28,15 @@ that user instead. For example, `!znr @user#1234` has the bot mention
 
 ## Host your own bot
 
+### Requirements
+
+The bot should works on `python 3.9+`. All dependencies are listed in
+`requirements.txt` and should be installed for the bot to run. If you are
+interested in running the tests or doing development, you should also install
+the dependencies in `requirements-dev.txt`.
+
+### Run the bot
+
 To host your own bot you will need a Discord token and an Imgur client ID. Once
 you have procured those for yourself, follow these steps:
 

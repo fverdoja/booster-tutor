@@ -1,0 +1,9 @@
+black==21.10b0
+flake8==3.8.4
+mypy==0.910
+pytest==6.2.4
+pytest-cov==3.0.0
+requests-mock==1.9.3
+types-aiofiles==0.7.0
+types-PyYAML==6.0.0
+types-requests==2.25.11
