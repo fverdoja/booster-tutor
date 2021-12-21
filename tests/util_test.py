@@ -2,8 +2,9 @@ import json
 from io import BytesIO
 from pathlib import Path
 
+import numpy as np
 import pytest
-from boostertutor.utils import mtgjson_downloader
+from boostertutor.utils import mtgjson_downloader, set_symbols_downloader
 from requests_mock import Mocker
 
 
@@ -109,3 +110,21 @@ def test_mtgjson_downloader_main(
     assert not temp_dir.exists()
     assert jmp_dir.exists() == jmp
     assert backup_dir.exists() == jmp_backup
+
+
+def test_set_symbols_downloader(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    def im(*args, **kargs):
+        return np.zeros((10, 10, 3))
+
+    def generator_init(self, *args, **kargs):
+        self.sets_with_boosters = ["FOO", "Bar"]
+
+    monkeypatch.setattr(
+        set_symbols_downloader.MtgPackGenerator, "__init__", generator_init
+    )
+    monkeypatch.setattr(set_symbols_downloader.imageio, "imread", im)
+    set_symbols_downloader.main(local_path=tmp_path)
+    assert (tmp_path / "foo.png").is_file()
+    assert (tmp_path / "bar.png").is_file()
