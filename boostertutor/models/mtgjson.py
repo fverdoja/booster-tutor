@@ -36,16 +36,16 @@ class CardProxy(SimpleNamespace):
         """`Gatherer <https://gatherer.wizards.com>` image link."""
         return (
             "https://gatherer.wizards.com/Handlers/Image.ashx"
-            "?multiverseid={}&type=card"
-        ).format(self.identifiers.multiverseId)
+            f"?multiverseid={self.identifiers.multiverseId}&type=card"
+        )
 
     @property
     def gatherer_url(self) -> str:
         """`Gatherer <https://gatherer.wizards.com>` card details link."""
         return (
             "https://gatherer.wizards.com/Pages/Card/Details.aspx"
-            "?multiverseid={}"
-        ).format(self.identifiers.multiverseId)
+            f"?multiverseid={self.identifiers.multiverseId}"
+        )
 
     @property
     def ascii_name(self) -> str:

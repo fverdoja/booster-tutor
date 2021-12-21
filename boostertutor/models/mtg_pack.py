@@ -25,10 +25,9 @@ class MtgPack:
 
     @property
     def cards(self) -> Sequence[MtgCard]:
-        cards = []
-        for slot in self.content.values():
-            for card in slot["cards"]:
-                cards.append(card)
+        cards = [
+            card for slot in self.content.values() for card in slot["cards"]
+        ]
         cards.sort(key=lambda x: x.pack_sort_key())
         return cards
 
@@ -206,23 +205,11 @@ class MtgPack:
         img = [await c.get_image(size, foil) for c in self.cards]
         return img
 
-    def get_json(self) -> Sequence[dict]:
-        ret = []
-        for card in self.cards:
-            ret.append(card.get_json())
+    def json(self) -> Sequence[dict]:
+        return [card.json() for card in self.cards]
 
-        return ret
-
-    def get_arena_format(self) -> str:
-        ret = ""
-        for card in self.cards:
-            ret += f"{card.get_arena_format()}\n"
-
-        return ret.strip()
+    def arena_format(self) -> str:
+        return "\n".join([card.arena_format() for card in self.cards])
 
     def __str__(self) -> str:
-        ret = ""
-        for card in self.cards:
-            ret += str(card) + "\n"
-
-        return ret.strip()
+        return "\n".join([str(card) for card in self.cards])

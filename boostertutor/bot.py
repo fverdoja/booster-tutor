@@ -181,10 +181,10 @@ async def on_message(message: discord.Message) -> None:
     elif command in all_sets:
         p = generator.get_pack(command, log=log)
     elif command == "chaossealed":
-        em = emoji("CHAOS", message.guild) + " "
+        em = emoji("CHAOS", message.guild)
         p_list = generator.get_random_packs(historic_sets, n=6, log=log)
     elif command.removesuffix("sealed") in all_sets:
-        em = emoji(command.removesuffix("sealed").upper(), message.guild) + " "
+        em = emoji(command.removesuffix("sealed").upper(), message.guild)
         p_list = generator.get_packs(
             command.removesuffix("sealed"), n=6, log=log
         )
@@ -272,12 +272,12 @@ async def on_message(message: discord.Message) -> None:
             "the aether...",
             color=discord.Color.orange(),
         )
-        em = emoji(p.set.code.upper(), message.guild) + " "
+        em = emoji(p.set.code.upper(), message.guild)
 
         m = await message.channel.send(
-            f"**{em.lstrip()}{p.name}**\n"
+            f"**{em}{(' ' if len(em) else '')}{p.name}**\n"
             f"{member.mention}\n"
-            f"```\n{p.get_arena_format()}\n```",
+            f"```\n{p.arena_format()}\n```",
             embed=embed,
         )
 
@@ -306,15 +306,9 @@ async def on_message(message: discord.Message) -> None:
 
         await m.edit(embed=embed)
     elif p_list:
-        pool = ""
-        sets = ""
-        json_pool: list[dict] = []
-        for p in p_list:
-            sets += f"{p.set.code}, "
-            pool += f"{p.get_arena_format()}\n"
-            json_pool += p.get_json()
-        sets = sets + ""
-        pool_file = StringIO(pool.replace("\n", "\r\n"))
+        pool_file = StringIO("\r\n".join([p.arena_format() for p in p_list]))
+        sets = ", ".join([p.set.code for p in p_list])
+        json_pool = [card_json for p in p_list for card_json in p.json()]
 
         # First send the pool content with a loading message for the image
         embed = discord.Embed(
@@ -323,9 +317,9 @@ async def on_message(message: discord.Message) -> None:
             color=discord.Color.orange(),
         )
         m = await message.channel.send(
-            f"**{em.lstrip()}Sealed pool**\n"
+            f"**{em}{(' ' if len(em) else '')}Sealed pool**\n"
             f"{member.mention}\n"
-            f"Content: [{sets.rstrip(', ')}]",
+            f"Content: [{sets}]",
             embed=embed,
             file=discord.File(pool_file, filename=f"{member.nick}_pool.txt"),
         )
@@ -348,11 +342,12 @@ async def on_message(message: discord.Message) -> None:
 
         try:
             # Then generate the image of the rares in the pool (takes a while)
-            img_list = []
-            for p in p_list:
-                for c in p.cards:
-                    if c.card.rarity in ["rare", "mythic"]:
-                        img_list.append(await c.get_image(size="normal"))
+            img_list = [
+                await c.get_image(size="normal")
+                for p in p_list
+                for c in p.cards
+                if c.card.rarity in ["rare", "mythic"]
+            ]
             r_img = rares_img(img_list)
             r_file = BytesIO()
             imageio.imwrite(r_file, r_img, format="jpeg")
