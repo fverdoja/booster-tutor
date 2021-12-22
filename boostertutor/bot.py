@@ -68,7 +68,7 @@ async def pool_to_sealeddeck(
     return resp_json["poolId"]
 
 
-async def upload_img(file: np.ndarray) -> str:
+async def upload_img(file: BytesIO) -> str:
     """Upload an image file to imgur.com and returns the link"""
     url = "https://api.imgur.com/3/image"
 

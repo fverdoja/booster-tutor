@@ -1,6 +1,11 @@
-from typing import Sequence
+from contextlib import nullcontext as does_not_raise
+from io import BytesIO
+from typing import ContextManager, Optional, Sequence
 
+import imageio
+import numpy as np
 import pytest
+from aioresponses import aioresponses
 from boostertutor.models.mtg_pack import MtgCard
 
 
@@ -58,7 +63,7 @@ def test_arena(cards: dict[str, MtgCard], card: str, expected: str):
     assert cards[card].arena_format() == expected
 
 
-def test_sort_key(cards: dict[str, MtgCard]):
+def test_pack_sort_key(cards: dict[str, MtgCard]):
     card_list = list(cards.values())
     card_list.sort(key=lambda x: x.pack_sort_key())
     names = [card.card.name for card in card_list]
@@ -73,3 +78,37 @@ def test_sort_key(cards: dict[str, MtgCard]):
         "Electrolyze",
         "Bojuka Bog",
     ]
+
+
+@pytest.mark.parametrize(
+    ["size", "foil", "expected_shape", "expected_raise"],
+    [
+        ("large", None, (936, 672, 3), does_not_raise()),
+        ("normal", False, (680, 488, 3), does_not_raise()),
+        ("small", True, (204, 146, 3), does_not_raise()),
+        ("wrong_size", None, (1, 1, 1), pytest.raises(AssertionError)),
+    ],
+)
+async def test_image(
+    cards: dict[str, MtgCard],
+    size: str,
+    foil: Optional[bool],
+    expected_shape: tuple[int, int, int],
+    expected_raise: ContextManager,
+):
+    c = cards["Electrolyze"]
+    scry_id = c.card.identifiers["scryfallId"]
+    img_url = (
+        f"https://api.scryfall.com/cards/{scry_id}"
+        f"?format=image&version={size}"
+    )
+    expected_img = np.zeros(expected_shape)
+    mock_img_file = BytesIO()
+    imageio.imwrite(mock_img_file, expected_img, format="jpeg")
+    with aioresponses() as mocked:
+        mocked.get(url=img_url, status=200, body=mock_img_file.getvalue())
+        with expected_raise:
+            img = await c.get_image(size, foil)
+            expected_equal = not foil if foil is not None else False
+            assert img.shape == expected_shape
+            assert np.array_equal(img, expected_img) == expected_equal
