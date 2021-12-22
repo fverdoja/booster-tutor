@@ -23,17 +23,18 @@ def generator() -> MtgPackGenerator:
 @pytest.fixture(scope="module")
 def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
     c19 = generator.data.sets["C19"].cards_by_ascii_name
+    iko = generator.data.sets["IKO"].cards_by_ascii_name
     sta = generator.data.sets["STA"].cards_by_ascii_name
     return {
-        "Ghostly Prison": MtgCard(c19["ghostly prison"]),
-        "Clever Impersonator": MtgCard(c19["clever impersonator"]),
-        "Grim Haruspex": MtgCard(c19["grim haruspex"]),
-        "Desperate Ravings": MtgCard(c19["desperate ravings"]),
-        "Farseek": MtgCard(c19["farseek"]),
-        "Scaretiller": MtgCard(c19["scaretiller"]),
-        "Bojuka Bog": MtgCard(c19["bojuka bog"]),
-        "Growing Ranks": MtgCard(c19["growing ranks"]),
-        "Electrolyze": MtgCard(sta["electrolyze"], foil=True),
+        "Ghostly Prison": MtgCard(c19["ghostly prison"]),  # uncommon
+        "Clever Impersonator": MtgCard(c19["clever impersonator"]),  # mythic
+        "Grim Haruspex": MtgCard(c19["grim haruspex"]),  # rare
+        "Desperate Ravings": MtgCard(c19["desperate ravings"]),  # uncommon
+        "Farseek": MtgCard(c19["farseek"]),  # common
+        "Mysterious Egg": MtgCard(iko["mysterious egg"]),  # common, promo
+        "Bojuka Bog": MtgCard(c19["bojuka bog"]),  # common land
+        "Growing Ranks": MtgCard(c19["growing ranks"]),  # rare
+        "Electrolyze": MtgCard(sta["electrolyze"], foil=True),  # rare foil
     }
 
 

@@ -17,7 +17,7 @@ from boostertutor.models.mtg_pack import MtgCard
         ("Grim Haruspex", ["B"]),
         ("Desperate Ravings", ["R"]),
         ("Farseek", ["G"]),
-        ("Scaretiller", []),
+        ("Mysterious Egg", []),
         ("Bojuka Bog", []),
         ("Growing Ranks", ["WG"]),
         ("Electrolyze", ["U", "R"]),
@@ -35,7 +35,7 @@ def test_colors(cards: dict[str, MtgCard], card: str, expected: Sequence[str]):
         ("Grim Haruspex", {"name": "Grim Haruspex", "count": 1}),
         ("Desperate Ravings", {"name": "Desperate Ravings", "count": 1}),
         ("Farseek", {"name": "Farseek", "count": 1}),
-        ("Scaretiller", {"name": "Scaretiller", "count": 1}),
+        ("Mysterious Egg", {"name": "Mysterious Egg", "count": 1}),
         ("Bojuka Bog", {"name": "Bojuka Bog", "count": 1}),
         ("Growing Ranks", {"name": "Growing Ranks", "count": 1}),
         ("Electrolyze", {"name": "Electrolyze", "count": 1}),
@@ -53,7 +53,6 @@ def test_json(cards: dict[str, MtgCard], card: str, expected: dict):
         ("Grim Haruspex", "1 Grim Haruspex (C19) 118"),
         ("Desperate Ravings", "1 Desperate Ravings (C19) 137"),
         ("Farseek", "1 Farseek (C19) 165"),
-        ("Scaretiller", "1 Scaretiller (C19) 57"),
         ("Bojuka Bog", "1 Bojuka Bog (C19) 232"),
         ("Growing Ranks", "1 Growing Ranks (C19) 193"),
         ("Electrolyze", "1 Electrolyze (STA) 123"),
@@ -61,6 +60,12 @@ def test_json(cards: dict[str, MtgCard], card: str, expected: dict):
 )
 def test_arena(cards: dict[str, MtgCard], card: str, expected: str):
     assert cards[card].arena_format() == expected
+
+
+def test_arena_promo(cards: dict[str, MtgCard]):
+    promo = cards["Mysterious Egg"]
+    assert promo.card.number == "385"  # check that it's the promo version
+    assert promo.arena_format() == "1 Mysterious Egg (IKO) 3"
 
 
 def test_pack_sort_key(cards: dict[str, MtgCard]):
@@ -74,7 +79,7 @@ def test_pack_sort_key(cards: dict[str, MtgCard]):
         "Ghostly Prison",
         "Desperate Ravings",
         "Farseek",
-        "Scaretiller",
+        "Mysterious Egg",
         "Electrolyze",
         "Bojuka Bog",
     ]
@@ -96,7 +101,7 @@ async def test_image(
     expected_shape: tuple[int, int, int],
     expected_raise: ContextManager,
 ):
-    c = cards["Electrolyze"]
+    c = cards["Electrolyze"]  # foil card, produces a foil image by default
     scry_id = c.card.identifiers["scryfallId"]
     img_url = (
         f"https://api.scryfall.com/cards/{scry_id}"
@@ -109,6 +114,10 @@ async def test_image(
         mocked.get(url=img_url, status=200, body=mock_img_file.getvalue())
         with expected_raise:
             img = await c.get_image(size, foil)
+
+            # if None or foil, the image should have been applied a foil
+            # effect, so it should not match the original image
             expected_equal = not foil if foil is not None else False
+
             assert img.shape == expected_shape
             assert np.array_equal(img, expected_img) == expected_equal
