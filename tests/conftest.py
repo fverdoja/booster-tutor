@@ -20,6 +20,23 @@ def generator() -> MtgPackGenerator:
     )
 
 
+@pytest.fixture(scope="module")
+def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
+    c19 = generator.data.sets["C19"].cards_by_ascii_name
+    sta = generator.data.sets["STA"].cards_by_ascii_name
+    return {
+        "Ghostly Prison": MtgCard(c19["ghostly prison"]),
+        "Clever Impersonator": MtgCard(c19["clever impersonator"]),
+        "Grim Haruspex": MtgCard(c19["grim haruspex"]),
+        "Desperate Ravings": MtgCard(c19["desperate ravings"]),
+        "Farseek": MtgCard(c19["farseek"]),
+        "Scaretiller": MtgCard(c19["scaretiller"]),
+        "Bojuka Bog": MtgCard(c19["bojuka bog"]),
+        "Growing Ranks": MtgCard(c19["growing ranks"]),
+        "Electrolyze": MtgCard(sta["electrolyze"], foil=True),
+    }
+
+
 @pytest.fixture
 def four_set_list() -> list[str]:
     return ["MB1", "APC", "MIR", "AKR"]
