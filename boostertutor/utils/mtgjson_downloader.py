@@ -23,9 +23,15 @@ def download_mtgjson_data(
     file: str, url: str = MTGJSON_URL, backup: bool = True
 ) -> None:
     fp = Path(file)
+    backup_fp = Path(fp.parent, "AllPrintings_last.json")
     if backup and fp.is_file():
-        fp.rename(Path(fp.parent, "AllPrintings_last.json"))
-    download_file(url, fp)
+        fp.rename(backup_fp)
+    try:
+        download_file(url, fp)
+    except requests.HTTPError as e:
+        if backup and backup_fp.is_file():
+            backup_fp.rename(fp)
+        raise e
 
 
 def download_jmp_decks(

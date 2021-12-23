@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from aioresponses import aioresponses
 from boostertutor.models.mtg_pack import MtgCard
+from aiohttp import ClientResponseError
 
 
 @pytest.mark.parametrize(
@@ -121,3 +122,16 @@ async def test_image(
 
             assert img.shape == expected_shape
             assert np.array_equal(img, expected_img) == expected_equal
+
+
+async def test_image_400(cards: dict[str, MtgCard]):
+    c = cards["Electrolyze"]
+    scry_id = c.card.identifiers["scryfallId"]
+    img_url = (
+        f"https://api.scryfall.com/cards/{scry_id}"
+        f"?format=image&version=large"
+    )
+    with aioresponses() as mocked:
+        mocked.get(url=img_url, status=400)
+        with pytest.raises(ClientResponseError):
+            await c.get_image(size="large")
