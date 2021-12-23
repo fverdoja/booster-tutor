@@ -84,7 +84,7 @@ def rares_img(im_list: Sequence[np.ndarray]) -> np.ndarray:
 def arena_to_json(arena_list: str) -> Sequence[dict]:
     """Convert a list of cards in arena format to a list of json cards"""
     json_list = []
-    for line in arena_list.split("\n"):
+    for line in arena_list.rstrip("\n ").split("\n"):
         count, card = line.split(" ", 1)
         card_name = card.split(" (")[0]
         json_list.append({"name": f"{card_name}", "count": int(count)})
