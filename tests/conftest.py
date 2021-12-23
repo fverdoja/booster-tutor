@@ -14,7 +14,7 @@ from boostertutor.models.mtg_pack import MtgPack
 def generator() -> MtgPackGenerator:
     with open("config.yaml") as file:
         conf = yaml.load(file, Loader=yaml.FullLoader)
-    jmp = conf["jmp_decklists_path"] if "jmp_decklists_path" in conf else None
+    jmp = conf.get("jmp_decklists_path", None)
     return MtgPackGenerator(
         path_to_mtgjson=conf["mtgjson_path"], path_to_jmp=jmp, jmp_arena=True
     )

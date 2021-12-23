@@ -109,10 +109,7 @@ class MtgPackGenerator:
 
             pack_content[sheet_name] = slot
 
-        if "name" in booster_meta:
-            pack_name = booster_meta["name"]
-        else:
-            pack_name = None
+        pack_name = booster_meta.get("name", None)
 
         pack = MtgPack(pack_content, name=pack_name)
 

@@ -223,7 +223,7 @@ class CardDb:
     def replace_cards(self, card_list: Sequence[dict]) -> Sequence[CardProxy]:
         cards: list[CardProxy] = []
         for c in card_list:
-            n = c["count"] if "count" in c else 1
+            n = c.get("count", 1)
             for _ in range(n):
                 cards.append(self.cards_by_id[c["uuid"]])
 

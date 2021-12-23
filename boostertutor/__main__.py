@@ -1,4 +1,5 @@
-import boostertutor.bot as bot
+from boostertutor.bot import DiscordBot
 
 if __name__ == "__main__":
-    bot.client.run(bot.config["discord_token"])
+    bot = DiscordBot()
+    bot.run(bot.config["discord_token"])
