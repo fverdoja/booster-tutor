@@ -2,7 +2,6 @@ from collections import Counter
 
 import pytest
 from boostertutor.generator import MtgPackGenerator
-from boostertutor.models.mtg_pack import MtgPack
 
 
 def test_pack(generator: MtgPackGenerator):
@@ -76,13 +75,3 @@ def test_arena_jumpstart(generator: MtgPackGenerator):
     for d in generator.data.sets["JMP"].decks:
         for c in d["mainBoard"]:
             assert c.name != "Path to Exile"
-
-
-def test_balancing(unbalanced_pack: MtgPack):
-    assert not unbalanced_pack.is_balanced()
-    unbalanced_pack.is_balanced(rebalance=True)
-    assert unbalanced_pack.is_balanced()
-
-    cards = [c.card.name for c in unbalanced_pack.cards]
-    assert "Griffin Protector" not in cards
-    assert "Fortress Crab" in cards

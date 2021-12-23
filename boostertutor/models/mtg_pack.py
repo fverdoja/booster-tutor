@@ -39,7 +39,6 @@ class MtgPack:
         if self.has_duplicates():
             if log:
                 print("Discarded pack: duplicates")
-            if log:
                 print(self)
             return False
 
@@ -53,7 +52,6 @@ class MtgPack:
                 ):
                     if log:
                         print("Discarded pack: 1 color commons")
-                    if log:
                         print(card_names)
                     return False
 
@@ -61,7 +59,6 @@ class MtgPack:
                 if self.max_cards_per_color(slot_name) > 4:
                     if log:
                         print("Discarded pack: 5+ same color commons")
-                    if log:
                         print(card_names)
                     return False
 
@@ -69,7 +66,6 @@ class MtgPack:
                 if not self.contains_creature(slot_name):
                     if log:
                         print("Discarded pack: no common creature")
-                    if log:
                         print(card_names)
                     return False
             elif (
@@ -80,7 +76,6 @@ class MtgPack:
                 if self.max_cards_per_color(slot_name) > 2:
                     if log:
                         print("Discarded pack: 3+ same color uncommons")
-                    if log:
                         print(card_names)
                     return False
         return True
@@ -201,7 +196,7 @@ class MtgPack:
 
     async def get_images(
         self, size: str = "normal", foil: bool = None
-    ) -> np.ndarray:
+    ) -> Sequence[np.ndarray]:
         img = [await c.get_image(size, foil) for c in self.cards]
         return img
 

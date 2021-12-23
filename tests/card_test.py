@@ -6,7 +6,7 @@ import imageio
 import numpy as np
 import pytest
 from aioresponses import aioresponses
-from boostertutor.models.mtg_pack import MtgCard
+from boostertutor.models.mtg_card import MtgCard
 from aiohttp import ClientResponseError
 
 
