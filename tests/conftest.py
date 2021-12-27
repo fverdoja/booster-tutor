@@ -8,15 +8,16 @@ import yaml
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
+from boostertutor.utils.utils import get_config
 
 
 @pytest.fixture(scope="session")
 def generator() -> MtgPackGenerator:
-    with open("config.yaml") as file:
-        conf = yaml.load(file, Loader=yaml.FullLoader)
-    jmp = conf.get("jmp_decklists_path", None)
+    config = get_config()
     return MtgPackGenerator(
-        path_to_mtgjson=conf["mtgjson_path"], path_to_jmp=jmp, jmp_arena=True
+        path_to_mtgjson=config.mtgjson_path,
+        path_to_jmp=config.jmp_decklists_path,
+        jmp_arena=True,
     )
 
 

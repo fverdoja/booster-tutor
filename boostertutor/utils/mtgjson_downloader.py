@@ -4,7 +4,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import requests
-import yaml
+from boostertutor.utils.utils import get_config
 
 # configs
 MTGJSON_URL = "https://mtgjson.com/api/v5/AllPrintings.json"
@@ -68,19 +68,17 @@ def download_jmp_decks(
 
 def main(jmp: bool, jmp_backup: bool) -> None:
     print("Reading config...")
+    config = get_config()
 
-    with open("config.yaml") as file:
-        config = yaml.load(file, Loader=yaml.FullLoader)
-    download_jmp = jmp and "jmp_decklists_path" in config
+    download_jmp = jmp and config.jmp_decklists_path is not None
 
-    print(f"MTGjson data will be downloaded in: {config['mtgjson_path']}")
+    print(f"MTGjson data will be downloaded in: {config.mtgjson_path}")
     if download_jmp:
-        print(
-            f"JMP decks will be downloaded in: {config['jmp_decklists_path']}"
-        )
+        print(f"JMP decks will be downloaded in: {config.jmp_decklists_path}")
         if jmp_backup:
             jmp_backup_path = (
-                Path(config["jmp_decklists_path"]).parent / "JMP_last/"
+                Path(config.jmp_decklists_path).parent  # type: ignore
+                / "JMP_last/"
             )
             print(
                 f"Old JMP decks will be moved to: {jmp_backup_path.as_posix()}"
@@ -89,13 +87,15 @@ def main(jmp: bool, jmp_backup: bool) -> None:
         print("JMP deck will not be downloaded")
 
     print("\nBeginning MTGjson data download...")
-    download_mtgjson_data(file=config["mtgjson_path"])
+    download_mtgjson_data(file=config.mtgjson_path)
 
     if download_jmp:
         print("Beginning JMP decks download...")
         download_jmp_decks(
-            dir=config["jmp_decklists_path"],
-            temp_dir=Path(config["jmp_decklists_path"]).parent.as_posix(),
+            dir=config.jmp_decklists_path,  # type: ignore
+            temp_dir=Path(
+                config.jmp_decklists_path  # type: ignore
+            ).parent.as_posix(),
             backup=jmp_backup,
         )
 

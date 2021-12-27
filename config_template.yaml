@@ -18,3 +18,5 @@ set_img_path: /absolute/path/to/img/sets/
 ## OTHER CONFIG ##
 # Discord messages using this prefix will be read by the bot as commands
 command_prefix: "!"
+# Logging level can be: DEBUG, INFO, WARNING, ERROR
+logging_level: INFO

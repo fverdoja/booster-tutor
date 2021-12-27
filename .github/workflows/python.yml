@@ -52,7 +52,8 @@ jobs:
         echo "mtgjson_path: data/AllPrintings.json" >> config.yaml
         echo "jmp_decklists_path: data/JMP/" >> config.yaml
         echo "set_img_path: boostertutor/img/sets/" >> config.yaml
-        echo "command_prefix: !" >> config.yaml
+        echo "command_prefix: '!'" >> config.yaml
+        echo "logging_level: INFO" >> config.yaml
     - name: Download data
       run: |
         mkdir -p data/JMP

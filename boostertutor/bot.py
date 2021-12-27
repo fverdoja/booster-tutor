@@ -1,12 +1,10 @@
 import logging
-import os
 from io import BytesIO, StringIO
-from typing import Any, Optional
+from typing import Optional
 
 import aiohttp
 import discord
 import imageio
-import yaml
 
 import boostertutor.utils.utils as utils
 from boostertutor.generator import MtgPackGenerator
@@ -15,16 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class Bot:
-    def __init__(self) -> None:
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(dir_path, "..", "config.yaml")) as file:
-            self.config: dict[str, Any] = yaml.load(
-                file, Loader=yaml.FullLoader
-            )
-
+    def __init__(self, config: utils.Config) -> None:
+        self.config = config
         self.generator = MtgPackGenerator(
-            path_to_mtgjson=self.config["mtgjson_path"],
-            path_to_jmp=self.config.get("jmp_decklists_path", None),
+            path_to_mtgjson=self.config.mtgjson_path,
+            path_to_jmp=self.config.jmp_decklists_path,
             jmp_arena=True,
         )
         self.standard_sets = ["znr", "khm", "stx", "afr", "mid", "vow"]
@@ -56,10 +49,10 @@ class Bot:
 
 
 class DiscordBot(Bot, discord.Client):
-    def __init__(self) -> None:
-        Bot.__init__(self)
+    def __init__(self, config: utils.Config) -> None:
+        Bot.__init__(self, config)
         discord.Client.__init__(self)
-        self.prefix: str = self.config["command_prefix"]
+        self.prefix: str = self.config.command_prefix
 
     def emoji(self, name: str, guild: Optional[discord.Guild] = None) -> str:
         """Return an emoji if it exists on the server or empty otherwise"""
@@ -220,7 +213,7 @@ class DiscordBot(Bot, discord.Client):
 
                 # Upload it to imgur.com
                 link = await utils.upload_img(
-                    img_file, self.config["imgur_client_id"]
+                    img_file, self.config.imgur_client_id
                 )
             except aiohttp.ClientResponseError:
                 # Send an error message if the upload failed...
@@ -290,7 +283,7 @@ class DiscordBot(Bot, discord.Client):
 
                 # Upload it to imgur.com
                 link = await utils.upload_img(
-                    r_file, self.config["imgur_client_id"]
+                    r_file, self.config.imgur_client_id
                 )
             except aiohttp.ClientResponseError:
                 # Send an error message if the upload failed...

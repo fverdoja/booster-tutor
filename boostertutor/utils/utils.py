@@ -1,11 +1,33 @@
+import logging
+from dataclasses import dataclass
 from io import BytesIO
+from pathlib import Path
 from typing import Optional, Sequence, Union
 
 import aiohttp
 import numpy as np
+import yaml
 
 SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
 IMGUR_URL = "https://api.imgur.com/3/image"
+
+
+@dataclass(frozen=True)
+class Config:
+    discord_token: str
+    imgur_client_id: str
+    mtgjson_path: str
+    jmp_decklists_path: Optional[str] = None
+    set_img_path: Optional[str] = None
+    command_prefix: str = "!"
+    logging_level: Union[int, str] = logging.INFO
+
+
+def get_config(path: Path = Path("config.yaml")) -> Config:
+    with open(path) as file:
+        config_dict = yaml.load(file, Loader=yaml.FullLoader)
+    config = Config(**config_dict)
+    return config
 
 
 async def pool_to_sealeddeck(

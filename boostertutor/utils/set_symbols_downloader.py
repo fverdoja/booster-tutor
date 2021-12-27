@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import imageio
-import yaml
+from boostertutor.utils.utils import get_config
 
 from ..generator import MtgPackGenerator
 
@@ -38,11 +38,11 @@ def main(
 
 if __name__ == "__main__":
     print("Reading config...")
-
-    with open("config.yaml") as file:
-        config = yaml.load(file, Loader=yaml.FullLoader)
-
-    main(
-        local_path=Path(config["set_img_path"]),
-        path_to_mtgjson=Path(config["mtgjson_path"]),
-    )
+    config = get_config()
+    if config.set_img_path:
+        main(
+            local_path=Path(config.set_img_path),
+            path_to_mtgjson=Path(config.mtgjson_path),
+        )
+    else:
+        print("Config does not contain set_img_path setting, doing nothing.")
