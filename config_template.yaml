@@ -18,5 +18,3 @@ set_img_path: /absolute/path/to/img/sets/
 ## OTHER CONFIG ##
 # Discord messages using this prefix will be read by the bot as commands
 command_prefix: "!"
-# enable or disable stdout logging of pack generation
-pack_logging: True

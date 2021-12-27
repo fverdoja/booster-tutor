@@ -111,7 +111,6 @@ def config_mock(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
             "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
             "jmp_decklists_path": (tmp_path / "JMP/").as_posix(),
             "command_prefix": "!",
-            "pack_logging": True,
         }
 
     monkeypatch.setattr(yaml, "load", test_config)

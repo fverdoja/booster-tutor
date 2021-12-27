@@ -37,11 +37,10 @@ class MtgPack:
     def can_be_balanced(self) -> bool:
         return any([slot["balance"] for slot in self.content.values()])
 
-    def is_balanced(self, rebalance: bool = False, log: bool = True) -> bool:
+    def is_balanced(self, rebalance: bool = False) -> bool:
         # Pack must never have duplicates (foil excluded)
         if self.has_duplicates():
-            if log:
-                logger.warning(f"Discarded pack: duplicates\n{self}")
+            logger.warning(f"Discarded pack: duplicates\n{self}")
             return False
 
         for slot_name, slot in self.content.items():
@@ -49,30 +48,25 @@ class MtgPack:
 
             if slot["balance"]:  # commons
                 # Pack must have at least 1 common card of each color
-                if not self.balanced_commons(
-                    slot_name, rebalance=rebalance, log=log
-                ):
-                    if log:
-                        logger.warning(
-                            f"Discarded pack: 1 color commons\n{card_names}"
-                        )
+                if not self.balanced_commons(slot_name, rebalance=rebalance):
+                    logger.warning(
+                        f"Discarded pack: 1 color commons\n{card_names}"
+                    )
                     return False
 
                 # Pack must never have more than 4 commons of the same color
                 if self.max_cards_per_color(slot_name) > 4:
-                    if log:
-                        logger.warning(
-                            "Discarded pack: 5+ same color commons\n"
-                            f"{card_names}"
-                        )
+                    logger.warning(
+                        "Discarded pack: 5+ same color commons\n"
+                        f"{card_names}"
+                    )
                     return False
 
                 # Pack must have at least 1 common creature
                 if not self.contains_creature(slot_name):
-                    if log:
-                        logger.warning(
-                            f"Discarded pack: no common creature\n{card_names}"
-                        )
+                    logger.warning(
+                        f"Discarded pack: no common creature\n{card_names}"
+                    )
                     return False
             elif (
                 not slot["cards"][0].foil
@@ -80,11 +74,10 @@ class MtgPack:
             ):
                 # Pack must never have more than 2 uncommons of the same color
                 if self.max_cards_per_color(slot_name) > 2:
-                    if log:
-                        logger.warning(
-                            "Discarded pack: 3+ same color uncommons\n"
-                            f"{card_names}"
-                        )
+                    logger.warning(
+                        "Discarded pack: 3+ same color uncommons\n"
+                        f"{card_names}"
+                    )
                     return False
         return True
 
@@ -119,7 +112,7 @@ class MtgPack:
         return (colors, counts)
 
     def balanced_commons(
-        self, slot_name: str, rebalance: bool = False, log: bool = True
+        self, slot_name: str, rebalance: bool = False
     ) -> bool:
         slot = self.content[slot_name]
         assert not rebalance or "backups" in slot
@@ -129,16 +122,13 @@ class MtgPack:
         missing = sum([v == 0 for v in list(common_counts.values())[:5]])
         if missing:
             if rebalance:
-                if log:
-                    logger.debug(f"Rebalancing: commons {common_counts}")
-                return self.rebalance_commons(slot, log=log)
+                logger.debug(f"Rebalancing: commons {common_counts}")
+                return self.rebalance_commons(slot)
             else:
                 return False
         return True
 
-    def rebalance_commons(
-        self, slot: dict[str, Sequence[MtgCard]], log: bool = True
-    ) -> bool:
+    def rebalance_commons(self, slot: dict[str, Sequence[MtgCard]]) -> bool:
         (common_colors, common_counts) = self.count_cards_colors(slot["cards"])
         (bkp_colors, bkp_counts) = self.count_cards_colors(slot["backups"])
 
@@ -166,22 +156,16 @@ class MtgPack:
                     slot["backups"] = [
                         c for c in slot["backups"] if c is not bkp
                     ]
-                    if log:
-                        logger.debug(f"Rebalancing: {color} -> {swap_color}")
-                    return self.rebalance_commons(slot, log=log)
+                    logger.debug(f"Rebalancing: {color} -> {swap_color}")
+                    return self.rebalance_commons(slot)
                 else:
-                    if log:
-                        logger.warning(
-                            f"Rebalancing: {color} failed (no swap)"
-                        )
+                    logger.warning(f"Rebalancing: {color} failed (no swap)")
                     return False
             else:
-                if log:
-                    logger.warning(f"Rebalancing: {color} failed (no backup)")
+                logger.warning(f"Rebalancing: {color} failed (no backup)")
                 return False
 
-        if log:
-            logger.debug(f"Rebalanced: commons {common_counts}")
+        logger.debug(f"Rebalanced: commons {common_counts}")
         return True
 
     def max_cards_per_color(self, slot_name: Optional[str] = None) -> int:

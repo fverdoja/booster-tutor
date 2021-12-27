@@ -22,7 +22,6 @@ class Bot:
                 file, Loader=yaml.FullLoader
             )
 
-        self.pack_log: bool = self.config.get("pack_logging", True)
         self.generator = MtgPackGenerator(
             path_to_mtgjson=self.config["mtgjson_path"],
             path_to_jmp=self.config.get("jmp_decklists_path", None),
@@ -89,38 +88,30 @@ class DiscordBot(Bot, discord.Client):
         p = p_list = None
         em = ""
         if command == "random":
-            p = self.generator.get_random_packs(log=self.pack_log)[0]
+            p = self.generator.get_random_packs()[0]
         elif command == "historic":
-            p = self.generator.get_random_packs(
-                self.historic_sets, log=self.pack_log
-            )[0]
+            p = self.generator.get_random_packs(self.historic_sets)[0]
         elif command == "standard":
-            p = self.generator.get_random_packs(
-                self.standard_sets, log=self.pack_log
-            )[0]
+            p = self.generator.get_random_packs(self.standard_sets)[0]
         elif command == "jmp":
             if self.generator.has_jmp:
-                p = self.generator.get_random_jmp_decks(log=self.pack_log)[0]
+                p = self.generator.get_random_jmp_decks()[0]
         elif command in self.all_sets:
-            p = self.generator.get_pack(command, log=self.pack_log)
+            p = self.generator.get_pack(command)
         elif command == "chaossealed":
             em = self.emoji("CHAOS", message.guild)
-            p_list = self.generator.get_random_packs(
-                self.historic_sets, n=6, log=self.pack_log
-            )
+            p_list = self.generator.get_random_packs(self.historic_sets, n=6)
         elif command.removesuffix("sealed") in self.all_sets:
             em = self.emoji(
                 command.removesuffix("sealed").upper(), message.guild
             )
             p_list = self.generator.get_packs(
-                command.removesuffix("sealed"), n=6, log=self.pack_log
+                command.removesuffix("sealed"), n=6
             )
         elif command == "jmpsealed":
             if self.generator.has_jmp:
                 em = self.emoji("JMP", message.guild)
-                p_list = self.generator.get_random_jmp_decks(
-                    n=3, log=self.pack_log
-                )
+                p_list = self.generator.get_random_jmp_decks(n=3)
         elif command == "help":
             await message.channel.send(
                 f"You can give me one of the following commands:\n"
