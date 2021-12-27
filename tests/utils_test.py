@@ -5,7 +5,44 @@ import boostertutor.utils.utils as utils
 import imageio
 import numpy as np
 import pytest
+import yaml
 from aioresponses import CallbackResult, aioresponses
+
+
+@pytest.mark.usefixtures("config_mock")
+def test_get_config():
+    config = utils.get_config()
+    assert config.discord_token == "0000"
+    assert config.imgur_client_id == "0000"
+    assert config.mtgjson_path.endswith("AllPrintings.json")
+    assert config.jmp_decklists_path and config.jmp_decklists_path.endswith(
+        "JMP"
+    )
+    assert config.set_img_path is None
+    assert config.command_prefix == "!"
+    assert config.logging_level == 20  # logging.INFO
+
+
+def test_get_config_missing(monkeypatch: pytest.MonkeyPatch):
+    def missing_config(*args, **kargs):
+        return {"discord_token": "0000", "imgur_client_id": "0000"}
+
+    monkeypatch.setattr(yaml, "load", missing_config)
+    with pytest.raises(TypeError) as excinfo:
+        utils.get_config()
+    assert "missing 1 required positional argument: 'mtgjson_path'" in str(
+        excinfo.value
+    )
+
+
+def test_get_config_wrong(monkeypatch: pytest.MonkeyPatch):
+    def wrong_config(*args, **kargs):
+        return {"diskord_token": "0000"}
+
+    monkeypatch.setattr(yaml, "load", wrong_config)
+    with pytest.raises(TypeError) as excinfo:
+        utils.get_config()
+    assert "unexpected keyword argument 'diskord_token'" in str(excinfo.value)
 
 
 @pytest.mark.parametrize("sealedpool_id", ["xxx", None])
