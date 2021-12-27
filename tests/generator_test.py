@@ -60,6 +60,10 @@ def test_random_packs_from_set_list_with_replacement(
     assert any([c > 1 for c in count_sets.values()])
 
 
+def test_has_jumpstart(generator: MtgPackGenerator):
+    assert generator.has_jmp
+
+
 def test_jumpstart(generator: MtgPackGenerator):
     p = generator.get_random_jmp_decks()[0]
     assert len(p.cards) == 20

@@ -1,9 +1,12 @@
+import logging
 from random import choice
 from typing import Optional, Sequence
 
 import numpy as np
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtgjson import SetProxy
+
+logger = logging.getLogger(__name__)
 
 
 class MtgPack:
@@ -38,8 +41,7 @@ class MtgPack:
         # Pack must never have duplicates (foil excluded)
         if self.has_duplicates():
             if log:
-                print("Discarded pack: duplicates")
-                print(self)
+                logger.warning(f"Discarded pack: duplicates\n{self}")
             return False
 
         for slot_name, slot in self.content.items():
@@ -51,22 +53,26 @@ class MtgPack:
                     slot_name, rebalance=rebalance, log=log
                 ):
                     if log:
-                        print("Discarded pack: 1 color commons")
-                        print(card_names)
+                        logger.warning(
+                            f"Discarded pack: 1 color commons\n{card_names}"
+                        )
                     return False
 
                 # Pack must never have more than 4 commons of the same color
                 if self.max_cards_per_color(slot_name) > 4:
                     if log:
-                        print("Discarded pack: 5+ same color commons")
-                        print(card_names)
+                        logger.warning(
+                            "Discarded pack: 5+ same color commons\n"
+                            f"{card_names}"
+                        )
                     return False
 
                 # Pack must have at least 1 common creature
                 if not self.contains_creature(slot_name):
                     if log:
-                        print("Discarded pack: no common creature")
-                        print(card_names)
+                        logger.warning(
+                            f"Discarded pack: no common creature\n{card_names}"
+                        )
                     return False
             elif (
                 not slot["cards"][0].foil
@@ -75,8 +81,10 @@ class MtgPack:
                 # Pack must never have more than 2 uncommons of the same color
                 if self.max_cards_per_color(slot_name) > 2:
                     if log:
-                        print("Discarded pack: 3+ same color uncommons")
-                        print(card_names)
+                        logger.warning(
+                            "Discarded pack: 3+ same color uncommons\n"
+                            f"{card_names}"
+                        )
                     return False
         return True
 
@@ -122,7 +130,7 @@ class MtgPack:
         if missing:
             if rebalance:
                 if log:
-                    print(f"Rebalancing: commons {common_counts}")
+                    logger.debug(f"Rebalancing: commons {common_counts}")
                 return self.rebalance_commons(slot, log=log)
             else:
                 return False
@@ -159,19 +167,21 @@ class MtgPack:
                         c for c in slot["backups"] if c is not bkp
                     ]
                     if log:
-                        print(f"Rebalancing: {color} -> {swap_color}")
+                        logger.debug(f"Rebalancing: {color} -> {swap_color}")
                     return self.rebalance_commons(slot, log=log)
                 else:
                     if log:
-                        print(f"Rebalancing: {color} failed (no swap)")
+                        logger.warning(
+                            f"Rebalancing: {color} failed (no swap)"
+                        )
                     return False
             else:
                 if log:
-                    print(f"Rebalancing: {color} failed (no backup)")
+                    logger.warning(f"Rebalancing: {color} failed (no backup)")
                 return False
 
         if log:
-            print(f"Rebalanced: commons {common_counts}")
+            logger.debug(f"Rebalanced: commons {common_counts}")
         return True
 
     def max_cards_per_color(self, slot_name: Optional[str] = None) -> int:

@@ -1,6 +1,7 @@
+import logging
 import os
 from io import BytesIO, StringIO
-from typing import Optional, Any
+from typing import Any, Optional
 
 import aiohttp
 import discord
@@ -9,6 +10,8 @@ import yaml
 
 import boostertutor.utils.utils as utils
 from boostertutor.generator import MtgPackGenerator
+
+logger = logging.getLogger(__name__)
 
 
 class Bot:
@@ -67,7 +70,7 @@ class DiscordBot(Bot, discord.Client):
         return ""
 
     async def on_ready(self) -> None:
-        print(f"{self.user} has connected to Discord!")
+        logger.info(f"{self.user} has connected to Discord!")
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author == self.user:
@@ -96,7 +99,7 @@ class DiscordBot(Bot, discord.Client):
                 self.standard_sets, log=self.pack_log
             )[0]
         elif command == "jmp":
-            if self.jmp is not None:
+            if self.generator.has_jmp:
                 p = self.generator.get_random_jmp_decks(log=self.pack_log)[0]
         elif command in self.all_sets:
             p = self.generator.get_pack(command, log=self.pack_log)
@@ -113,7 +116,7 @@ class DiscordBot(Bot, discord.Client):
                 command.removesuffix("sealed"), n=6, log=self.pack_log
             )
         elif command == "jmpsealed":
-            if self.jmp is not None:
+            if self.generator.has_jmp:
                 em = self.emoji("JMP", message.guild)
                 p_list = self.generator.get_random_jmp_decks(
                     n=3, log=self.pack_log
@@ -181,7 +184,7 @@ class DiscordBot(Bot, discord.Client):
                             pack_json, sealeddeck_id
                         )
                     except aiohttp.ClientResponseError as e:
-                        print(f"Sealeddeck error: {e}")
+                        logger.error(f"Sealeddeck error: {e}")
                         content = (
                             f"{message.author.mention}\n"
                             f"The pack could not be added to sealeddeck.tech "
@@ -270,7 +273,7 @@ class DiscordBot(Bot, discord.Client):
             try:
                 sealeddeck_id = await utils.pool_to_sealeddeck(json_pool)
             except aiohttp.ClientResponseError as e:
-                print(f"Sealeddeck error: {e}")
+                logger.error(f"Sealeddeck error: {e}")
                 content += "\n\n**Sealeddeck.tech:** Error\n"
             else:
                 content += (

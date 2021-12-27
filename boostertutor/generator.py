@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Sequence
 
 from numpy.random import choice
@@ -5,6 +6,8 @@ from numpy.random import choice
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
 from boostertutor.models.mtgjson import CardDb
+
+logger = logging.getLogger(__name__)
 
 
 class MtgPackGenerator:
@@ -17,6 +20,7 @@ class MtgPackGenerator:
     ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
+        self.has_jmp = False
         if path_to_jmp is not None:
             self.import_jmp(path_to_jmp, arena=jmp_arena)
         self.fix_iko()
@@ -34,7 +38,7 @@ class MtgPackGenerator:
         self, set: str, balance: bool = True, log: bool = True
     ) -> MtgPack:
         if log:
-            print(f"Generating {set.upper()} pack...")
+            logger.debug(f"Generating {set.upper()} pack...")
         iterations = self.max_balancing_iterations if balance else 1
         return self._get_pack_internal(set, iterations, log=log)
 
@@ -115,12 +119,12 @@ class MtgPackGenerator:
 
         if not balance:
             if log:
-                print("Pack should not be balanced, skipping.")
+                logger.debug("Pack should not be balanced, skipping.")
             iterations = 1
 
         if iterations <= 1 or pack.is_balanced(rebalance=True, log=log):
             if log:
-                print(
+                logger.info(
                     f"{set.upper()} pack generated, iterations needed: "
                     f"{str(self.max_balancing_iterations - iterations + 1)}"
                 )
@@ -149,19 +153,20 @@ class MtgPackGenerator:
     def get_random_jmp_decks(
         self, n: int = 1, replace: bool = True, log: bool = True
     ) -> Sequence[MtgPack]:
+        assert self.has_jmp
         jmp_decks = self.data.sets["JMP"].decks
         decks = choice(jmp_decks, size=n, replace=replace)
         packs = []
         for d in decks:
             if log:
-                print("Generating JMP pack...")
+                logger.debug("Generating JMP pack...")
             cards = [MtgCard(c) for c in d["mainBoard"]]
             content = {"deck": {"cards": cards, "balance": False}}
             packs.append(
                 MtgPack(content, set=self.data.sets["JMP"], name=d["name"])
             )
             if log:
-                print(f"{d['name']} (JMP) pack generated")
+                logger.info(f"{d['name']} (JMP) pack generated")
         return packs
 
     def fix_iko(self) -> None:
@@ -205,3 +210,4 @@ class MtgPackGenerator:
                             card = ajmp[r]
                             card.setCode = "JMP"
                         d["mainBoard"][i] = card
+        self.has_jmp = True
