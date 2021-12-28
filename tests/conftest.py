@@ -4,11 +4,10 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
-import yaml
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
-from boostertutor.utils.utils import get_config
+from boostertutor.utils.utils import Config, get_config
 
 
 @pytest.fixture(scope="session")
@@ -104,14 +103,12 @@ def zip_two() -> BytesIO:
 
 
 @pytest.fixture
-def config_mock(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    def test_config(*args, **kargs):
-        return {
-            "discord_token": "0000",
-            "imgur_client_id": "0000",
-            "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
-            "jmp_decklists_path": (tmp_path / "JMP/").as_posix(),
-            "command_prefix": "!",
-        }
-
-    monkeypatch.setattr(yaml, "load", test_config)
+def temp_config(tmp_path: Path) -> Config:
+    config_dict = {
+        "discord_token": "0000",
+        "imgur_client_id": "0000",
+        "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
+        "jmp_decklists_path": (tmp_path / "JMP/").as_posix(),
+        "command_prefix": "!",
+    }
+    return Config(**config_dict)

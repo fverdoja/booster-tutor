@@ -1,3 +1,4 @@
+import dataclasses
 from io import BytesIO
 from typing import Optional
 
@@ -9,8 +10,13 @@ import yaml
 from aioresponses import CallbackResult, aioresponses
 
 
-@pytest.mark.usefixtures("config_mock")
-def test_get_config():
+def test_get_config(
+    monkeypatch: pytest.MonkeyPatch, temp_config: utils.Config
+):
+    def config_dict(*args, **kargs):
+        return dataclasses.asdict(temp_config)
+
+    monkeypatch.setattr(yaml, "load", config_dict)
     config = utils.get_config()
     assert config.discord_token == "0000"
     assert config.imgur_client_id == "0000"

@@ -4,7 +4,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import requests
-from boostertutor.utils.utils import get_config
+from boostertutor.utils.utils import Config, get_config
 
 # configs
 MTGJSON_URL = "https://mtgjson.com/api/v5/AllPrintings.json"
@@ -66,12 +66,8 @@ def download_jmp_decks(
         shutil.rmtree(temp_path)
 
 
-def main(jmp: bool, jmp_backup: bool) -> None:
-    print("Reading config...")
-    config = get_config()
-
+def main(config: Config, jmp: bool, jmp_backup: bool) -> None:
     download_jmp = jmp and config.jmp_decklists_path is not None
-
     print(f"MTGjson data will be downloaded in: {config.mtgjson_path}")
     if download_jmp:
         print(f"JMP decks will be downloaded in: {config.jmp_decklists_path}")
@@ -86,22 +82,33 @@ def main(jmp: bool, jmp_backup: bool) -> None:
     else:
         print("JMP deck will not be downloaded")
 
-    print("\nBeginning MTGjson data download...")
-    download_mtgjson_data(file=config.mtgjson_path)
+    if Path(config.mtgjson_path).parent.is_dir():
+        print("\nBeginning MTGjson data download...")
+        download_mtgjson_data(file=config.mtgjson_path)
 
-    if download_jmp:
-        print("Beginning JMP decks download...")
-        download_jmp_decks(
-            dir=config.jmp_decklists_path,  # type: ignore
-            temp_dir=Path(
-                config.jmp_decklists_path  # type: ignore
-            ).parent.as_posix(),
-            backup=jmp_backup,
+        if download_jmp:
+            print("Beginning JMP decks download...")
+            download_jmp_decks(
+                dir=config.jmp_decklists_path,  # type: ignore
+                temp_dir=Path(
+                    config.jmp_decklists_path  # type: ignore
+                ).parent.as_posix(),
+                backup=jmp_backup,
+            )
+    else:
+        print(
+            f"The directory {Path(config.mtgjson_path).parent.as_posix()} "
+            "does not exist."
         )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Downloads MTGJSON data.")
+    parser.add_argument(
+        "--config",
+        help="config file path (default: ./config.yaml)",
+        default="config.yaml",
+    )
     parser.add_argument(
         "--jmp", help="download JMP decks", action="store_true"
     )
@@ -109,4 +116,8 @@ if __name__ == "__main__":
         "--jmp-backup", help="backup old JMP decks", action="store_true"
     )
     args = parser.parse_args()
-    main(args.jmp, args.jmp_backup)
+
+    print("Reading config...")
+    config = get_config(args.config)
+
+    main(config, args.jmp, args.jmp_backup)

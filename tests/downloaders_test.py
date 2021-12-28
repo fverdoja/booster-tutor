@@ -5,8 +5,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 from boostertutor.utils import mtgjson_downloader, set_symbols_downloader
-from requests_mock import Mocker
+from boostertutor.utils.utils import Config
 from requests import HTTPError
+from requests_mock import Mocker
 
 
 def test_download_file(tmp_path: Path, requests_mock: Mocker):
@@ -137,13 +138,13 @@ def test_download_jmp_decks_400(
 @pytest.mark.parametrize(
     ["jmp", "jmp_backup"], [(False, False), (True, False), (True, True)]
 )
-@pytest.mark.usefixtures("config_mock")
 def test_mtgjson_downloader_main(
     tmp_path: Path,
     requests_mock: Mocker,
     zip_one: BytesIO,
     jmp: bool,
     jmp_backup: bool,
+    temp_config: Config,
 ):
     mtgjson_file = tmp_path / "AllPrintings.json"
     backup_file = tmp_path / "AllPrintings_last.json"
@@ -158,7 +159,7 @@ def test_mtgjson_downloader_main(
 
     requests_mock.get(mtgjson_downloader.MTGJSON_URL, json={"second": True})
     requests_mock.get(mtgjson_downloader.DECKFILE_URL, body=zip_one)
-    mtgjson_downloader.main(jmp=jmp, jmp_backup=jmp_backup)
+    mtgjson_downloader.main(config=temp_config, jmp=jmp, jmp_backup=jmp_backup)
     assert mtgjson_file.is_file()
     assert backup_file.is_file()
     with open(mtgjson_file) as f:
