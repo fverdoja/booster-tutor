@@ -45,7 +45,7 @@ you have procured those for yourself, follow these steps:
 * Download MTGJson data by running:
 
 ```bash
-  python -m boostertutor.utils.mtgjson_downloader
+  python -m boostertutor mtgjson
 ```
 
 For the first run you might want to download JMP decks as well to allow the bot
@@ -56,6 +56,14 @@ to the previous command.
 
 ```bash
   python -m boostertutor
+```
+
+For a complete list of commands and parameters you can check the help by
+running:
+
+```bash
+  python -m boostertutor -h          # general help
+  python -m boostertutor mtgjson -h  # MTGjson downloader help
 ```
 
 ## Under the hood
