@@ -197,7 +197,7 @@ class MtgPackGenerator:
                 ]
             )
             booster_ev += composition_ev * weight / booster_total_weight
-        return booster_ev
+        return round(booster_ev, 2)
 
     def fix_iko(self) -> None:
         iko = self.data.sets["IKO"]
