@@ -7,6 +7,8 @@ import imageio
 import numpy as np
 from boostertutor.models.mtgjson import CardProxy
 
+SCRYFALL_CARD_BASE_URL = "https://api.scryfall.com/cards"
+
 
 class MtgCard:
     def __init__(self, card: CardProxy, foil: bool = False) -> None:
@@ -33,6 +35,37 @@ class MtgCard:
             mana = self.card.colors
         return mana
 
+    async def get_price(
+        self, currency: str, eur_usd_rate: Optional[float] = None
+    ) -> Optional[float]:
+        currencies = ("eur", "usd")
+        assert currency in currencies
+        alt_currency = currencies[1 - currencies.index(currency)]
+        if self.foil:
+            currency += "_foil"
+            alt_currency += "_foil"
+
+        scry_id = self.card.identifiers["scryfallId"]
+        card_url = f"{SCRYFALL_CARD_BASE_URL}/{scry_id}"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(card_url) as resp:
+                resp.raise_for_status()
+                card = await resp.json()
+
+        price = card["prices"][currency]
+        if price is not None:
+            price = float(price)
+        elif (
+            card["prices"][alt_currency] is not None
+            and eur_usd_rate is not None
+        ):
+            if alt_currency.startswith("usd"):
+                price = float(card["prices"][alt_currency]) / eur_usd_rate
+            else:
+                price = float(card["prices"][alt_currency]) * eur_usd_rate
+        return price
+
     async def get_image(
         self, size: str = "normal", foil: Optional[bool] = None
     ) -> np.ndarray:
@@ -41,8 +74,7 @@ class MtgCard:
 
         scry_id = self.card.identifiers["scryfallId"]
         img_url = (
-            f"https://api.scryfall.com/cards/{scry_id}"
-            f"?format=image&version={size}"
+            f"{SCRYFALL_CARD_BASE_URL}/{scry_id}?format=image&version={size}"
         )
         if foil is None:
             foil = self.foil

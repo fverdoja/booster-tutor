@@ -1,6 +1,8 @@
+import re
 from collections import Counter
 
 import pytest
+from aioresponses import aioresponses
 from boostertutor.generator import MtgPackGenerator
 
 
@@ -79,3 +81,23 @@ def test_arena_jumpstart(generator: MtgPackGenerator):
     for d in generator.data.sets["JMP"].decks:
         for c in d["mainBoard"]:
             assert c.name != "Path to Exile"
+
+
+async def test_pack_ev(generator: MtgPackGenerator):
+    pattern = re.compile(r"^https://api\.scryfall\.com/cards.*$")
+    prices = {"prices": {"eur": "1.0", "eur_foil": "1.0"}}
+    with aioresponses() as mocked:
+        mocked.get(url=pattern, status=200, payload=prices, repeat=True)
+        ev = await generator.get_pack_ev(set="mh2", currency="eur")
+    assert ev == pytest.approx(15)
+
+
+async def test_pack_ev_bulk(generator: MtgPackGenerator):
+    pattern = re.compile(r"^https://api\.scryfall\.com/cards.*$")
+    prices = {"prices": {"eur": "1.0", "eur_foil": "3.0"}}
+    with aioresponses() as mocked:
+        mocked.get(url=pattern, status=200, payload=prices, repeat=True)
+        ev = await generator.get_pack_ev(
+            set="mh2", currency="eur", bulk_threshold=1.5
+        )
+    assert ev == pytest.approx(1)

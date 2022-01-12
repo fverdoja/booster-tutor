@@ -5,9 +5,9 @@ from typing import ContextManager, Optional, Sequence
 import imageio
 import numpy as np
 import pytest
+from aiohttp import ClientResponseError
 from aioresponses import aioresponses
 from boostertutor.models.mtg_card import MtgCard
-from aiohttp import ClientResponseError
 
 
 @pytest.mark.parametrize(
@@ -84,6 +84,47 @@ def test_pack_sort_key(cards: dict[str, MtgCard]):
         "Electrolyze",
         "Bojuka Bog",
     ]
+
+
+@pytest.mark.parametrize(
+    ["card", "currency", "is_none", "rate_none", "expected"],
+    [
+        ("Ghostly Prison", "eur", False, False, 1.0),  # eur
+        ("Electrolyze", "eur", False, False, 3.0),  # eur_foil
+        ("Ghostly Prison", "usd", False, False, 2.6),  # usd
+        ("Electrolyze", "usd", False, False, 5.2),  # usd_foil
+        ("Ghostly Prison", "eur", True, False, 2.0),  # eur converted
+        ("Electrolyze", "eur", True, False, 4.0),  # eur_foil converted
+        ("Ghostly Prison", "usd", True, False, 1.3),  # usd converted
+        ("Electrolyze", "usd", True, False, 3.9),  # usd_foil converted
+        ("Ghostly Prison", "eur", True, True, None),  # no rate
+    ],
+)
+async def test_prices(
+    cards: dict[str, MtgCard],
+    card: str,
+    currency: str,
+    is_none: bool,
+    rate_none: bool,
+    expected: float,
+):
+    c = cards[card]
+    prices: dict[str, Optional[str]] = {
+        "eur": "1.0",
+        "eur_foil": "3.0",
+        "usd": "2.6",
+        "usd_foil": "5.2",
+    }
+    if is_none:
+        prices[currency] = None
+        prices[currency + "_foil"] = None
+    rate = None if rate_none else 1.3
+    scry_id = c.card.identifiers["scryfallId"]
+    card_url = f"https://api.scryfall.com/cards/{scry_id}"
+    with aioresponses() as mocked:
+        mocked.get(url=card_url, status=200, payload={"prices": prices})
+        price = await c.get_price(currency=currency, eur_usd_rate=rate)
+    assert price == pytest.approx(expected)
 
 
 @pytest.mark.parametrize(

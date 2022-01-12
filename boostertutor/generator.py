@@ -157,6 +157,48 @@ class MtgPackGenerator:
             logger.info(f"{d['name']} (JMP) pack generated")
         return packs
 
+    async def get_pack_ev(
+        self,
+        set: str,
+        currency: str,
+        eur_usd_rate: Optional[float] = None,
+        bulk_threshold: float = 0.0,
+    ) -> float:
+        assert set.upper() in self.data.sets
+        booster = self.data.sets[set.upper()].booster
+        if "default" in booster:
+            booster_meta = booster["default"]
+        else:
+            logger.warning(
+                f"Requested EV of {set.upper()} booster, but no "
+                f"paper booster metadata found for it. Returning 0."
+            )
+            return 0
+        sheets_ev = {}
+        for sheet_name, sheet_meta in booster_meta["sheets"].items():
+            total_weight = sheet_meta["totalWeight"]
+            foil = sheet_meta["foil"]
+            sheet_total = 0.0
+            for card_id, weight in sheet_meta["cards"].items():
+                card = MtgCard(self.data.cards_by_id[card_id], foil)
+                price = await card.get_price(currency, eur_usd_rate)
+                if price and price >= bulk_threshold:
+                    sheet_total += price * weight
+            sheets_ev[sheet_name] = sheet_total / total_weight
+
+        booster_ev = 0.0
+        booster_total_weight = booster_meta["boostersTotalWeight"]
+        for composition in booster_meta["boosters"]:
+            weight = composition["weight"]
+            composition_ev = sum(
+                [
+                    sheets_ev[sheet_name] * count
+                    for sheet_name, count in composition["contents"].items()
+                ]
+            )
+            booster_ev += composition_ev * weight / booster_total_weight
+        return booster_ev
+
     def fix_iko(self) -> None:
         iko = self.data.sets["IKO"]
         iko.booster["default"]["sheets"]["common"]["balanceColors"] = True
