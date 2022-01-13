@@ -1,4 +1,5 @@
 import logging
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
@@ -8,8 +9,11 @@ import aiohttp
 import numpy as np
 import yaml
 
+logger = logging.getLogger(__name__)
+
 SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
 IMGUR_URL = "https://api.imgur.com/3/image"
+EXCHANGE_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 
 
 @dataclass(frozen=True)
@@ -118,3 +122,15 @@ def set_symbol_link(code: str, size: str = "large", rarity: str = "M") -> str:
         f"https://gatherer.wizards.com/Handlers/Image.ashx?"
         f"type=symbol&size={size}&rarity={rarity}&set={code.lower()}"
     )
+
+
+async def get_eur_usd_rate() -> float:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(EXCHANGE_URL) as resp:
+            resp.raise_for_status()
+            tree = ET.fromstring(await resp.read())
+    for child in tree[2][0]:
+        if child.attrib["currency"] == "USD":
+            return float(child.attrib["rate"])
+    logger.warning("EUR/USD exchange rate not found")
+    return 1

@@ -187,6 +187,55 @@ class DiscordBot(Bot, discord.Client):
                             f"ID: `{new_id}`"
                         )
                     await m.edit(content=content)
+        elif command == "ev":
+            if len(argv) >= 2:
+                set: str = argv[1]
+                bulk_threshold = float(argv[2]) if len(argv) >= 3 else 0.0
+                currency: str = (
+                    argv[3]
+                    if len(argv) >= 4 and argv[3] in ["eur", "usd"]
+                    else "eur"
+                )
+                sign = "€" if currency == "eur" else "$"
+                bulk_string = (
+                    f" *(bulk threshold: {bulk_threshold:.2f}{sign})*"
+                    if bulk_threshold
+                    else ""
+                )
+                m = await message.channel.send(
+                    f"{message.author.mention}\n"
+                    f":hourglass: Computing {set.upper()} draft pack "
+                    f"{currency.upper()} EV{bulk_string}, it will take a "
+                    f"while (usually around 4 minutes)..."
+                )
+                try:
+                    rate = await utils.get_eur_usd_rate()
+                    ev = await self.generator.get_pack_ev(
+                        set=set,
+                        currency=currency,
+                        bulk_threshold=bulk_threshold,
+                        eur_usd_rate=rate,
+                    )
+                except aiohttp.ClientResponseError as e:
+                    logger.error(f"EV Calculation error: {e}")
+                    content = (
+                        f"{message.author.mention}\n"
+                        f":x: The EV calculation generated some errors."
+                    )
+
+                else:
+                    em = self.emoji(set.upper(), message.guild)
+                    content = (
+                        f"{message.author.mention}\n"
+                        f"**{em}{(' ' if len(em) else '')}{set.upper()} Draft "
+                        f"Pack EV**{bulk_string}\n"
+                        f"One pack: {ev:.2f}{sign}\n"
+                        f"Draft (3): {ev*3:.2f}{sign}\n"
+                        f"Sealed (6): {ev*6:.2f}{sign}\n"
+                        f"24-pack box: {ev*24:.2f}{sign}\n"
+                        f"36-pack box: {ev*36:.2f}{sign}\n"
+                    )
+                await m.edit(content=content)
 
         if p:
             # First send the booster text with a loading message for the image

@@ -152,3 +152,16 @@ def test_set_symbol_link():
         "https://gatherer.wizards.com/Handlers/Image.ashx?"
         "type=symbol&size=normal&rarity=C&set=inv"
     )
+
+
+async def test_eur_usd_rate():
+    exchange_xml = (
+        "<root><zero /><one /><two><zero>"
+        "<child currency='USD' rate='1.30'/>"
+        "<child currency='JPY' rate='130.00'/>"
+        "</zero></two></root>"
+    )
+    with aioresponses() as mocked:
+        mocked.get(url=utils.EXCHANGE_URL, status=200, body=exchange_xml)
+        rate = await utils.get_eur_usd_rate()
+    assert rate == pytest.approx(1.3)
