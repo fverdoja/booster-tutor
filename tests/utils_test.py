@@ -165,3 +165,9 @@ async def test_eur_usd_rate():
         mocked.get(url=utils.EXCHANGE_URL, status=200, body=exchange_xml)
         rate = await utils.get_eur_usd_rate()
     assert rate == pytest.approx(1.3)
+
+
+def test_foil_layer():
+    foil = utils.foil_layer(size=(10, 20))
+    assert foil.shape == (10, 20, 3)
+    assert foil.dtype == np.uint8

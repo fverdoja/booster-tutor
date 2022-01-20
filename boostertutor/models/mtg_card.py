@@ -1,11 +1,10 @@
-import os
 from typing import Optional, Sequence
 
-import aiofiles
 import aiohttp
 import imageio
 import numpy as np
 from boostertutor.models.mtgjson import CardProxy
+from boostertutor.utils.utils import foil_layer
 
 SCRYFALL_CARD_BASE_URL = "https://api.scryfall.com/cards"
 
@@ -69,7 +68,7 @@ class MtgCard:
     async def get_image(
         self, size: str = "normal", foil: Optional[bool] = None
     ) -> np.ndarray:
-        sizes = ["large", "normal", "small"]
+        sizes = ["large", "normal", "small", "png", "border_crop"]
         assert size in sizes
 
         scry_id = self.card.identifiers["scryfallId"]
@@ -87,17 +86,8 @@ class MtgCard:
         im: np.ndarray = imageio.imread(resp_bytes)
 
         if foil:
-            foil_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                "..",
-                "img",
-                f"foil_{size}.png",
-            )
-            async with aiofiles.open(foil_path, "rb") as f:
-                content = await f.read()
-            foil_im: np.ndarray = imageio.imread(content)[:, :, 0:3]
-
-            im = (im * 0.7 + foil_im * 0.3).astype("uint8")
+            foil_im = foil_layer(size=im.shape[0:2])
+            im[..., 0:3] = (im[..., 0:3] * 0.7 + foil_im * 0.3).astype("uint8")
 
         return im
 

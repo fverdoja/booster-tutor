@@ -71,16 +71,17 @@ def cards_img(
     im_list: Sequence[np.ndarray], max_row_length: int = 10
 ) -> np.ndarray:
     """Generate an image of the cards in im_list"""
-    assert len(im_list)
-    num_rows = int(np.ceil(len(im_list) / max_row_length))
-    cards_per_row = int(np.ceil(len(im_list) / num_rows))
+    num_cards = len(im_list)
+    assert num_cards
+    num_rows = int(np.ceil(num_cards / max_row_length))
+    num_cards_per_row = int(np.ceil(num_cards / num_rows))
 
     cards = None
     for row_i in range(num_rows):
-        offset = row_i * cards_per_row
+        offset = row_i * num_cards_per_row
         row = im_list[offset]
-        num_cards = min(len(im_list) - offset, cards_per_row)
-        for i in range(1 + offset, num_cards + offset):
+        num_cards_this_row = min(num_cards - offset, num_cards_per_row)
+        for i in range(1 + offset, num_cards_this_row + offset):
             row = np.hstack((row, im_list[i]))
         if cards is None:
             cards = row
@@ -91,7 +92,7 @@ def cards_img(
                 row,
                 [[0, 0], [0, pad_amount], [0, 0]],
                 "constant",
-                constant_values=255,
+                constant_values=255 if cards.shape[2] == 3 else 0,
             )
             cards = np.vstack((cards, row))
     return cards
@@ -134,3 +135,22 @@ async def get_eur_usd_rate() -> float:
             return float(child.attrib["rate"])
     logger.warning("EUR/USD exchange rate not found")
     return 1
+
+
+def foil_layer(size: tuple[int, int]) -> np.ndarray:
+    h, w = size
+    ruler_w = np.linspace(-1, 1, w, endpoint=True)
+    ruler_h = np.linspace(-1, 1, h, endpoint=True)
+    _, Y = np.meshgrid(ruler_w, ruler_h)
+    color_width, offset = 0.3, 0.0
+    foil = np.empty((h, w, 3), dtype="uint8")
+    foil[:, :, 0] = (
+        (1 - np.exp(-0.5 * ((Y - offset) ** 2) / (color_width * 3)) ** 2) * 255
+    ).astype("uint8")
+    foil[:, :, 1] = (
+        np.exp(-0.5 * ((Y - offset) ** 2) / color_width ** 2) * 255
+    ).astype("uint8")
+    foil[:, :, 2] = (
+        (1 - 1 / (1 + np.exp((Y - offset) / color_width))) * 255
+    ).astype("uint8")
+    return foil

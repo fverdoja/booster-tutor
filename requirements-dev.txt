@@ -6,6 +6,5 @@ pytest==6.2.4
 pytest-aiohttp==0.3.0
 pytest-cov==3.0.0
 requests-mock==1.9.3
-types-aiofiles==0.7.0
 types-PyYAML==6.0.0
 types-requests==2.25.11
