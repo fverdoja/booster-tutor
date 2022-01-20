@@ -189,7 +189,7 @@ class MtgPack:
         return False
 
     async def get_images(
-        self, size: str = "normal", foil: bool = None
+        self, size: str = "normal", foil: Optional[bool] = None
     ) -> Sequence[np.ndarray]:
         img = [await c.get_image(size, foil) for c in self.cards]
         return img
