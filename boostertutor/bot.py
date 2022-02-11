@@ -20,7 +20,7 @@ class Bot:
             path_to_jmp=self.config.jmp_decklists_path,
             jmp_arena=True,
         )
-        self.standard_sets = ["znr", "khm", "stx", "afr", "mid", "vow"]
+        self.standard_sets = ["znr", "khm", "stx", "afr", "mid", "vow", "neo"]
         self.historic_sets = [
             "klr",
             "akr",
@@ -42,6 +42,7 @@ class Bot:
             "afr",
             "mid",
             "vow",
+            "neo",
         ]
         self.all_sets: list[str] = [
             s.lower() for s in self.generator.sets_with_boosters
