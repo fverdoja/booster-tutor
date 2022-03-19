@@ -86,7 +86,7 @@ class DiscordBot(Bot, discord.Client):
         assert len(argv)
         command = argv[0].lower()
         num_packs = (
-            min(1, int(argv[1])) if len(argv) >= 2 and argv[1].isdigit() else 1
+            max(1, int(argv[1])) if len(argv) >= 2 and argv[1].isdigit() else 1
         )
         if num_packs > MAX_NUM_PACKS:
             await message.channel.send(
