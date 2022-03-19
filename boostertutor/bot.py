@@ -11,6 +11,8 @@ from boostertutor.generator import MtgPackGenerator
 
 logger = logging.getLogger(__name__)
 
+MAX_NUM_PACKS = 36
+
 
 class Bot:
     def __init__(self, config: utils.Config) -> None:
@@ -72,26 +74,47 @@ class DiscordBot(Bot, discord.Client):
             return
 
         argv = message.content.removeprefix(self.prefix).split()
-        assert len(argv)
-        command = argv[0].lower()
         if len(message.mentions):
             member = message.mentions[0]
+            argv = [
+                x
+                for x in argv
+                if x not in [m.mention for m in message.mentions]
+            ]
         else:
             member = message.author
+        assert len(argv)
+        command = argv[0].lower()
+        num_packs = (
+            min(1, int(argv[1])) if len(argv) >= 2 and argv[1].isdigit() else 1
+        )
+        if num_packs > MAX_NUM_PACKS:
+            await message.channel.send(
+                f"{message.author.mention}\n"
+                f"You requested too many packs, I will generate "
+                f"{MAX_NUM_PACKS} instead."
+            )
+            num_packs = MAX_NUM_PACKS
 
         p = p_list = None
         em = ""
         if command == "random":
-            p = self.generator.get_random_packs()[0]
+            p_list = self.generator.get_random_packs(n=num_packs, replace=True)
         elif command == "historic":
-            p = self.generator.get_random_packs(self.historic_sets)[0]
+            p_list = self.generator.get_random_packs(
+                self.historic_sets, n=num_packs, replace=True
+            )
         elif command == "standard":
-            p = self.generator.get_random_packs(self.standard_sets)[0]
+            p_list = self.generator.get_random_packs(
+                self.standard_sets, n=num_packs, replace=True
+            )
         elif command == "jmp":
             if self.generator.has_jmp:
-                p = self.generator.get_random_jmp_decks()[0]
+                p_list = self.generator.get_random_jmp_decks(
+                    n=num_packs, replace=True
+                )
         elif command in self.all_sets:
-            p = self.generator.get_pack(command)
+            p_list = self.generator.get_packs(command, n=num_packs)
         elif command == "chaossealed":
             em = self.emoji("CHAOS", message.guild)
             p_list = self.generator.get_random_packs(self.historic_sets, n=6)
@@ -105,7 +128,7 @@ class DiscordBot(Bot, discord.Client):
         elif command == "jmpsealed":
             if self.generator.has_jmp:
                 em = self.emoji("JMP", message.guild)
-                p_list = self.generator.get_random_jmp_decks(n=3)
+                p_list = self.generator.get_random_jmp_decks(n=6)
         elif command == "help":
             await message.channel.send(
                 f"You can give me one of the following commands:\n"
@@ -238,7 +261,8 @@ class DiscordBot(Bot, discord.Client):
                     )
                 await m.edit(content=content)
 
-        if p:
+        if p_list and len(p_list) == 1:
+            p = p_list[0]
             # First send the booster text with a loading message for the image
             embed = discord.Embed(
                 description=":hourglass: Summoning a vision of your booster "
@@ -293,8 +317,11 @@ class DiscordBot(Bot, discord.Client):
                 "from the aether...",
                 color=discord.Color.orange(),
             )
+            title = (
+                "Sealed pool" if len(p_list) == 6 else f"{len(p_list)} packs"
+            )
             m = await message.channel.send(
-                f"**{em}{(' ' if len(em) else '')}Sealed pool**\n"
+                f"**{em}{(' ' if len(em) else '')}{title}**\n"
                 f"{member.mention}\n"
                 f"Content: [{sets}]",
                 embed=embed,
