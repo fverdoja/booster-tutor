@@ -148,7 +148,7 @@ def foil_layer(size: tuple[int, int]) -> np.ndarray:
         (1 - np.exp(-0.5 * ((Y - offset) ** 2) / (color_width * 3) ** 2)) * 255
     ).astype("uint8")
     foil[:, :, 1] = (
-        np.exp(-0.5 * ((Y - offset) ** 2) / color_width ** 2) * 255
+        np.exp(-0.5 * ((Y - offset) ** 2) / color_width**2) * 255
     ).astype("uint8")
     foil[:, :, 2] = (
         (1 - 1 / (1 + np.exp((Y - offset) / color_width))) * 255
