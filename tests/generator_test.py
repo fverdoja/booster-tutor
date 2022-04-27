@@ -1,9 +1,50 @@
+import logging
 import re
 from collections import Counter
+from typing import Sequence
+from unittest import mock
 
 import pytest
 from aioresponses import aioresponses
 from boostertutor.generator import MtgPackGenerator
+from boostertutor.models.mtgjson import SetProxy
+
+
+@pytest.mark.parametrize(
+    ["card_ids", "expected_num_warnings"],
+    [(["mocked_id_0", "mocked_id_1"], 0), (["mocked_id_2", "mocked_id_3"], 2)],
+)
+def test_booster_data_validation(
+    generator: MtgPackGenerator,
+    card_ids: Sequence[str],
+    expected_num_warnings: int,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+):
+    monkeypatch.setattr(generator, "sets_with_boosters", ["mocked_set"])
+    monkeypatch.setattr(
+        generator.data,
+        "cards_by_id",
+        {
+            "mocked_id_0": "mocked_card_0",
+            "mocked_id_1": "mocked_card_1",
+        },
+    )
+    mocked_set: SetProxy = mock.MagicMock(
+        booster={
+            "mocked_booster": {"sheets": {"mocked_sheet": {"cards": card_ids}}}
+        }
+    )
+    monkeypatch.setitem(generator.data.sets, "mocked_set", mocked_set)
+
+    with caplog.at_level(logging.WARNING):
+        num_warnings = generator.validate_booster_data()
+        assert num_warnings == expected_num_warnings
+        if expected_num_warnings:
+            assert "Found non-existent card id in a booster" in caplog.text
+            assert "Generating boosters with non-existent card" in caplog.text
+        else:
+            assert caplog.text == ""
 
 
 def test_pack(generator: MtgPackGenerator):
