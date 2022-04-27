@@ -1,2 +1,21 @@
+#### Black ####
 [tool.black]
 line-length = 79
+
+
+#### Mypy ####
+# Global options
+[[tool.mypy.overrides]]
+module = [
+  "aiohttp.*",
+  "aioresponses.*",
+  "discord.*",
+  "imageio.*",
+  "numpy.*",
+]
+ignore_missing_imports = true
+
+
+#### PyTest ####
+[tool.pytest.ini_options]
+testpaths = "tests"
