@@ -1,6 +1,6 @@
 # Booster Tutor
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](<https://www.paypal.com/donate/?hosted_button_id=YHE578M9CCSE8>)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.com/donate/?hosted_button_id=YHE578M9CCSE8)
 
 A Discord bot to generate *Magic: the Gathering* (MTG) boosters and sealed pools
 
