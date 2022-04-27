@@ -31,7 +31,8 @@ class MtgPackGenerator:
         ]
         self.validate_booster_data()
 
-    def validate_booster_data(self):
+    def validate_booster_data(self) -> int:
+        num_warnings = 0
         for set_code in self.sets_with_boosters:
             set = self.data.sets[set_code]
             for booster_name, booster in set.booster.items():
@@ -42,6 +43,14 @@ class MtgPackGenerator:
                                 f"Found non-existent card id in a booster: "
                                 f"{set_code} {booster_name} {sheet_name} {id}"
                             )
+                            num_warnings += 1
+        if num_warnings:
+            logger.warning(
+                "Generating boosters with non-existent card ids will result "
+                "in exceptions. Please consider reporting the non-existent "
+                "ids to the MTGJSON devs."
+            )
+        return num_warnings
 
     def get_packs(
         self, set: str, n: int = 1, balance: bool = True
