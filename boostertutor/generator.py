@@ -24,10 +24,24 @@ class MtgPackGenerator:
         if path_to_jmp is not None:
             self.import_jmp(path_to_jmp, arena=jmp_arena)
         self.fix_iko()
-        self.sets_with_boosters = []
-        for s in self.data.sets:
-            if hasattr(self.data.sets[s], "booster"):
-                self.sets_with_boosters.append(s)
+        self.sets_with_boosters = [
+            set_code
+            for set_code, set in self.data.sets.items()
+            if hasattr(set, "booster")
+        ]
+        self.validate_booster_data()
+
+    def validate_booster_data(self):
+        for set_code in self.sets_with_boosters:
+            set = self.data.sets[set_code]
+            for booster_name, booster in set.booster.items():
+                for sheet_name, sheet in booster["sheets"].items():
+                    for id in sheet["cards"]:
+                        if id not in self.data.cards_by_id:
+                            logger.warning(
+                                f"Found non-existent card id in a booster: "
+                                f"{set_code} {booster_name} {sheet_name} {id}"
+                            )
 
     def get_packs(
         self, set: str, n: int = 1, balance: bool = True
