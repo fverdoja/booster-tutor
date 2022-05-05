@@ -1,7 +1,7 @@
 # Booster Tutor
 
 [![Python checks and tests](https://github.com/fverdoja/booster-tutor/actions/workflows/python.yml/badge.svg?branch=main)](https://github.com/fverdoja/booster-tutor/actions/workflows/python.yml)
-[![Donate](https://img.shields.io/badge/PayPal-donate-blue.svg?logo=paypal)](https://www.paypal.com/donate/?hosted_button_id=YHE578M9CCSE8)
+[![Donate](https://img.shields.io/badge/Ko--fi-donate-13C3FF.svg?logo=kofi&logoColor=lightgray)](https://ko-fi.com/boostertutor)
 
 A Discord bot to generate *Magic: the Gathering* (MTG) boosters and sealed pools
 
