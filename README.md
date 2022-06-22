@@ -115,7 +115,7 @@ whether a pack should be balanced or not is obtained from the metadata by
 * Card images are taken from [Scryfall](https://scryfall.com)
 * Thanks to [Sealeddeck.tech](https://sealeddeck.tech) for working with me on
   integrating Booster Tutor with their tool
-* Part of my data reading implementation is borrowed from
+* Part of my data reading implementation is inspired by
   [pymtgjson](https://pythonhosted.org/mtgjson)
 * An [interesting
   discussion](https://gist.github.com/fenhl/8d163733ab92ed718d89975127aac152#simulated-collation)
@@ -123,7 +123,7 @@ whether a pack should be balanced or not is obtained from the metadata by
   *Reuben's algorithm*
 * *Wizards of the Coast*, *Magic: The Gathering*, and their logos are
   trademarks of Wizards of the Coast LLC in the United States and other
-  countries. © 1993-2021 Wizards. All Rights Reserved. Booster Tutor may use
+  countries. © 1993-2022 Wizards. All Rights Reserved. Booster Tutor may use
   the trademarks and other intellectual property of Wizards of the Coast LLC,
   which is permitted under Wizards' Fan Site Policy. For more information about
   Wizards of the Coast or any of Wizards' trademarks or other intellectual
