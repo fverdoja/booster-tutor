@@ -139,6 +139,7 @@ class CardDb:
         self._card_db = db_dict["data"]
 
         self.cards_by_id = {}
+        self.cards_by_scryfall_id = {}
         self.cards_by_name = {}
         self.cards_by_ascii_name = {}
         self.sets = OrderedDict()
@@ -156,6 +157,9 @@ class CardDb:
                     continue
 
                 self.cards_by_id[card.uuid] = card
+                self.cards_by_scryfall_id[
+                    card.identifiers["scryfallId"]
+                ] = card
 
         for card_id in self.cards_by_id:
             card = self.cards_by_id[card_id]

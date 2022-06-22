@@ -12,6 +12,7 @@ import yaml
 logger = logging.getLogger(__name__)
 
 SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
+CUBECOBRA_URL = "https://cubecobra.com/cube/api/cubeJSON/"
 IMGUR_URL = "https://api.imgur.com/3/image"
 EXCHANGE_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 
@@ -135,6 +136,14 @@ async def get_eur_usd_rate() -> float:
             return float(child.attrib["rate"])
     logger.warning("EUR/USD exchange rate not found")
     return 1
+
+
+async def get_cube(cube_id: str) -> dict:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(CUBECOBRA_URL + cube_id) as resp:
+            resp.raise_for_status()
+            cube_json = await resp.json()
+            return cube_json
 
 
 def foil_layer(size: tuple[int, int]) -> np.ndarray:

@@ -180,6 +180,26 @@ class MtgPackGenerator:
             logger.info(f"{d['name']} (JMP) pack generated")
         return packs
 
+    def get_cube_packs(self, cube: dict, n: int = 1) -> Sequence[MtgPack]:
+        return [self.get_cube_pack(cube) for _ in range(n)]
+
+    def get_cube_pack(self, cube: dict) -> MtgPack:
+        logger.debug(f"Generating {cube['shortID']} cube pack...")
+        cube_name = cube["name"]
+        cube_cards = cube["cards"]
+        pack_list = choice(cube_cards, 15, replace=False)
+        pack_cards = [
+            MtgCard(
+                self.data.cards_by_scryfall_id[card_dict["cardID"]],
+                foil=card_dict["finish"] != "Non-foil",
+            )
+            for card_dict in pack_list
+        ]
+        logger.info(f"{cube['shortID']} cube pack generated")
+        return MtgPack(
+            {"pack": {"cards": pack_cards, "balance": False}}, name=cube_name
+        )
+
     async def get_pack_ev(
         self,
         set: str,

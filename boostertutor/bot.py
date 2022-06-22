@@ -123,6 +123,26 @@ class DiscordBot(Bot, discord.Client):
                 p_list = self.generator.get_random_jmp_decks(
                     n=num_packs, replace=True
                 )
+        elif command == "cube":
+            cube_id = argv[1]
+            try:
+                cube = await utils.get_cube(cube_id)
+                p_list = self.generator.get_cube_packs(cube, n=1)
+            except aiohttp.ClientResponseError:
+                await message.channel.send(
+                    f"{message.author.mention}\n"
+                    f"The provided Cube ID cannot be found on CubeCobra."
+                )
+        elif command == "cubesealed":
+            cube_id = argv[1]
+            try:
+                cube = await utils.get_cube(cube_id)
+                p_list = self.generator.get_cube_packs(cube, n=6)
+            except aiohttp.ClientResponseError:
+                await message.channel.send(
+                    f"{message.author.mention}\n"
+                    f"The provided Cube ID cannot be found on CubeCobra."
+                )
         elif command in self.all_sets:
             p_list = self.generator.get_packs(command, n=num_packs)
         elif command == "chaossealed":
@@ -151,11 +171,15 @@ class DiscordBot(Bot, discord.Client):
                 f"> `{self.prefix}{{setcode}}`: generates a pack from the "
                 f"indicated set (e.g., `{self.prefix}znr` generates a "
                 f"*Zendikar Rising* pack)\n"
+                f"> `{self.prefix}cube cube_id`: generates a pack from the "
+                f"cube indicated by the CubeCobra Cube ID `cube_id`\n"
                 f"> `{self.prefix}{{setcode}}sealed`: generates 6 packs from "
                 f"the indicated set (e.g., `{self.prefix}znrsealed` generates "
                 f"6 *Zendikar Rising* packs)\n"
                 f"> `{self.prefix}chaossealed`: generates 6 random historic "
                 f"packs\n"
+                f"> `{self.prefix}cubesealed cube_id`: generates 6 packs from "
+                f"the cube indicated by the CubeCobra Cube ID `cube_id`\n"
                 f"> `{self.prefix}addpack xyz123`: if issued replying to "
                 f"packs I have generated, adds those packs to the previously "
                 f"generated sealeddeck.tech pool with ID `xyz123`\n"

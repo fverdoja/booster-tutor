@@ -7,6 +7,7 @@ import imageio
 import numpy as np
 import pytest
 import yaml
+from aiohttp import ClientResponseError
 from aioresponses import CallbackResult, aioresponses
 
 
@@ -165,6 +166,29 @@ async def test_eur_usd_rate():
         mocked.get(url=utils.EXCHANGE_URL, status=200, body=exchange_xml)
         rate = await utils.get_eur_usd_rate()
     assert rate == pytest.approx(1.3)
+
+
+async def test_get_cube():
+    cube1_id = "cube_one"
+    cube1_json = {"name": "Cube 1"}
+    cube2_id = "cube_two"
+    cube2_json = {"name": "Cube 2"}
+    cube3_id = "cube_three"
+    with aioresponses() as mocked:
+        mocked.get(
+            url=utils.CUBECOBRA_URL + cube1_id, status=200, payload=cube1_json
+        )
+        mocked.get(
+            url=utils.CUBECOBRA_URL + cube2_id, status=200, payload=cube2_json
+        )
+        mocked.get(url=utils.CUBECOBRA_URL + cube3_id, status=404)
+
+        cube1 = await utils.get_cube(cube1_id)
+        assert cube1["name"] == "Cube 1"
+        cube2 = await utils.get_cube(cube2_id)
+        assert cube2["name"] == "Cube 2"
+        with pytest.raises(ClientResponseError):
+            await utils.get_cube(cube3_id)
 
 
 def test_foil_layer():

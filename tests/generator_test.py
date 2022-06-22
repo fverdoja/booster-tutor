@@ -124,6 +124,19 @@ def test_arena_jumpstart(generator: MtgPackGenerator):
             assert c.name != "Path to Exile"
 
 
+def test_cube_pack(generator: MtgPackGenerator, cube: dict):
+    p = generator.get_cube_pack(cube)
+    assert len(p.cards) == 15
+    assert p.name == "Test Cube"
+    assert sum([card.foil for card in p.cards]) == 2
+
+
+def test_cube_pack_list(generator: MtgPackGenerator, cube: dict):
+    p_list = generator.get_cube_packs(cube, n=6)
+    assert len(p_list) == 6
+    assert all([pack.name == "Test Cube" for pack in p_list])
+
+
 async def test_pack_ev(generator: MtgPackGenerator):
     pattern = re.compile(r"^https://api\.scryfall\.com/cards.*$")
     prices = {"prices": {"eur": "1.0", "eur_foil": "1.0"}}
