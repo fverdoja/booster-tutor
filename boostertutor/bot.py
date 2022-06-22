@@ -156,8 +156,8 @@ class DiscordBot(Bot, discord.Client):
                 f"6 *Zendikar Rising* packs)\n"
                 f"> `{self.prefix}chaossealed`: generates 6 random historic "
                 f"packs\n"
-                f"> `{self.prefix}addpack xyz123`: if issued replying to a "
-                f"pack I have generated, adds that pack to the previously "
+                f"> `{self.prefix}addpack xyz123`: if issued replying to "
+                f"packs I have generated, adds those packs to the previously "
                 f"generated sealeddeck.tech pool with ID `xyz123`\n"
                 f"> `{self.prefix}help`: shows this message\n"
                 f"While replying to any command, I will mention the user who "
@@ -170,7 +170,7 @@ class DiscordBot(Bot, discord.Client):
             if len(argv) != 2 or not message.reference:
                 await message.channel.send(
                     f"{message.author.mention}\n"
-                    "To add a pack to the sealeddeck.tech pool `xyz123`, reply"
+                    "To add packs to the sealeddeck.tech pool `xyz123`, reply"
                     " to my message with the pack content with the command "
                     f"`{self.prefix}addpack xyz123`"
                 )
@@ -178,17 +178,19 @@ class DiscordBot(Bot, discord.Client):
                 ref = await message.channel.fetch_message(
                     message.reference.message_id
                 )
-                if (
-                    ref.author != self.user
-                    or len(ref.content.split("```")) < 2
+                if ref.author != self.user or (
+                    len(ref.content.split("```")) < 2 and not ref.attachments
                 ):
                     await message.channel.send(
                         f"{message.author.mention}\n"
-                        "The message you are replying to does not contain a "
-                        "pack I have generated"
+                        "The message you are replying to does not contain "
+                        "packs I have generated"
                     )
                 else:
-                    ref_pack = ref.content.split("```")[1].strip()
+                    if len(ref.content.split("```")) >= 2:
+                        ref_pack = ref.content.split("```")[1].strip()
+                    else:
+                        ref_pack = (await ref.attachments[0].read()).decode()
 
                     sealeddeck_id = argv[1].strip()
 
@@ -205,7 +207,7 @@ class DiscordBot(Bot, discord.Client):
                         logger.error(f"Sealeddeck error: {e}")
                         content = (
                             f"{message.author.mention}\n"
-                            f"The pack could not be added to sealeddeck.tech "
+                            f"The packs could not be added to sealeddeck.tech "
                             f"pool with ID `{sealeddeck_id}`. Please, verify "
                             f"the ID.\n"
                             f"If the ID is correct, sealeddeck.tech might be "
@@ -215,7 +217,7 @@ class DiscordBot(Bot, discord.Client):
                     else:
                         content = (
                             f"{message.author.mention}\n"
-                            f"The pack has been added to the pool.\n\n"
+                            f"The packs have been added to the pool.\n\n"
                             f"**Updated sealeddeck.tech pool**\n"
                             f"link: https://sealeddeck.tech/{new_id}\n"
                             f"ID: `{new_id}`"
