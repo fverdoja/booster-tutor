@@ -131,6 +131,71 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict):
     assert sum([card.foil for card in p.cards]) == 2
 
 
+@pytest.mark.parametrize(
+    ["draft_format", "expected_len", "expected_dups"],
+    [
+        (
+            {
+                "packs": [
+                    {
+                        "slots": [
+                            'tag:"Foil"',
+                            'tag:"Etched"',
+                            'tag:"Non-foil"',
+                            'tag:"Non-foil"',
+                            'tag:"Double"',
+                        ]
+                    }
+                ],
+                "multiples": False,
+            },
+            5,
+            False,
+        ),
+        (
+            {
+                "packs": [
+                    {
+                        "slots": [
+                            'tag:"Foil"',
+                            'tag:"Etched"',
+                            'tag:"Non-foil"',
+                            'tag:"Non-foil"',
+                            'tag:"Double"',
+                            'tag:"Double"',
+                        ]
+                    }
+                ],
+                "multiples": True,
+            },
+            6,
+            True,
+        ),
+        (
+            {
+                "packs": [{"slots": ['rarity:"Rare"']}],
+                "multiples": False,
+            },
+            15,
+            False,
+        ),
+    ],
+)
+def test_cube_pack_custom(
+    generator: MtgPackGenerator,
+    cube: dict,
+    draft_format: dict,
+    expected_len: int,
+    expected_dups: bool,
+):
+    cube["draft_formats"] = [draft_format]
+    p = generator.get_cube_pack(cube)
+    copy_count = Counter([c.card.name for c in p.cards])
+    assert len(p.cards) == expected_len
+    assert sum([card.foil for card in p.cards]) == 2
+    assert (copy_count["Dega Disciple"] == 2) == expected_dups
+
+
 def test_cube_pack_list(generator: MtgPackGenerator, cube: dict):
     p_list = generator.get_cube_packs(cube, n=6)
     assert len(p_list) == 6
