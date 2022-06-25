@@ -188,14 +188,17 @@ class MtgPackGenerator:
         logger.debug(f"Generating {cube['shortID']} cube pack...")
         cube_name = cube["name"]
         try:
-            pack_format: dict[str, int] = Counter(
-                cube["draft_formats"][0]["packs"][0]["slots"]
-            )
-            assert all([key.startswith("tag:") for key in pack_format])
+            slots = []
+            for slot in cube["draft_formats"][0]["packs"][0]["slots"]:
+                assert slot.startswith("tag:") or slot.startswith("t:")
+                slots.append(slot.split(":")[1].strip('"'))
+            pack_format: dict[str, int] = Counter(slots)
+
             replace = cube["draft_formats"][0]["multiples"]
+
             cube_cards: dict[str, list[str]] = {key: [] for key in pack_format}
             for card in cube["cards"]:
-                tag = f"tag:\"{card['tags'][0]}\""
+                tag = card["tags"][0]
                 cube_cards[tag].append(card)
         except (KeyError, IndexError, AssertionError):
             pack_format = {"cards": 15}

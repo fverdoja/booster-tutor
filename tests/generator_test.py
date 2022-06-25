@@ -139,11 +139,11 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict):
                 "packs": [
                     {
                         "slots": [
-                            'tag:"Foil"',
-                            'tag:"Etched"',
-                            'tag:"Non-foil"',
-                            'tag:"Non-foil"',
-                            'tag:"Double"',
+                            't:"Foil"',
+                            't:"Etched"',
+                            't:"Non-foil"',
+                            't:"Non-foil"',
+                            't:"Double"',
                         ]
                     }
                 ],
@@ -157,12 +157,12 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict):
                 "packs": [
                     {
                         "slots": [
-                            'tag:"Foil"',
-                            'tag:"Etched"',
-                            'tag:"Non-foil"',
-                            'tag:"Non-foil"',
-                            'tag:"Double"',
-                            'tag:"Double"',
+                            "tag:Foil",
+                            "tag:Etched",
+                            "tag:Non-foil",
+                            "tag:Non-foil",
+                            "tag:Double",
+                            "tag:Double",
                         ]
                     }
                 ],
@@ -173,7 +173,7 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict):
         ),
         (
             {
-                "packs": [{"slots": ['rarity:"Rare"']}],
+                "packs": [{"slots": ["rarity:Rare"]}],
                 "multiples": False,
             },
             15,
