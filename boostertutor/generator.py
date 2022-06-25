@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from typing import Optional, Sequence
 
 from numpy.random import choice
@@ -186,8 +187,26 @@ class MtgPackGenerator:
     def get_cube_pack(self, cube: dict) -> MtgPack:
         logger.debug(f"Generating {cube['shortID']} cube pack...")
         cube_name = cube["name"]
-        cube_cards = cube["cards"]
-        pack_list = choice(cube_cards, 15, replace=False)
+        try:
+            pack_format: dict[str, int] = Counter(
+                cube["draft_formats"][0]["packs"][0]["slots"]
+            )
+            assert all([key.startswith("tag:") for key in pack_format])
+            replace = cube["draft_formats"][0]["multiples"]
+            cube_cards = {key: [] for key in pack_format}
+            for card in cube["cards"]:
+                tag = f"tag:\"{card['tags'][0]}\""
+                cube_cards[tag].append(card)
+        except (KeyError, IndexError, AssertionError):
+            pack_format = {"cards": 15}
+            replace = False
+            cube_cards = {"cards": cube["cards"]}
+        logger.debug(f"Using pack format: {pack_format}")
+
+        pack_list = []
+        for key, num in pack_format.items():
+            pack_list.extend(choice(cube_cards[key], num, replace=replace))
+
         pack_cards = [
             MtgCard(
                 self.data.cards_by_scryfall_id[card_dict["cardID"]],
