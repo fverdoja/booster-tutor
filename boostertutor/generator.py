@@ -193,7 +193,7 @@ class MtgPackGenerator:
             )
             assert all([key.startswith("tag:") for key in pack_format])
             replace = cube["draft_formats"][0]["multiples"]
-            cube_cards = {key: [] for key in pack_format}
+            cube_cards: dict[str, list[str]] = {key: [] for key in pack_format}
             for card in cube["cards"]:
                 tag = f"tag:\"{card['tags'][0]}\""
                 cube_cards[tag].append(card)
