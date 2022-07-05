@@ -1,21 +1,24 @@
 import logging
 from io import BytesIO, StringIO
-from typing import Optional
+from typing import Optional, Sequence
 
 import aiohttp
 import discord
 import imageio
+from discord.ext import commands
 
 import boostertutor.utils.utils as utils
 from boostertutor.generator import MtgPackGenerator
+from boostertutor.models.mtg_pack import MtgPack
 
 logger = logging.getLogger(__name__)
 
 MAX_NUM_PACKS = 36
 
 
-class Bot:
-    def __init__(self, config: utils.Config) -> None:
+class BoosterTutor(commands.Cog):
+    def __init__(self, bot: commands.Bot, config: utils.Config):
+        self.bot = bot
         self.config = config
         self.generator = MtgPackGenerator(
             path_to_mtgjson=self.config.mtgjson_path,
@@ -56,371 +59,299 @@ class Bot:
             "neo",
             "snc",
         ]
-        self.all_sets: list[str] = [
-            s.lower() for s in self.generator.sets_with_boosters
-        ]
+        self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
 
+    def __random(self, num_packs: int) -> Sequence[MtgPack]:
+        return self.generator.get_random_packs(n=num_packs, replace=True)
 
-class DiscordBot(Bot, discord.Client):
-    def __init__(self, config: utils.Config) -> None:
-        Bot.__init__(self, config)
-        discord.Client.__init__(self)
-        self.prefix: str = self.config.command_prefix
+    def __historic(self, num_packs: int) -> Sequence[MtgPack]:
+        return self.generator.get_random_packs(
+            self.historic_sets, n=num_packs, replace=True
+        )
+
+    def __chaos_sealed(self) -> Sequence[MtgPack]:
+        return self.generator.get_random_packs(self.historic_sets, n=6)
+
+    def __standard(self, num_packs: int) -> Sequence[MtgPack]:
+        return self.generator.get_random_packs(
+            self.standard_sets, n=num_packs, replace=True
+        )
+
+    def __jmp(self, num_packs: int) -> Sequence[MtgPack]:
+        return (
+            self.generator.get_random_jmp_decks(n=num_packs, replace=True)
+            if self.generator.has_jmp
+            else []  # TODO: consider exception?
+        )
+
+    async def __cube(  # TODO: throws exception, should it handle it?
+        self, cube_id: str, num_packs: int
+    ) -> Sequence[MtgPack]:
+        cube = await utils.get_cube(cube_id)
+        return self.generator.get_cube_packs(cube, n=num_packs)
+
+    def __set(self, set: str, num_packs: int) -> Sequence[MtgPack]:
+        return (
+            self.generator.get_packs(set, n=num_packs)
+            if set in self.all_sets
+            else []  # TODO: consider exception?
+        )
 
     def emoji(self, name: str, guild: Optional[discord.Guild] = None) -> str:
         """Return an emoji if it exists on the server or empty otherwise"""
-        for e in guild.emojis if guild else self.emojis:
+        for e in guild.emojis if guild else self.bot.emojis:
             if e.name == name:
                 return str(e)
         return ""
 
-    async def on_ready(self) -> None:
-        logger.info(f"{self.user} has connected to Discord!")
-
-    async def on_message(self, message: discord.Message) -> None:
-        if message.author == self.user:
-            return
-        if not message.content.startswith(self.prefix):
-            return
-
-        argv = message.content.removeprefix(self.prefix).split()
-        if len(message.mentions):
-            member = message.mentions[0]
-            argv = [
-                x
-                for x in argv
-                if x not in [m.mention for m in message.mentions]
-            ]
-        else:
-            member = message.author
-        assert len(argv)
-        command = argv[0].lower()
-        num_packs = (
-            max(1, int(argv[1])) if len(argv) >= 2 and argv[1].isdigit() else 1
+    async def send_pack_msg(
+        self,
+        p: MtgPack,
+        message: discord.Message,
+        member: discord.Member,
+        emoji: str,
+    ) -> None:
+        # First send the booster text with a loading message for the image
+        embed = discord.Embed(
+            description=":hourglass: Summoning a vision of your booster "
+            "from the aether...",
+            color=discord.Color.orange(),
         )
-        if num_packs > MAX_NUM_PACKS:
+
+        m = await message.channel.send(
+            f"**{emoji}{(' ' if len(emoji) else '')}{p.name}**\n"
+            f"{member.mention}\n"
+            f"```\n{p.arena_format()}\n```",
+            embed=embed,
+        )
+
+        try:
+            # Then generate the image of booster content (takes a while)
+            img_list = await p.get_images(size="normal")
+            p_img = utils.pack_img(img_list)
+            img_file = BytesIO()
+            imageio.imwrite(img_file, p_img, format="jpeg")
+
+            # Upload it to imgur.com
+            link = await utils.upload_img(
+                img_file, self.config.imgur_client_id
+            )
+        except aiohttp.ClientResponseError:
+            # Send an error message if the upload failed...
+            embed = discord.Embed(
+                description=":x: Sorry, it seems your booster is lost in "
+                "the Blind Eternities...",
+                color=discord.Color.red(),
+            )
+        else:
+            # ...or edit the message by embedding the link
+            embed = discord.Embed(
+                color=discord.Color.dark_green(), description=link
+            )
+            embed.set_image(url=link)
+
+        await m.edit(embed=embed)
+
+    async def send_pool_msg(
+        self,
+        pool: Sequence[MtgPack],
+        message: discord.Message,
+        member: discord.Member,
+        emoji: str,
+    ) -> None:
+        pool_file = StringIO("\r\n".join([p.arena_format() for p in pool]))
+        sets = ", ".join([p.set.code for p in pool])
+        json_pool = [card_json for p in pool for card_json in p.json()]
+
+        # First send the pool content with a loading message for the image
+        embed = discord.Embed(
+            description=":hourglass: Summoning a vision of your rares "
+            "from the aether...",
+            color=discord.Color.orange(),
+        )
+        title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} packs"
+        m = await message.channel.send(
+            f"**{emoji}{(' ' if len(emoji) else '')}{title}**\n"
+            f"{member.mention}\n"
+            f"Content: [{sets}]",
+            embed=embed,
+            file=discord.File(pool_file, filename=f"{member.nick}_pool.txt"),
+        )
+
+        content = m.content
+        try:
+            sealeddeck_id = await utils.pool_to_sealeddeck(json_pool)
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"Sealeddeck error: {e}")
+            content += "\n\n**Sealeddeck.tech:** Error\n"
+        else:
+            content += (
+                f"\n\n**Sealeddeck.tech link:** "
+                f"https://sealeddeck.tech/{sealeddeck_id}"
+                f"\n**Sealeddeck.tech ID:** "
+                f"`{sealeddeck_id}`"
+            )
+
+        await m.edit(content=content)
+
+        try:
+            # Then generate the image of rares in pool (takes a while)
+            img_list = [
+                await c.get_image(size="normal")
+                for p in pool
+                for c in p.cards
+                if c.card.rarity in ["rare", "mythic"]
+            ]
+            r_img = utils.rares_img(img_list)
+            r_file = BytesIO()
+            imageio.imwrite(r_file, r_img, format="jpeg")
+
+            # Upload it to imgur.com
+            link = await utils.upload_img(r_file, self.config.imgur_client_id)
+        except aiohttp.ClientResponseError:
+            # Send an error message if the upload failed...
+            embed = discord.Embed(
+                description=":x: Sorry, it seems your rares are lost in "
+                "the Blind Eternities...",
+                color=discord.Color.red(),
+            )
+        else:
+            # ...or edit the message by embedding the link
+            embed = discord.Embed(
+                color=discord.Color.dark_green(), description=link
+            )
+            embed.set_image(url=link)
+
+        await m.edit(embed=embed)
+
+    async def send_plist_msg(
+        self, p_list, ctx: commands.Context, emoji: str = ""
+    ) -> None:
+        if p_list:
+            assert ctx.message
+            message: discord.Message = ctx.message
+            member = (
+                message.mentions[0]
+                if len(message.mentions)
+                else message.author
+            )
+            if len(p_list) == 1:
+                await self.send_pack_msg(p_list[0], message, member, emoji)
+            else:
+                await self.send_pool_msg(p_list, message, member, emoji)
+
+    @commands.command(name="random")
+    async def random(self, ctx: commands.Context, num_packs: int = 1) -> None:
+        p_list = self.__random(num_packs)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="historic")
+    async def historic(
+        self, ctx: commands.Context, num_packs: int = 1
+    ) -> None:
+        p_list = self.__historic(num_packs)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="chaossealed")
+    async def chaos_sealed(self, ctx: commands.Context) -> None:
+        p_list = self.__chaos_sealed()
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="standard")
+    async def standard(
+        self, ctx: commands.Context, num_packs: int = 1
+    ) -> None:
+        p_list = self.__standard(num_packs)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="jmp")
+    async def jmp(self, ctx: commands.Context, num_packs: int = 1) -> None:
+        p_list = self.__jmp(num_packs)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="jmpsealed")
+    async def jmp_sealed(self, ctx: commands.Context) -> None:
+        p_list = self.__jmp(6)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="cube")
+    async def cube(
+        self, ctx: commands.Context, cube_id: str, num_packs: int = 1
+    ) -> None:
+        p_list = self.__cube(cube_id, num_packs)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="cubesealed")
+    async def cube_sealed(self, ctx: commands.Context, cube_id: str) -> None:
+        p_list = self.__cube(cube_id, 6)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="set")
+    async def set(
+        self, ctx: commands.Context, set: str, num_packs: int = 1
+    ) -> None:
+        p_list = self.__set(set, num_packs)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="setsealed")
+    async def set_sealed(self, ctx: commands.Context, set: str) -> None:
+        p_list = self.__set(set, 6)
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(name="addpack")
+    async def add_pack(
+        self, ctx: commands.Context, sealeddeck_id: str
+    ) -> None:
+        assert ctx.message
+        message: discord.Message = ctx.message
+        if not message.reference:
             await message.channel.send(
                 f"{message.author.mention}\n"
-                f"You requested too many packs, I will generate "
-                f"{MAX_NUM_PACKS} instead."
+                "To add packs to the sealeddeck.tech pool `xyz123`, reply"
+                " to my message with the pack content with the command "
+                f"`{self.config.command_prefix}addpack xyz123`"
             )
-            num_packs = MAX_NUM_PACKS
+            return
 
-        p = p_list = None
-        em = ""
-        if command == "random":
-            p_list = self.generator.get_random_packs(n=num_packs, replace=True)
-        elif command == "historic":
-            p_list = self.generator.get_random_packs(
-                self.historic_sets, n=num_packs, replace=True
-            )
-        elif command == "standard":
-            p_list = self.generator.get_random_packs(
-                self.standard_sets, n=num_packs, replace=True
-            )
-        elif command == "jmp":
-            if self.generator.has_jmp:
-                p_list = self.generator.get_random_jmp_decks(
-                    n=num_packs, replace=True
-                )
-        elif command == "cube":
-            cube_id = argv[1]
-            try:
-                cube = await utils.get_cube(cube_id)
-                p_list = self.generator.get_cube_packs(cube, n=1)
-            except aiohttp.ClientResponseError:
-                await message.channel.send(
-                    f"{message.author.mention}\n"
-                    f"The provided Cube ID cannot be found on CubeCobra."
-                )
-        elif command == "cubesealed":
-            cube_id = argv[1]
-            try:
-                cube = await utils.get_cube(cube_id)
-                p_list = self.generator.get_cube_packs(cube, n=6)
-            except aiohttp.ClientResponseError:
-                await message.channel.send(
-                    f"{message.author.mention}\n"
-                    f"The provided Cube ID cannot be found on CubeCobra."
-                )
-        elif command in self.all_sets:
-            p_list = self.generator.get_packs(command, n=num_packs)
-        elif command == "chaossealed":
-            em = self.emoji("CHAOS", message.guild)
-            p_list = self.generator.get_random_packs(self.historic_sets, n=6)
-        elif command.removesuffix("sealed") in self.all_sets:
-            em = self.emoji(
-                command.removesuffix("sealed").upper(), message.guild
-            )
-            p_list = self.generator.get_packs(
-                command.removesuffix("sealed"), n=6
-            )
-        elif command == "jmpsealed":
-            if self.generator.has_jmp:
-                em = self.emoji("JMP", message.guild)
-                p_list = self.generator.get_random_jmp_decks(n=6)
-        elif command == "help":
+        ref = await message.channel.fetch_message(message.reference.message_id)
+        if ref.author != self.bot.user or (
+            len(ref.content.split("```")) < 2 and not ref.attachments
+        ):
             await message.channel.send(
-                f"You can give me one of the following commands:\n"
-                f"**Random packs**\n"
-                f"> `{self.prefix}random`: generates a random pack from the "
-                f"whole history of Magic\n"
-                f"> `{self.prefix}standard`: generates a random standard "
-                f"pack\n"
-                f"> `{self.prefix}historic`: generates a random (non-alchemy) "
-                f"historic pack\n"
-                f"> `{self.prefix}chaossealed`: generates 6 random "
-                f"(non-alchemy) historic packs\n"
-                f"\n**Set-specific packs**\n"
-                f"> `{self.prefix}{{setcode}}`: generates a pack from the "
-                f"indicated set (e.g., `{self.prefix}znr` generates a "
-                f"*Zendikar Rising* pack)\n"
-                f"> `{self.prefix}{{setcode}}sealed`: generates 6 packs from "
-                f"the indicated set (e.g., `{self.prefix}znrsealed` generates "
-                f"6 *Zendikar Rising* packs)\n"
-                f"\n***Jumpstart* decks**\n"
-                f"> `{self.prefix}jmp`: generates a ramdom Jumpstart deck "
-                f"(with MTG Arena replacements)\n"
-                f"\n**CubeCobra cube packs**\n"
-                f"> `{self.prefix}cube cube_id`: generates a pack from the "
-                f"cube indicated by the CubeCobra Cube ID `cube_id`\n"
-                f"> `{self.prefix}cubesealed cube_id`: generates 6 packs from "
-                f"the cube indicated by the CubeCobra Cube ID `cube_id`\n"
-                f"\n**Sealeddeck.tech integration**\n"
-                f"> `{self.prefix}addpack xyz123`: if issued replying to "
-                f"packs I have generated, adds those packs to the previously "
-                f"generated sealeddeck.tech pool with ID `xyz123`\n"
-                f"\n**Additional general parameters**\n"
-                f"While replying to any command, I will mention the user who "
-                f"issued it, unless the command is followed by a mention, in "
-                f"which case I will mention that user instead. For example, "
-                f"`{self.prefix}znr @user` has me mention *user* (instead of "
-                f"you) in my reply.\n"
-                f"Most of the pack-generating non-sealed commands can take a "
-                f"number to generate more than one pack. For example `!random "
-                f"3` will generate 3 random packs. This cannot be used with "
-                f"cube packs at the moment."
+                f"{message.author.mention}\n"
+                "The message you are replying to does not contain "
+                "packs I have generated"
             )
-        elif command == "addpack":
-            if len(argv) != 2 or not message.reference:
-                await message.channel.send(
-                    f"{message.author.mention}\n"
-                    "To add packs to the sealeddeck.tech pool `xyz123`, reply"
-                    " to my message with the pack content with the command "
-                    f"`{self.prefix}addpack xyz123`"
-                )
-            else:
-                ref = await message.channel.fetch_message(
-                    message.reference.message_id
-                )
-                if ref.author != self.user or (
-                    len(ref.content.split("```")) < 2 and not ref.attachments
-                ):
-                    await message.channel.send(
-                        f"{message.author.mention}\n"
-                        "The message you are replying to does not contain "
-                        "packs I have generated"
-                    )
-                else:
-                    if len(ref.content.split("```")) >= 2:
-                        ref_pack = ref.content.split("```")[1].strip()
-                    else:
-                        ref_pack = (await ref.attachments[0].read()).decode()
+            return
 
-                    sealeddeck_id = argv[1].strip()
+        if len(ref.content.split("```")) >= 2:
+            ref_pack = ref.content.split("```")[1].strip()
+        else:
+            ref_pack = (await ref.attachments[0].read()).decode()
 
-                    pack_json = utils.arena_to_json(ref_pack)
-                    m = await message.channel.send(
-                        f"{message.author.mention}\n"
-                        f":hourglass: Adding pack to pool..."
-                    )
-                    try:
-                        new_id = await utils.pool_to_sealeddeck(
-                            pack_json, sealeddeck_id
-                        )
-                    except aiohttp.ClientResponseError as e:
-                        logger.error(f"Sealeddeck error: {e}")
-                        content = (
-                            f"{message.author.mention}\n"
-                            f"The packs could not be added to sealeddeck.tech "
-                            f"pool with ID `{sealeddeck_id}`. Please, verify "
-                            f"the ID.\n"
-                            f"If the ID is correct, sealeddeck.tech might be "
-                            f"having some issues right now, try again later."
-                        )
-
-                    else:
-                        content = (
-                            f"{message.author.mention}\n"
-                            f"The packs have been added to the pool.\n\n"
-                            f"**Updated sealeddeck.tech pool**\n"
-                            f"link: https://sealeddeck.tech/{new_id}\n"
-                            f"ID: `{new_id}`"
-                        )
-                    await m.edit(content=content)
-        elif command == "ev":
-            if len(argv) >= 2:
-                set: str = argv[1]
-                bulk_threshold = float(argv[2]) if len(argv) >= 3 else 0.0
-                currency: str = (
-                    argv[3]
-                    if len(argv) >= 4 and argv[3] in ["eur", "usd"]
-                    else "eur"
-                )
-                sign = "€" if currency == "eur" else "$"
-                bulk_string = (
-                    f" *(bulk threshold: {bulk_threshold:.2f}{sign})*"
-                    if bulk_threshold
-                    else ""
-                )
-                m = await message.channel.send(
-                    f"{message.author.mention}\n"
-                    f":hourglass: Computing {set.upper()} draft pack "
-                    f"{currency.upper()} EV{bulk_string}, it will take a "
-                    f"while (usually around 4 minutes)..."
-                )
-                try:
-                    rate = await utils.get_eur_usd_rate()
-                    ev = await self.generator.get_pack_ev(
-                        set=set,
-                        currency=currency,
-                        bulk_threshold=bulk_threshold,
-                        eur_usd_rate=rate,
-                    )
-                except aiohttp.ClientResponseError as e:
-                    logger.error(f"EV Calculation error: {e}")
-                    content = (
-                        f"{message.author.mention}\n"
-                        f":x: The EV calculation generated some errors."
-                    )
-
-                else:
-                    em = self.emoji(set.upper(), message.guild)
-                    content = (
-                        f"{message.author.mention}\n"
-                        f"**{em}{(' ' if len(em) else '')}{set.upper()} Draft "
-                        f"Pack EV**{bulk_string}\n"
-                        f"One pack: {ev:.2f}{sign}\n"
-                        f"Draft (3): {ev*3:.2f}{sign}\n"
-                        f"Sealed (6): {ev*6:.2f}{sign}\n"
-                        f"24-pack box: {ev*24:.2f}{sign}\n"
-                        f"36-pack box: {ev*36:.2f}{sign}\n"
-                    )
-                await m.edit(content=content)
-
-        if p_list and len(p_list) == 1:
-            p = p_list[0]
-            # First send the booster text with a loading message for the image
-            embed = discord.Embed(
-                description=":hourglass: Summoning a vision of your booster "
-                "from the aether...",
-                color=discord.Color.orange(),
-            )
-            em = self.emoji(p.set.code.upper(), message.guild)
-
-            m = await message.channel.send(
-                f"**{em}{(' ' if len(em) else '')}{p.name}**\n"
-                f"{member.mention}\n"
-                f"```\n{p.arena_format()}\n```",
-                embed=embed,
+        pack_json = utils.arena_to_json(ref_pack)
+        m = await message.channel.send(
+            f"{message.author.mention}\n" f":hourglass: Adding pack to pool..."
+        )
+        try:
+            new_id = await utils.pool_to_sealeddeck(pack_json, sealeddeck_id)
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"Sealeddeck error: {e}")
+            content = (
+                f"{message.author.mention}\n"
+                f"The packs could not be added to sealeddeck.tech "
+                f"pool with ID `{sealeddeck_id}`. Please, verify "
+                f"the ID.\n"
+                f"If the ID is correct, sealeddeck.tech might be "
+                f"having some issues right now, try again later."
             )
 
-            try:
-                # Then generate the image of booster content (takes a while)
-                img_list = await p.get_images(size="normal")
-                p_img = utils.pack_img(img_list)
-                img_file = BytesIO()
-                imageio.imwrite(img_file, p_img, format="jpeg")
-
-                # Upload it to imgur.com
-                link = await utils.upload_img(
-                    img_file, self.config.imgur_client_id
-                )
-            except aiohttp.ClientResponseError:
-                # Send an error message if the upload failed...
-                embed = discord.Embed(
-                    description=":x: Sorry, it seems your booster is lost in "
-                    "the Blind Eternities...",
-                    color=discord.Color.red(),
-                )
-            else:
-                # ...or edit the message by embedding the link
-                embed = discord.Embed(
-                    color=discord.Color.dark_green(), description=link
-                )
-                embed.set_image(url=link)
-
-            await m.edit(embed=embed)
-        elif p_list:
-            pool_file = StringIO(
-                "\r\n".join([p.arena_format() for p in p_list])
+        else:
+            content = (
+                f"{message.author.mention}\n"
+                f"The packs have been added to the pool.\n\n"
+                f"**Updated sealeddeck.tech pool**\n"
+                f"link: https://sealeddeck.tech/{new_id}\n"
+                f"ID: `{new_id}`"
             )
-            sets = ", ".join([p.set.code for p in p_list])
-            json_pool = [card_json for p in p_list for card_json in p.json()]
-
-            # First send the pool content with a loading message for the image
-            embed = discord.Embed(
-                description=":hourglass: Summoning a vision of your rares "
-                "from the aether...",
-                color=discord.Color.orange(),
-            )
-            title = (
-                "Sealed pool" if len(p_list) == 6 else f"{len(p_list)} packs"
-            )
-            m = await message.channel.send(
-                f"**{em}{(' ' if len(em) else '')}{title}**\n"
-                f"{member.mention}\n"
-                f"Content: [{sets}]",
-                embed=embed,
-                file=discord.File(
-                    pool_file, filename=f"{member.nick}_pool.txt"
-                ),
-            )
-
-            content = m.content
-            try:
-                sealeddeck_id = await utils.pool_to_sealeddeck(json_pool)
-            except aiohttp.ClientResponseError as e:
-                logger.error(f"Sealeddeck error: {e}")
-                content += "\n\n**Sealeddeck.tech:** Error\n"
-            else:
-                content += (
-                    f"\n\n**Sealeddeck.tech link:** "
-                    f"https://sealeddeck.tech/{sealeddeck_id}"
-                    f"\n**Sealeddeck.tech ID:** "
-                    f"`{sealeddeck_id}`"
-                )
-
-            await m.edit(content=content)
-
-            try:
-                # Then generate the image of rares in pool (takes a while)
-                img_list = [
-                    await c.get_image(size="normal")
-                    for p in p_list
-                    for c in p.cards
-                    if c.card.rarity in ["rare", "mythic"]
-                ]
-                r_img = utils.rares_img(img_list)
-                r_file = BytesIO()
-                imageio.imwrite(r_file, r_img, format="jpeg")
-
-                # Upload it to imgur.com
-                link = await utils.upload_img(
-                    r_file, self.config.imgur_client_id
-                )
-            except aiohttp.ClientResponseError:
-                # Send an error message if the upload failed...
-                embed = discord.Embed(
-                    description=":x: Sorry, it seems your rares are lost in "
-                    "the Blind Eternities...",
-                    color=discord.Color.red(),
-                )
-            else:
-                # ...or edit the message by embedding the link
-                embed = discord.Embed(
-                    color=discord.Color.dark_green(), description=link
-                )
-                embed.set_image(url=link)
-
-            await m.edit(embed=embed)
+        await m.edit(content=content)

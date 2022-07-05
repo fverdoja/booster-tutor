@@ -132,7 +132,8 @@ dmypy.json
 .pyre/
 
 # local config
-config.yaml
+config*.yaml
+!config_template.yaml
 
 # MTGJSON database
 AllPrintings*.json

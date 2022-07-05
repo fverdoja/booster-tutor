@@ -25,7 +25,7 @@ class MtgPackGenerator:
         if path_to_jmp is not None:
             self.import_jmp(path_to_jmp, arena=jmp_arena)
         self.fix_iko()
-        self.sets_with_boosters = [
+        self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
             if hasattr(set, "booster")

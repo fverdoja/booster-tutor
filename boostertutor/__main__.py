@@ -3,9 +3,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+from discord.ext.commands import Bot
+
 import boostertutor.utils.mtgjson_downloader as mtgjson
 import boostertutor.utils.set_symbols_downloader as symbols
-from boostertutor.bot import DiscordBot
+from boostertutor.bot import BoosterTutor
 from boostertutor.utils.utils import get_config
 
 
@@ -76,7 +78,8 @@ def main():
     elif args.downloader == "mtgjson":
         mtgjson.main(config, jmp=args.jmp, jmp_backup=args.jmp_backup)
     else:
-        bot = DiscordBot(config)
+        bot = Bot(command_prefix=config.command_prefix)
+        bot.add_cog(BoosterTutor(bot, config))
         bot.run(config.discord_token)
 
 
