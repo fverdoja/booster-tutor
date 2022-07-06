@@ -13,13 +13,14 @@ from boostertutor.models.mtg_pack import MtgPack
 
 logger = logging.getLogger(__name__)
 
-MAX_NUM_PACKS = 36  # TODO: currently unused (maybe put in config?)
+MAX_NUM_PACKS = 36
 
 
 def help_msg(
     brief: str,
     long_description: Optional[str] = None,
     has_num_packs: bool = False,
+    has_member: bool = True,
     args: dict[str, str] = {},
     examples: dict[str, str] = {},
 ) -> str:
@@ -33,7 +34,12 @@ def help_msg(
         if has_num_packs:
             help += (
                 "\n*num_packs* (optional): Number of packs to generate. "
-                "Defaults to 1."
+                f"Defaults to 1, maximum {MAX_NUM_PACKS}."
+            )
+        if has_member:
+            help += (
+                "\n*member* (optional): the member to be mentioned in the "
+                "reply. Defaults to the member who issued the command."
             )
     if examples:
         help += "\n\n__**Examples:**__"
@@ -70,13 +76,12 @@ class DiscordBot(commands.Bot):
                     self.command_prefix, self.command_prefix + "set ", 1
                 )
                 logger.info(message.content)
-            if command.removesuffix("sealed") in self.all_sets:
+            elif command.removesuffix("sealed") in self.all_sets:
                 message.content = message.content.replace(
                     "sealed", "", 1
                 ).replace(
                     self.command_prefix, self.command_prefix + "setsealed ", 1
                 )
-                logger.info(message.content)
 
         await self.process_commands(message)
 
@@ -134,6 +139,12 @@ class BoosterTutor(commands.Cog):
                 return str(e)
         return ""
 
+    def process_num_packs(self, num_packs: Optional[int]) -> int:
+        if num_packs:
+            return min(max(1, num_packs), MAX_NUM_PACKS)
+        else:
+            return 1
+
     async def send_pack_msg(
         self,
         p: MtgPack,
@@ -148,7 +159,7 @@ class BoosterTutor(commands.Cog):
             color=discord.Color.orange(),
         )
 
-        m = await message.channel.send(
+        m = await message.reply(
             f"**{emoji}{(' ' if len(emoji) else '')}{p.name}**\n"
             f"{member.mention}\n"
             f"```\n{p.arena_format()}\n```",
@@ -200,12 +211,14 @@ class BoosterTutor(commands.Cog):
             color=discord.Color.orange(),
         )
         title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} packs"
-        m = await message.channel.send(
+        m = await message.reply(
             f"**{emoji}{(' ' if len(emoji) else '')}{title}**\n"
             f"{member.mention}\n"
             f"Content: [{sets}]",
             embed=embed,
-            file=discord.File(pool_file, filename=f"{member.nick}_pool.txt"),
+            file=discord.File(
+                pool_file, filename=f"{member.display_name}_pool.txt"
+            ),
         )
 
         content = m.content
@@ -255,16 +268,17 @@ class BoosterTutor(commands.Cog):
         await m.edit(embed=embed)
 
     async def send_plist_msg(
-        self, p_list, ctx: commands.Context, emoji: str = ""
+        self,
+        p_list,
+        ctx: commands.Context,
+        member: Optional[discord.Member] = None,
+        emoji: str = "",
     ) -> None:
         if p_list:
             assert ctx.message
             message: discord.Message = ctx.message
-            member = (
-                message.mentions[0]
-                if len(message.mentions)
-                else message.author
-            )
+            if not member:
+                member = message.author
             if len(p_list) == 1:
                 await self.send_pack_msg(p_list[0], message, member, emoji)
             else:
@@ -280,9 +294,15 @@ class BoosterTutor(commands.Cog):
             },
         )
     )
-    async def random(self, ctx: commands.Context, num_packs: int = 1) -> None:
+    async def random(
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = self.process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(n=num_packs, replace=True)
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
         help=help_msg(
@@ -295,12 +315,16 @@ class BoosterTutor(commands.Cog):
         )
     )
     async def historic(
-        self, ctx: commands.Context, num_packs: int = 1
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
     ) -> None:
+        num_packs = self.process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
             self.historic_sets, n=num_packs, replace=True
         )
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
         name="chaossealed",
@@ -311,9 +335,11 @@ class BoosterTutor(commands.Cog):
             },
         ),
     )
-    async def chaos_sealed(self, ctx: commands.Context) -> None:
+    async def chaos_sealed(
+        self, ctx: commands.Context, member: Optional[discord.Member] = None
+    ) -> None:
         p_list = self.generator.get_random_packs(self.historic_sets, n=6)
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
         help=help_msg(
@@ -326,12 +352,16 @@ class BoosterTutor(commands.Cog):
         )
     )
     async def standard(
-        self, ctx: commands.Context, num_packs: int = 1
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
     ) -> None:
+        num_packs = self.process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
             self.standard_sets, n=num_packs, replace=True
         )
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
         help=help_msg(
@@ -344,12 +374,16 @@ class BoosterTutor(commands.Cog):
         )
     )
     async def explorer(
-        self, ctx: commands.Context, num_packs: int = 1
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
     ) -> None:
+        num_packs = self.process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
             self.explorer_sets, n=num_packs, replace=True
         )
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
         help=help_msg(
@@ -361,13 +395,19 @@ class BoosterTutor(commands.Cog):
             },
         )
     )
-    async def jmp(self, ctx: commands.Context, num_packs: int = 1) -> None:
+    async def jmp(
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = self.process_num_packs(num_packs)
         p_list = (
             self.generator.get_random_jmp_decks(n=num_packs, replace=True)
             if self.generator.has_jmp
             else []  # TODO: consider exception?
         )
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
         name="jmpsealed",
@@ -378,8 +418,10 @@ class BoosterTutor(commands.Cog):
             },
         ),
     )
-    async def jmp_sealed(self, ctx: commands.Context) -> None:
-        await self.jmp(ctx, 6)
+    async def jmp_sealed(
+        self, ctx: commands.Context, member: Optional[discord.Member] = None
+    ) -> None:
+        await self.jmp(ctx, 6, member)
 
     @commands.command(
         help=help_msg(
@@ -398,11 +440,28 @@ class BoosterTutor(commands.Cog):
         )
     )
     async def cube(
-        self, ctx: commands.Context, cube_id: str, num_packs: int = 1
+        self,
+        ctx: commands.Context,
+        cube_id: str,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
     ) -> None:
+        num_packs = self.process_num_packs(num_packs)
         cube = await utils.get_cube(cube_id)
         p_list = self.generator.get_cube_packs(cube, n=num_packs)
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
+
+    @cube.error
+    async def cube_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ):
+        message: discord.Message = ctx.message
+        if isinstance(error, commands.CommandInvokeError) and isinstance(
+            error.original, aiohttp.ClientResponseError
+        ):
+            await message.reply(
+                ":warning: The provided Cube ID cannot be found on CubeCobra."
+            )
 
     @commands.command(
         name="cubesealed",
@@ -418,8 +477,13 @@ class BoosterTutor(commands.Cog):
             },
         ),
     )
-    async def cube_sealed(self, ctx: commands.Context, cube_id: str) -> None:
-        await self.cube(ctx, cube_id, 6)
+    async def cube_sealed(
+        self,
+        ctx: commands.Context,
+        cube_id: str,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        await self.cube(ctx, cube_id, 6, member)
 
     @commands.command(
         help=help_msg(
@@ -440,14 +504,19 @@ class BoosterTutor(commands.Cog):
         )
     )
     async def set(
-        self, ctx: commands.Context, set_code: str, num_packs: int = 1
+        self,
+        ctx: commands.Context,
+        set_code: str,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
     ) -> None:
+        num_packs = self.process_num_packs(num_packs)
         p_list = (
             self.generator.get_packs(set_code, num_packs)
-            if set_code in self.all_sets
+            if set_code.lower() in self.all_sets
             else []
         )
-        await self.send_plist_msg(p_list, ctx)
+        await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
         name="setsealed",
@@ -464,17 +533,39 @@ class BoosterTutor(commands.Cog):
             },
         ),
     )
-    async def set_sealed(self, ctx: commands.Context, set_code: str) -> None:
-        await self.set(ctx, set_code, 6)
+    async def set_sealed(
+        self,
+        ctx: commands.Context,
+        set_code: str,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        await self.set(ctx, set_code, 6, member)
 
-    @commands.command(name="addpack")
+    @commands.command(
+        name="addpack",
+        help=help_msg(
+            "Adds packs to a previously generated sealeddeck.tech pool",
+            long_description="This command must be issued in reply to a "
+            "message by the bot containing one or more generated packs. Those "
+            "packs will be added to the indicated pool.",
+            has_member=False,
+            args={
+                "sealeddeck_id": "The ID of the sealeddeck.tech pool to add "
+                "the additional packs to"
+            },
+            examples={
+                "addpack xyz123": "adds packs to the previously generated "
+                "sealeddeck.tech pool with ID xyz123"
+            },
+        ),
+    )
     async def add_pack(
         self, ctx: commands.Context, sealeddeck_id: str
     ) -> None:
         assert ctx.message
         message: discord.Message = ctx.message
         if not message.reference:
-            await message.channel.send(
+            await message.reply(
                 f"{message.author.mention}\n"
                 "To add packs to the sealeddeck.tech pool `xyz123`, reply"
                 " to my message with the pack content with the command "
@@ -486,7 +577,7 @@ class BoosterTutor(commands.Cog):
         if ref.author != self.bot.user or (
             len(ref.content.split("```")) < 2 and not ref.attachments
         ):
-            await message.channel.send(
+            await message.reply(
                 f"{message.author.mention}\n"
                 "The message you are replying to does not contain "
                 "packs I have generated"
@@ -499,7 +590,7 @@ class BoosterTutor(commands.Cog):
             ref_pack = (await ref.attachments[0].read()).decode()
 
         pack_json = utils.arena_to_json(ref_pack)
-        m = await message.channel.send(
+        m = await message.reply(
             f"{message.author.mention}\n" f":hourglass: Adding pack to pool..."
         )
         try:
@@ -524,3 +615,12 @@ class BoosterTutor(commands.Cog):
                 f"ID: `{new_id}`"
             )
         await m.edit(content=content)
+
+    # Cog error handler
+    async def cog_command_error(self, ctx, error):
+        message: discord.Message = ctx.message
+        if isinstance(error, commands.MissingRequiredArgument):
+            await message.reply(
+                f":warning: {error}\nFor more help, "
+                f"use `{self.config.command_prefix}help {ctx.invoked_with}`."
+            )
