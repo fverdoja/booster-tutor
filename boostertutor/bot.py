@@ -101,9 +101,7 @@ class BoosterTutor(commands.Cog):
             "neo",
             "snc",
         ]
-        self.historic_sets = [
-            "klr",
-            "akr",
+        self.explorer_sets = [
             "xln",
             "rix",
             "dom",
@@ -125,6 +123,7 @@ class BoosterTutor(commands.Cog):
             "neo",
             "snc",
         ]
+        self.historic_sets = ["klr", "akr"] + self.explorer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
         self.bot.all_sets = self.all_sets
 
@@ -331,6 +330,24 @@ class BoosterTutor(commands.Cog):
     ) -> None:
         p_list = self.generator.get_random_packs(
             self.standard_sets, n=num_packs, replace=True
+        )
+        await self.send_plist_msg(p_list, ctx)
+
+    @commands.command(
+        help=help_msg(
+            "Generates random explorer packs",
+            has_num_packs=True,
+            examples={
+                "explorer": "generates one pack",
+                "explorer 4": "generates four packs",
+            },
+        )
+    )
+    async def explorer(
+        self, ctx: commands.Context, num_packs: int = 1
+    ) -> None:
+        p_list = self.generator.get_random_packs(
+            self.explorer_sets, n=num_packs, replace=True
         )
         await self.send_plist_msg(p_list, ctx)
 
