@@ -13,11 +13,77 @@ from boostertutor.models.mtg_pack import MtgPack
 
 logger = logging.getLogger(__name__)
 
-MAX_NUM_PACKS = 36
+MAX_NUM_PACKS = 36  # TODO: currently unused (maybe put in config?)
+
+
+def help_msg(
+    brief: str,
+    long_description: Optional[str] = None,
+    has_num_packs: bool = False,
+    args: dict[str, str] = {},
+    examples: dict[str, str] = {},
+) -> str:
+    help = f"{brief}"
+    if long_description:
+        help += f"\n\n{long_description}"
+    if args or has_num_packs:
+        help += "\n\n__**Args:**__"
+        for name, description in args.items():
+            help += f"\n*{name}*: {description}"
+        if has_num_packs:
+            help += (
+                "\n*num_packs* (optional): Number of packs to generate. "
+                "Defaults to 1."
+            )
+    if examples:
+        help += "\n\n__**Examples:**__"
+        for name, description in examples.items():
+            help += f"\n`{name}`: {description}"
+
+    return help
+
+
+class DiscordBot(commands.Bot):
+    def __init__(
+        self,
+        command_prefix,
+        help_command=commands.MinimalHelpCommand(no_category="Other"),
+        description=None,
+        **options,
+    ):
+        super().__init__(command_prefix, help_command, description, **options)
+
+    async def on_ready(self) -> None:
+        logger.info(f"{self.user} has connected to Discord!")
+
+    async def on_message(self, message: discord.Message) -> None:
+        if message.author != self.user and message.content.startswith(
+            self.command_prefix
+        ):
+            command = (
+                message.content.removeprefix(self.command_prefix)
+                .split()[0]
+                .lower()
+            )
+            if command in self.all_sets:
+                message.content = message.content.replace(
+                    self.command_prefix, self.command_prefix + "set ", 1
+                )
+                logger.info(message.content)
+            if command.removesuffix("sealed") in self.all_sets:
+                message.content = message.content.replace(
+                    "sealed", "", 1
+                ).replace(
+                    self.command_prefix, self.command_prefix + "setsealed ", 1
+                )
+                logger.info(message.content)
+
+        await self.process_commands(message)
 
 
 class BoosterTutor(commands.Cog):
-    def __init__(self, bot: commands.Bot, config: utils.Config):
+    def __init__(self, bot: DiscordBot, config: utils.Config):
+        super().__init__()
         self.bot = bot
         self.config = config
         self.generator = MtgPackGenerator(
@@ -60,42 +126,7 @@ class BoosterTutor(commands.Cog):
             "snc",
         ]
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
-
-    def __random(self, num_packs: int) -> Sequence[MtgPack]:
-        return self.generator.get_random_packs(n=num_packs, replace=True)
-
-    def __historic(self, num_packs: int) -> Sequence[MtgPack]:
-        return self.generator.get_random_packs(
-            self.historic_sets, n=num_packs, replace=True
-        )
-
-    def __chaos_sealed(self) -> Sequence[MtgPack]:
-        return self.generator.get_random_packs(self.historic_sets, n=6)
-
-    def __standard(self, num_packs: int) -> Sequence[MtgPack]:
-        return self.generator.get_random_packs(
-            self.standard_sets, n=num_packs, replace=True
-        )
-
-    def __jmp(self, num_packs: int) -> Sequence[MtgPack]:
-        return (
-            self.generator.get_random_jmp_decks(n=num_packs, replace=True)
-            if self.generator.has_jmp
-            else []  # TODO: consider exception?
-        )
-
-    async def __cube(  # TODO: throws exception, should it handle it?
-        self, cube_id: str, num_packs: int
-    ) -> Sequence[MtgPack]:
-        cube = await utils.get_cube(cube_id)
-        return self.generator.get_cube_packs(cube, n=num_packs)
-
-    def __set(self, set: str, num_packs: int) -> Sequence[MtgPack]:
-        return (
-            self.generator.get_packs(set, n=num_packs)
-            if set in self.all_sets
-            else []  # TODO: consider exception?
-        )
+        self.bot.all_sets = self.all_sets
 
     def emoji(self, name: str, guild: Optional[discord.Guild] = None) -> str:
         """Return an emoji if it exists on the server or empty otherwise"""
@@ -240,63 +271,184 @@ class BoosterTutor(commands.Cog):
             else:
                 await self.send_pool_msg(p_list, message, member, emoji)
 
-    @commands.command(name="random")
+    @commands.command(
+        help=help_msg(
+            "Generates random packs from the whole history of Magic",
+            has_num_packs=True,
+            examples={
+                "random": "generates one pack",
+                "random 4": "generates four packs",
+            },
+        )
+    )
     async def random(self, ctx: commands.Context, num_packs: int = 1) -> None:
-        p_list = self.__random(num_packs)
+        p_list = self.generator.get_random_packs(n=num_packs, replace=True)
         await self.send_plist_msg(p_list, ctx)
 
-    @commands.command(name="historic")
+    @commands.command(
+        help=help_msg(
+            "Generates random (non-alchemy) historic packs",
+            has_num_packs=True,
+            examples={
+                "historic": "generates one pack",
+                "historic 4": "generates four packs",
+            },
+        )
+    )
     async def historic(
         self, ctx: commands.Context, num_packs: int = 1
     ) -> None:
-        p_list = self.__historic(num_packs)
+        p_list = self.generator.get_random_packs(
+            self.historic_sets, n=num_packs, replace=True
+        )
         await self.send_plist_msg(p_list, ctx)
 
-    @commands.command(name="chaossealed")
+    @commands.command(
+        name="chaossealed",
+        help=help_msg(
+            "Generates 6 random (non-alchemy) historic packs",
+            examples={
+                "chaossealed": "generates six packs",
+            },
+        ),
+    )
     async def chaos_sealed(self, ctx: commands.Context) -> None:
-        p_list = self.__chaos_sealed()
+        p_list = self.generator.get_random_packs(self.historic_sets, n=6)
         await self.send_plist_msg(p_list, ctx)
 
-    @commands.command(name="standard")
+    @commands.command(
+        help=help_msg(
+            "Generates random standard packs",
+            has_num_packs=True,
+            examples={
+                "standard": "generates one pack",
+                "standard 4": "generates four packs",
+            },
+        )
+    )
     async def standard(
         self, ctx: commands.Context, num_packs: int = 1
     ) -> None:
-        p_list = self.__standard(num_packs)
+        p_list = self.generator.get_random_packs(
+            self.standard_sets, n=num_packs, replace=True
+        )
         await self.send_plist_msg(p_list, ctx)
 
-    @commands.command(name="jmp")
+    @commands.command(
+        help=help_msg(
+            "Generates ramdom *Jumpstart* decks (with Arena replacements)",
+            has_num_packs=True,
+            examples={
+                "jmp": "generates one deck",
+                "jmp 3": "generates three decks",
+            },
+        )
+    )
     async def jmp(self, ctx: commands.Context, num_packs: int = 1) -> None:
-        p_list = self.__jmp(num_packs)
+        p_list = (
+            self.generator.get_random_jmp_decks(n=num_packs, replace=True)
+            if self.generator.has_jmp
+            else []  # TODO: consider exception?
+        )
         await self.send_plist_msg(p_list, ctx)
 
-    @commands.command(name="jmpsealed")
+    @commands.command(
+        name="jmpsealed",
+        help=help_msg(
+            "Generates six ramdom *Jumpstart* decks (with Arena replacements)",
+            examples={
+                "jmpsealed": "generates six decks",
+            },
+        ),
+    )
     async def jmp_sealed(self, ctx: commands.Context) -> None:
-        p_list = self.__jmp(6)
-        await self.send_plist_msg(p_list, ctx)
+        await self.jmp(ctx, 6)
 
-    @commands.command(name="cube")
+    @commands.command(
+        help=help_msg(
+            "Generates packs from the cube indicated by the ID `cube_id`",
+            has_num_packs=True,
+            args={
+                "cube_id": "CubeCobra cube ID of the cube from which to "
+                "generate the pack"
+            },
+            examples={
+                "cube modovintage": "generates one pack from the *MTGO "
+                "Vintage Cube*",
+                "cube modovintage 4": "generates four packs from the *MTGO "
+                "Vintage Cube*",
+            },
+        )
+    )
     async def cube(
         self, ctx: commands.Context, cube_id: str, num_packs: int = 1
     ) -> None:
-        p_list = self.__cube(cube_id, num_packs)
+        cube = await utils.get_cube(cube_id)
+        p_list = self.generator.get_cube_packs(cube, n=num_packs)
         await self.send_plist_msg(p_list, ctx)
 
-    @commands.command(name="cubesealed")
+    @commands.command(
+        name="cubesealed",
+        help=help_msg(
+            "Generates six packs from the cube indicated by the ID `cube_id`",
+            args={
+                "cube_id": "CubeCobra cube ID of the cube from which to "
+                "generate the pack"
+            },
+            examples={
+                "cubesealed modovintage": "generates six pack from the *MTGO "
+                "Vintage Cube*",
+            },
+        ),
+    )
     async def cube_sealed(self, ctx: commands.Context, cube_id: str) -> None:
-        p_list = self.__cube(cube_id, 6)
-        await self.send_plist_msg(p_list, ctx)
+        await self.cube(ctx, cube_id, 6)
 
-    @commands.command(name="set")
+    @commands.command(
+        help=help_msg(
+            "Generates packs from the indicated set",
+            long_description="It can also be called directly as `{set_code}` "
+            "(forgoing `set`)",
+            has_num_packs=True,
+            args={
+                "set_code": "Three-letter code of the set to generate packs "
+                "from"
+            },
+            examples={
+                "set znr": "generates one *Zendikar Rising* pack",
+                "stx": "generates one *Strixhaven* pack",
+                "set znr 4": "generates four *Zendikar Rising* packs",
+                "stx 4": "generates four *Strixhaven* packs",
+            },
+        )
+    )
     async def set(
-        self, ctx: commands.Context, set: str, num_packs: int = 1
+        self, ctx: commands.Context, set_code: str, num_packs: int = 1
     ) -> None:
-        p_list = self.__set(set, num_packs)
+        p_list = (
+            self.generator.get_packs(set_code, num_packs)
+            if set_code in self.all_sets
+            else []
+        )
         await self.send_plist_msg(p_list, ctx)
 
-    @commands.command(name="setsealed")
-    async def set_sealed(self, ctx: commands.Context, set: str) -> None:
-        p_list = self.__set(set, 6)
-        await self.send_plist_msg(p_list, ctx)
+    @commands.command(
+        name="setsealed",
+        help=help_msg(
+            "Generates six packs from the indicated set",
+            long_description="It can also be called as `{set_code}sealed`",
+            args={
+                "set_code": "Three-letter code of the set to generate packs "
+                "from"
+            },
+            examples={
+                "setsealed znr": "generates six *Zendikar Rising* packs",
+                "stxsealed": "generates six *Strixhaven* packs",
+            },
+        ),
+    )
+    async def set_sealed(self, ctx: commands.Context, set_code: str) -> None:
+        await self.set(ctx, set_code, 6)
 
     @commands.command(name="addpack")
     async def add_pack(
