@@ -452,6 +452,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
     async def cube_error(
         self, ctx: commands.Context, error: commands.CommandError
     ):
+        assert ctx.message
         message: discord.Message = ctx.message
         if isinstance(error, commands.CommandInvokeError) and isinstance(
             error.original, aiohttp.ClientResponseError
