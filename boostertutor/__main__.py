@@ -5,7 +5,7 @@ from pathlib import Path
 
 import boostertutor.utils.mtgjson_downloader as mtgjson
 import boostertutor.utils.set_symbols_downloader as symbols
-from boostertutor.bot import BoosterTutor, DiscordBot
+from boostertutor.bot import DiscordBot
 from boostertutor.utils.utils import get_config
 
 
@@ -76,8 +76,7 @@ def main():
     elif args.downloader == "mtgjson":
         mtgjson.main(config, jmp=args.jmp, jmp_backup=args.jmp_backup)
     else:
-        bot = DiscordBot(command_prefix=config.command_prefix)
-        bot.add_cog(BoosterTutor(bot, config))
+        bot = DiscordBot(config)
         bot.run(config.discord_token)
 
 

@@ -52,44 +52,16 @@ def help_msg(
 class DiscordBot(commands.Bot):
     def __init__(
         self,
-        command_prefix,
-        help_command=commands.MinimalHelpCommand(no_category="Other"),
-        description=None,
+        config: utils.Config,
         **options,
     ):
-        super().__init__(command_prefix, help_command, description, **options)
-
-    async def on_ready(self) -> None:
-        logger.info(f"{self.user} has connected to Discord!")
-
-    async def on_message(self, message: discord.Message) -> None:
-        if message.author != self.user and message.content.startswith(
-            self.command_prefix
-        ):
-            command = (
-                message.content.removeprefix(self.command_prefix)
-                .split()[0]
-                .lower()
-            )
-            if command in self.all_sets:
-                message.content = message.content.replace(
-                    self.command_prefix, self.command_prefix + "set ", 1
-                )
-                logger.info(message.content)
-            elif command.removesuffix("sealed") in self.all_sets:
-                message.content = message.content.replace(
-                    "sealed", "", 1
-                ).replace(
-                    self.command_prefix, self.command_prefix + "setsealed ", 1
-                )
-
-        await self.process_commands(message)
-
-
-class BoosterTutor(commands.Cog):
-    def __init__(self, bot: DiscordBot, config: utils.Config):
-        super().__init__()
-        self.bot = bot
+        super().__init__(
+            command_prefix=config.command_prefix,
+            help_command=commands.MinimalHelpCommand(no_category="Other"),
+            description='A Discord bot to generate "Magic: the Gathering" '
+            "boosters and sealed pools",
+            **options,
+        )
         self.config = config
         self.generator = MtgPackGenerator(
             path_to_mtgjson=self.config.mtgjson_path,
@@ -130,7 +102,40 @@ class BoosterTutor(commands.Cog):
         ]
         self.historic_sets = ["klr", "akr"] + self.explorer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
-        self.bot.all_sets = self.all_sets
+        self.add_cog(BotCommands(self))
+
+    async def on_ready(self) -> None:
+        logger.info(f"{self.user} has connected to Discord!")
+
+    async def on_message(self, message: discord.Message) -> None:
+        if message.author != self.user and message.content.startswith(
+            self.command_prefix
+        ):
+            command = (
+                message.content.removeprefix(self.command_prefix)
+                .split()[0]
+                .lower()
+            )
+            if command in self.all_sets:
+                message.content = message.content.replace(
+                    self.command_prefix, self.command_prefix + "set ", 1
+                )
+                logger.info(message.content)
+            elif command.removesuffix("sealed") in self.all_sets:
+                message.content = message.content.replace(
+                    "sealed", "", 1
+                ).replace(
+                    self.command_prefix, self.command_prefix + "setsealed ", 1
+                )
+
+        await self.process_commands(message)
+
+
+class BotCommands(commands.Cog, name="Bot"):  # type: ignore
+    def __init__(self, bot: DiscordBot):
+        super().__init__()
+        self.bot = bot
+        self.generator = self.bot.generator
 
     def emoji(self, name: str, guild: Optional[discord.Guild] = None) -> str:
         """Return an emoji if it exists on the server or empty otherwise"""
@@ -149,8 +154,8 @@ class BoosterTutor(commands.Cog):
         self,
         p: MtgPack,
         message: discord.Message,
-        member: discord.Member,
         emoji: str,
+        member: Optional[discord.Member] = None,
     ) -> None:
         # First send the booster text with a loading message for the image
         embed = discord.Embed(
@@ -161,7 +166,7 @@ class BoosterTutor(commands.Cog):
 
         m = await message.reply(
             f"**{emoji}{(' ' if len(emoji) else '')}{p.name}**\n"
-            f"{member.mention}\n"
+            f"{member.mention if member else ''}\n"
             f"```\n{p.arena_format()}\n```",
             embed=embed,
         )
@@ -175,7 +180,7 @@ class BoosterTutor(commands.Cog):
 
             # Upload it to imgur.com
             link = await utils.upload_img(
-                img_file, self.config.imgur_client_id
+                img_file, self.bot.config.imgur_client_id
             )
         except aiohttp.ClientResponseError:
             # Send an error message if the upload failed...
@@ -197,8 +202,8 @@ class BoosterTutor(commands.Cog):
         self,
         pool: Sequence[MtgPack],
         message: discord.Message,
-        member: discord.Member,
         emoji: str,
+        member: Optional[discord.Member] = None,
     ) -> None:
         pool_file = StringIO("\r\n".join([p.arena_format() for p in pool]))
         sets = ", ".join([p.set.code for p in pool])
@@ -211,13 +216,15 @@ class BoosterTutor(commands.Cog):
             color=discord.Color.orange(),
         )
         title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} packs"
+        name = member.display_name if member else message.author.display_name
         m = await message.reply(
             f"**{emoji}{(' ' if len(emoji) else '')}{title}**\n"
-            f"{member.mention}\n"
+            f"{member.mention if member else ''}\n"
             f"Content: [{sets}]",
             embed=embed,
             file=discord.File(
-                pool_file, filename=f"{member.display_name}_pool.txt"
+                pool_file,
+                filename=f"{name}_pool.txt",
             ),
         )
 
@@ -250,7 +257,9 @@ class BoosterTutor(commands.Cog):
             imageio.imwrite(r_file, r_img, format="jpeg")
 
             # Upload it to imgur.com
-            link = await utils.upload_img(r_file, self.config.imgur_client_id)
+            link = await utils.upload_img(
+                r_file, self.bot.config.imgur_client_id
+            )
         except aiohttp.ClientResponseError:
             # Send an error message if the upload failed...
             embed = discord.Embed(
@@ -277,12 +286,14 @@ class BoosterTutor(commands.Cog):
         if p_list:
             assert ctx.message
             message: discord.Message = ctx.message
-            if not member:
-                member = message.author
             if len(p_list) == 1:
-                await self.send_pack_msg(p_list[0], message, member, emoji)
+                await self.send_pack_msg(
+                    p_list[0], message=message, member=member, emoji=emoji
+                )
             else:
-                await self.send_pool_msg(p_list, message, member, emoji)
+                await self.send_pool_msg(
+                    p_list, message=message, member=member, emoji=emoji
+                )
 
     @commands.command(
         help=help_msg(
@@ -322,7 +333,7 @@ class BoosterTutor(commands.Cog):
     ) -> None:
         num_packs = self.process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
-            self.historic_sets, n=num_packs, replace=True
+            self.bot.historic_sets, n=num_packs, replace=True
         )
         await self.send_plist_msg(p_list, ctx, member)
 
@@ -338,7 +349,7 @@ class BoosterTutor(commands.Cog):
     async def chaos_sealed(
         self, ctx: commands.Context, member: Optional[discord.Member] = None
     ) -> None:
-        p_list = self.generator.get_random_packs(self.historic_sets, n=6)
+        p_list = self.generator.get_random_packs(self.bot.historic_sets, n=6)
         await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
@@ -359,7 +370,7 @@ class BoosterTutor(commands.Cog):
     ) -> None:
         num_packs = self.process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
-            self.standard_sets, n=num_packs, replace=True
+            self.bot.standard_sets, n=num_packs, replace=True
         )
         await self.send_plist_msg(p_list, ctx, member)
 
@@ -381,7 +392,7 @@ class BoosterTutor(commands.Cog):
     ) -> None:
         num_packs = self.process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
-            self.explorer_sets, n=num_packs, replace=True
+            self.bot.explorer_sets, n=num_packs, replace=True
         )
         await self.send_plist_msg(p_list, ctx, member)
 
@@ -408,20 +419,6 @@ class BoosterTutor(commands.Cog):
             else []  # TODO: consider exception?
         )
         await self.send_plist_msg(p_list, ctx, member)
-
-    @commands.command(
-        name="jmpsealed",
-        help=help_msg(
-            "Generates six ramdom *Jumpstart* decks (with Arena replacements)",
-            examples={
-                "jmpsealed": "generates six decks",
-            },
-        ),
-    )
-    async def jmp_sealed(
-        self, ctx: commands.Context, member: Optional[discord.Member] = None
-    ) -> None:
-        await self.jmp(ctx, 6, member)
 
     @commands.command(
         help=help_msg(
@@ -513,7 +510,7 @@ class BoosterTutor(commands.Cog):
         num_packs = self.process_num_packs(num_packs)
         p_list = (
             self.generator.get_packs(set_code, num_packs)
-            if set_code.lower() in self.all_sets
+            if set_code.lower() in self.bot.all_sets
             else []
         )
         await self.send_plist_msg(p_list, ctx, member)
@@ -566,10 +563,9 @@ class BoosterTutor(commands.Cog):
         message: discord.Message = ctx.message
         if not message.reference:
             await message.reply(
-                f"{message.author.mention}\n"
-                "To add packs to the sealeddeck.tech pool `xyz123`, reply"
-                " to my message with the pack content with the command "
-                f"`{self.config.command_prefix}addpack xyz123`"
+                ":warning: To add packs to the sealeddeck.tech pool `xyz123`, "
+                "reply to my message with the pack content with the command "
+                f"`{self.bot.command_prefix}addpack xyz123`"
             )
             return
 
@@ -578,8 +574,7 @@ class BoosterTutor(commands.Cog):
             len(ref.content.split("```")) < 2 and not ref.attachments
         ):
             await message.reply(
-                f"{message.author.mention}\n"
-                "The message you are replying to does not contain "
+                ":warning: The message you are replying to does not contain "
                 "packs I have generated"
             )
             return
@@ -590,25 +585,20 @@ class BoosterTutor(commands.Cog):
             ref_pack = (await ref.attachments[0].read()).decode()
 
         pack_json = utils.arena_to_json(ref_pack)
-        m = await message.reply(
-            f"{message.author.mention}\n" f":hourglass: Adding pack to pool..."
-        )
+        m = await message.reply(":hourglass: Adding pack to pool...")
         try:
             new_id = await utils.pool_to_sealeddeck(pack_json, sealeddeck_id)
         except aiohttp.ClientResponseError as e:
             logger.error(f"Sealeddeck error: {e}")
             content = (
-                f"{message.author.mention}\n"
-                f"The packs could not be added to sealeddeck.tech "
-                f"pool with ID `{sealeddeck_id}`. Please, verify "
-                f"the ID.\n"
-                f"If the ID is correct, sealeddeck.tech might be "
-                f"having some issues right now, try again later."
+                f":warning: The packs could not be added to sealeddeck.tech "
+                f"pool with ID `{sealeddeck_id}`. Please, verify the ID.\n"
+                f"If the ID is correct, sealeddeck.tech might be having some "
+                f"issues right now, try again later."
             )
 
         else:
             content = (
-                f"{message.author.mention}\n"
                 f"The packs have been added to the pool.\n\n"
                 f"**Updated sealeddeck.tech pool**\n"
                 f"link: https://sealeddeck.tech/{new_id}\n"
@@ -622,5 +612,5 @@ class BoosterTutor(commands.Cog):
         if isinstance(error, commands.MissingRequiredArgument):
             await message.reply(
                 f":warning: {error}\nFor more help, "
-                f"use `{self.config.command_prefix}help {ctx.invoked_with}`."
+                f"use `{self.bot.command_prefix}help {ctx.invoked_with}`."
             )
