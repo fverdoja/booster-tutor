@@ -144,8 +144,8 @@ def test_cards_pack_rares_img_empty():
 def test_arena_to_json():
     arena = "1 Opt (INV) 000\n3 Ponder (C18) 001\n "
     json_list = utils.arena_to_json(arena)
-    assert json_list[0] == {"name": "Opt", "count": 1}
-    assert json_list[1] == {"name": "Ponder", "count": 3}
+    assert json_list[0] == {"name": "Opt", "count": 1, "set": "INV"}
+    assert json_list[1] == {"name": "Ponder", "count": 3, "set": "C18"}
 
 
 def test_set_symbol_link():

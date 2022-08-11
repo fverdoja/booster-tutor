@@ -11,6 +11,7 @@ module = [
   "discord.*",
   "imageio.*",
   "numpy.*",
+  "parse.*",
 ]
 ignore_missing_imports = true
 
