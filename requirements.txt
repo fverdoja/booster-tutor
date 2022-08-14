@@ -1,5 +1,6 @@
 discord.py==1.7.3
 imageio==2.9.0
 numpy==1.19.4
+parse==1.19.0
 PyYAML==6.0
 requests==2.25.1

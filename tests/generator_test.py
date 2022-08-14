@@ -173,6 +173,14 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict):
         ),
         (
             {
+                "packs": [{"slots": ["tag:Foil", "tag:Etched"]}],
+                "multiples": False,
+            },
+            2,
+            False,
+        ),
+        (
+            {
                 "packs": [{"slots": ["rarity:Rare"]}],
                 "multiples": False,
             },

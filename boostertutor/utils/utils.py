@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from typing import Optional, Sequence, Union
+from parse import compile
 
 import aiohttp
 import numpy as np
@@ -112,10 +113,10 @@ def rares_img(im_list: Sequence[np.ndarray]) -> np.ndarray:
 def arena_to_json(arena_list: str) -> Sequence[dict]:
     """Convert a list of cards in arena format to a list of json cards"""
     json_list = []
+    p = compile("{count:d} {name} ({set}) {:d}")
     for line in arena_list.rstrip("\n ").split("\n"):
-        count, card = line.split(" ", 1)
-        card_name = card.split(" (")[0]
-        json_list.append({"name": f"{card_name}", "count": int(count)})
+        card = p.parse(line)
+        json_list.append(card.named)
     return json_list
 
 
