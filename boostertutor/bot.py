@@ -91,15 +91,7 @@ class DiscordBot(commands.Bot):
             "thb",
             "iko",
             "m21",
-            "znr",
-            "khm",
-            "stx",
-            "afr",
-            "mid",
-            "vow",
-            "neo",
-            "snc",
-        ]
+        ] + self.standard_sets
         self.historic_sets = ["klr", "akr"] + self.explorer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
         self.add_cog(BotCommands(self))
