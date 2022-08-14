@@ -199,7 +199,8 @@ class MtgPackGenerator:
             cube_cards: dict[str, list[str]] = {key: [] for key in pack_format}
             for card in cube["cards"]:
                 tag = card["tags"][0]
-                cube_cards[tag].append(card)
+                if tag in cube_cards:
+                    cube_cards[tag].append(card)
         except (KeyError, IndexError, AssertionError):
             pack_format = {"cards": 15}
             replace = False

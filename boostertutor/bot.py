@@ -373,7 +373,7 @@ class DiscordBot(Bot, discord.Client):
                 f"Content: [{sets}]",
                 embed=embed,
                 file=discord.File(
-                    pool_file, filename=f"{member.nick}_pool.txt"
+                    pool_file, filename=f"{member.display_name}_pool.txt"
                 ),
             )
 
