@@ -1,4 +1,5 @@
 # Booster Tutor
+
 [![Python checks and tests](https://github.com/fverdoja/booster-tutor/actions/workflows/python.yml/badge.svg?branch=main)](https://github.com/fverdoja/booster-tutor/actions/workflows/python.yml)
 [![Donate](https://img.shields.io/badge/Ko--fi-donate-13C3FF.svg?logo=kofi&logoColor=lightgray)](https://ko-fi.com/boostertutor)
 [![Add to Discord](https://img.shields.io/badge/Discord-add%20bot-5865F2.svg?logo=discord&logoColor=lightgray)](https://discord.com/api/oauth2/authorize?client_id=790677464355045396&permissions=274878155840&scope=bot)
