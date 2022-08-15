@@ -193,15 +193,18 @@ class MtgPackGenerator:
                 assert slot.startswith("tag:") or slot.startswith("t:")
                 slots.append(slot.split(":")[1].strip('"'))
             pack_format: dict[str, int] = Counter(slots)
+            logger.debug(f"Pack format: {pack_format}")
 
             replace = cube["draft_formats"][0]["multiples"]
 
             cube_cards: dict[str, list[str]] = {key: [] for key in pack_format}
             for card in cube["cards"]:
-                tag = card["tags"][0]
-                if tag in cube_cards:
-                    cube_cards[tag].append(card)
-        except (KeyError, IndexError, AssertionError):
+                if card["tags"]:
+                    tag = card["tags"][0]
+                    if tag in cube_cards:
+                        cube_cards[tag].append(card)
+        except (KeyError, IndexError, AssertionError) as e:
+            logger.debug(e, exc_info=True)
             pack_format = {"cards": 15}
             replace = False
             cube_cards = {"cards": cube["cards"]}
