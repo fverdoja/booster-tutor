@@ -199,10 +199,8 @@ class MtgPackGenerator:
 
             cube_cards: dict[str, list[str]] = {key: [] for key in pack_format}
             for card in cube["cards"]:
-                if card["tags"]:
-                    tag = card["tags"][0]
-                    if tag in cube_cards:
-                        cube_cards[tag].append(card)
+                if card["tags"] and card["tags"][0] in cube_cards:
+                    cube_cards[card["tags"][0]].append(card)
         except (KeyError, IndexError, AssertionError) as e:
             logger.debug(e, exc_info=True)
             pack_format = {"cards": 15}
