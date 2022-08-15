@@ -153,7 +153,7 @@ def cube() -> dict:
             {
                 "cardID": "35b3da05-9a3e-4827-96b8-5de244128db3",
                 "finish": "Non-foil",
-                "tags": ["Non-foil"],
+                "tags": [],
             },
             {
                 "cardID": "a7af8350-9a51-437c-a55e-19f3e07acfa9",
