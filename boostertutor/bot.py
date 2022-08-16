@@ -120,7 +120,8 @@ class DiscordBot(commands.Bot):
                     self.command_prefix, self.command_prefix + "setsealed ", 1
                 )
 
-        await self.process_commands(message)
+        ctx = await self.get_context(message)
+        await self.invoke(ctx)
 
 
 class BotCommands(commands.Cog, name="Bot"):  # type: ignore
