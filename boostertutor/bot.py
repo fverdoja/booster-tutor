@@ -68,16 +68,7 @@ class DiscordBot(commands.Bot):
             path_to_jmp=self.config.jmp_decklists_path,
             jmp_arena=True,
         )
-        self.standard_sets = [
-            "znr",
-            "khm",
-            "stx",
-            "afr",
-            "mid",
-            "vow",
-            "neo",
-            "snc",
-        ]
+        self.standard_sets = ["mid", "vow", "neo", "snc", "dmu"]
         self.explorer_sets = [
             "xln",
             "rix",
@@ -91,13 +82,19 @@ class DiscordBot(commands.Bot):
             "thb",
             "iko",
             "m21",
+            "znr",
+            "khm",
+            "stx",
+            "afr",
         ] + self.standard_sets
         self.historic_sets = ["klr", "akr"] + self.explorer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
         self.add_cog(BotCommands(self))
 
     async def on_ready(self) -> None:
-        logger.info(f"{self.user} has connected to Discord!")
+        logger.info(
+            f"{self.user} has connected to {len(self.guilds)} Discord servers!"
+        )
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author != self.user and message.content.startswith(
@@ -198,7 +195,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         emoji: str,
         member: Optional[discord.Member] = None,
     ) -> None:
-        pool_file = StringIO("\r\n".join([p.arena_format() for p in pool]))
+        pool_file = StringIO("\n".join([p.arena_format() for p in pool]))
         sets = ", ".join([p.set.code for p in pool])
         json_pool = [card_json for p in pool for card_json in p.json()]
 
