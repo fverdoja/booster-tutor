@@ -68,7 +68,7 @@ class DiscordBot(commands.Bot):
             path_to_jmp=self.config.jmp_decklists_path,
             jmp_arena=True,
         )
-        self.standard_sets = ["mid", "vow", "neo", "snc", "dmu"]
+        self.standard_sets = ["mid", "vow", "neo", "snc", "dmu", "bro"]
         self.explorer_sets = [
             "xln",
             "rix",
