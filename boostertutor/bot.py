@@ -268,7 +268,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
 
     async def send_plist_msg(
         self,
-        p_list,
+        p_list: Sequence[MtgPack],
         ctx: commands.Context,
         member: Optional[discord.Member] = None,
         emoji: str = "",
