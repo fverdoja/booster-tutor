@@ -538,8 +538,8 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             "packs will be added to the indicated pool.",
             has_member=False,
             args={
-                "sealeddeck_id": "The ID of the sealeddeck.tech pool to add "
-                "the additional packs to"
+                "sealeddeck_id_or_url": "The ID of the sealeddeck.tech pool "
+                "to add the additional packs to"
             },
             examples={
                 "addpack xyz123": "adds packs to the previously generated "
@@ -576,7 +576,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             ref_pack = (await ref.attachments[0].read()).decode()
 
         pack_json = utils.arena_to_json(ref_pack)
-        sealeddeck_id = sealeddeck_id_or_url.replace("https://sealeddeck.tech/", "")
+        sealeddeck_id = sealeddeck_id_or_url.replace(
+            "https://sealeddeck.tech/", ""
+        )
         m = await message.reply(":hourglass: Adding pack to pool...")
         try:
             new_id = await utils.pool_to_sealeddeck(pack_json, sealeddeck_id)
