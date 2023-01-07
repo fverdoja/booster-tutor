@@ -548,7 +548,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         ),
     )
     async def add_pack(
-        self, ctx: commands.Context, sealeddeck_id: str
+        self, ctx: commands.Context, sealeddeck_id_or_url: str
     ) -> None:
         assert ctx.message
         message: discord.Message = ctx.message
@@ -576,6 +576,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             ref_pack = (await ref.attachments[0].read()).decode()
 
         pack_json = utils.arena_to_json(ref_pack)
+        sealeddeck_id = sealeddeck_id_or_url.replace("https://sealeddeck.tech/", "")
         m = await message.reply(":hourglass: Adding pack to pool...")
         try:
             new_id = await utils.pool_to_sealeddeck(pack_json, sealeddeck_id)
