@@ -77,8 +77,7 @@ that user instead. For example, `!znr @user#1234` has the bot mention
 *user#1234* (instead of you) in its reply.
 
 * Most of the pack-generating non-sealed commands can take a number to generate
-  more than one pack. For example `!random 3` will generate 3 random packs. This
-  cannot be used with cube packs at the moment.
+  more than one pack. For example `!random 3` will generate 3 random packs.
 
 ## Host your own bot
 
@@ -174,7 +173,7 @@ whether a pack should be balanced or not is obtained from the metadata by
   *Reuben's algorithm*
 * *Wizards of the Coast*, *Magic: The Gathering*, and their logos are
   trademarks of Wizards of the Coast LLC in the United States and other
-  countries. © 1993-2022 Wizards. All Rights Reserved. Booster Tutor may use
+  countries. © 1993-2023 Wizards. All Rights Reserved. Booster Tutor may use
   the trademarks and other intellectual property of Wizards of the Coast LLC,
   which is permitted under Wizards' Fan Site Policy. For more information about
   Wizards of the Coast or any of Wizards' trademarks or other intellectual
