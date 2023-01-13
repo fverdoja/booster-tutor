@@ -181,9 +181,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             )
         else:
             # ...or edit the message by embedding the link
-            embed = discord.Embed(
-                color=discord.Color.dark_green(), description=link
-            )
+            embed = discord.Embed(color=discord.Color.dark_green())
             embed.set_image(url=link)
 
         await m.edit(embed=embed)
@@ -259,9 +257,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             )
         else:
             # ...or edit the message by embedding the link
-            embed = discord.Embed(
-                color=discord.Color.dark_green(), description=link
-            )
+            embed = discord.Embed(color=discord.Color.dark_green())
             embed.set_image(url=link)
 
         await m.edit(embed=embed)
