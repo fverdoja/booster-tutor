@@ -27,7 +27,7 @@ def help_msg(
     help = f"{brief}"
     if long_description:
         help += f"\n\n{long_description}"
-    if args or has_num_packs:
+    if args or has_num_packs or has_member:
         help += "\n\n__**Args:**__"
         for name, description in args.items():
             help += f"\n*{name}*: {description}"
@@ -47,6 +47,22 @@ def help_msg(
             help += f"\n`{name}`: {description}"
 
     return help
+
+
+@commands.command(
+    help=help_msg(
+        "Gives info on how to support Booster Tutor development",
+        has_member=False,
+    ),
+)
+async def donate(ctx: commands.Context) -> None:
+    assert ctx.message
+    message: discord.Message = ctx.message
+    await message.reply(
+        "If you are having fun using Booster Tutor, consider sponsoring "
+        "my next draft with a donation! Thanks!!\n"
+        "Donate on Ko-fi: https://ko-fi.com/boostertutor"
+    )
 
 
 class DiscordBot(commands.Bot):
@@ -90,10 +106,12 @@ class DiscordBot(commands.Bot):
         self.historic_sets = ["klr", "akr"] + self.explorer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
         self.add_cog(BotCommands(self))
+        self.add_command(donate)
 
     async def on_ready(self) -> None:
         logger.info(
-            f"{self.user} has connected to {len(self.guilds)} Discord servers!"
+            f"{self.user} has connected to {len(self.guilds)} Discord servers:"
+            f" {[guild.name for guild in self.guilds]}"
         )
 
     async def on_message(self, message: discord.Message) -> None:

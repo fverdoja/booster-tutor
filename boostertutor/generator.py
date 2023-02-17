@@ -1,6 +1,6 @@
 import logging
 from collections import Counter
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from numpy.random import choice
 
@@ -64,9 +64,10 @@ class MtgPackGenerator:
         return self._get_pack_internal(set, iterations)
 
     def _get_pack_internal(self, set: str, iterations: int) -> MtgPack:
-        assert set.upper() in self.data.sets
+        set_meta = self.data.sets.get(set.upper())
+        assert set_meta is not None
 
-        booster = self.data.sets[set.upper()].booster
+        booster = set_meta.booster
         if "default" in booster:
             booster_meta = booster["default"]
         elif "arena" in booster:
@@ -123,10 +124,8 @@ class MtgPackGenerator:
                     )
                 pick_i += 1
 
-            slot = {"cards": slot_content}
-            slot["balance"] = (
-                "balanceColors" in sheet_meta.keys()  # type: ignore
-            )
+            slot: dict[str, Any] = {"cards": slot_content}
+            slot["balance"] = "balanceColors" in sheet_meta.keys()
             if num_of_backups:
                 slot["backups"] = slot_backup
 
@@ -134,7 +133,7 @@ class MtgPackGenerator:
 
         pack_name = booster_meta.get("name", None)
 
-        pack = MtgPack(pack_content, name=pack_name)
+        pack = MtgPack(pack_content, set=set_meta, name=pack_name)
 
         if not balance:
             logger.debug("Pack should not be balanced, skipping.")
@@ -267,8 +266,16 @@ class MtgPackGenerator:
         return round(booster_ev, 2)
 
     def fix_iko(self) -> None:
-        iko = self.data.sets["IKO"]
-        iko.booster["default"]["sheets"]["common"]["balanceColors"] = True
+        iko_commons: dict[str, Any] = self.data.sets["IKO"].booster["default"][
+            "sheets"
+        ]["common"]
+        if iko_commons.get("balanceColors"):
+            logger.warning(
+                "`generator.fix_iko()` function can be removed. IKO common "
+                "sheet doesn't need to be fixed anymore."
+            )
+        else:
+            iko_commons["balanceColors"] = True
 
     def import_jmp(self, path_to_jmp: str, arena: bool = False) -> None:
         self.data.add_decks_from_folder(path_to_jmp + "decks/")
