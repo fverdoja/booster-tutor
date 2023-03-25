@@ -196,7 +196,7 @@ def test_cube_pack_custom(
     expected_len: int,
     expected_dups: bool,
 ):
-    cube["draft_formats"] = [draft_format]
+    cube["formats"] = [draft_format]
     p = generator.get_cube_pack(cube)
     copy_count = Counter([c.card.name for c in p.cards])
     assert len(p.cards) == expected_len
