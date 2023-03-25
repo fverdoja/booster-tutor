@@ -184,27 +184,27 @@ class MtgPackGenerator:
         return [self.get_cube_pack(cube) for _ in range(n)]
 
     def get_cube_pack(self, cube: dict) -> MtgPack:
-        logger.debug(f"Generating {cube['shortID']} cube pack...")
+        logger.debug(f"Generating {cube['shortId']} cube pack...")
         cube_name = cube["name"]
         try:
             slots = []
-            for slot in cube["draft_formats"][0]["packs"][0]["slots"]:
+            for slot in cube["formats"][0]["packs"][0]["slots"]:
                 assert slot.startswith("tag:") or slot.startswith("t:")
                 slots.append(slot.split(":")[1].strip('"'))
             pack_format: dict[str, int] = Counter(slots)
             logger.debug(f"Pack format: {pack_format}")
 
-            replace = cube["draft_formats"][0]["multiples"]
+            replace = cube["formats"][0]["multiples"]
 
             cube_cards: dict[str, list[str]] = {key: [] for key in pack_format}
-            for card in cube["cards"]:
+            for card in cube["cards"]["mainboard"]:
                 if card["tags"] and card["tags"][0] in cube_cards:
                     cube_cards[card["tags"][0]].append(card)
         except (KeyError, IndexError, AssertionError) as e:
             logger.debug(e, exc_info=True)
             pack_format = {"cards": 15}
             replace = False
-            cube_cards = {"cards": cube["cards"]}
+            cube_cards = {"cards": cube["cards"]["mainboard"]}
         logger.debug(f"Using pack format: {pack_format}")
 
         pack_list = []
@@ -218,7 +218,7 @@ class MtgPackGenerator:
             )
             for card_dict in pack_list
         ]
-        logger.info(f"{cube['shortID']} cube pack generated")
+        logger.info(f"{cube['shortId']} cube pack generated")
         return MtgPack(
             {"pack": {"cards": pack_cards, "balance": False}}, name=cube_name
         )
