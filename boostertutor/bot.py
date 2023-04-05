@@ -103,7 +103,7 @@ class DiscordBot(commands.Bot):
             "stx",
             "afr",
         ] + self.standard_sets
-        self.historic_sets = ["klr", "akr"] + self.explorer_sets
+        self.historic_sets = ["klr", "akr", "sir"] + self.explorer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
         self.add_cog(BotCommands(self))
         self.add_command(donate)

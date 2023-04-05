@@ -70,6 +70,9 @@ class MtgPackGenerator:
         booster = set_meta.booster
         if "default" in booster:
             booster_meta = booster["default"]
+        elif set.upper() == "SIR":
+            sis_variant = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
+            booster_meta = booster[sis_variant]
         elif "arena" in booster:
             booster_meta = booster["arena"]
         else:
