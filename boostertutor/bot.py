@@ -536,6 +536,46 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
+        help=help_msg(
+            "Generates collector packs from the indicated set",
+            has_num_packs=True,
+            args={
+                "set_code": "Three-letter code of the set to generate packs "
+                "from"
+            },
+            examples={
+                "collector znr": "generates one *Zendikar Rising* collector "
+                "pack",
+                "collector stx 4": "generates four *Strixhaven* collector "
+                "packs",
+            },
+        )
+    )
+    async def collector(
+        self,
+        ctx: commands.Context,
+        set_code: str,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = self.process_num_packs(num_packs)
+        try:
+            p_list = (
+                self.generator.get_packs(
+                    set_code, num_packs, booster_type="collector"
+                )
+                if set_code.lower() in self.bot.all_sets
+                else []
+            )
+            await self.send_plist_msg(p_list, ctx, member)
+        except ValueError:
+            assert ctx.message
+            message: discord.Message = ctx.message
+            await message.reply(
+                ":warning: The provided set does not have collector boosters."
+            )
+
+    @commands.command(
         name="setsealed",
         help=help_msg(
             "Generates six packs from the indicated set",
