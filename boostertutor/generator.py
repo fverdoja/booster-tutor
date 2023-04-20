@@ -31,9 +31,9 @@ class MtgPackGenerator:
         self.fix_missing_balance("mh2", "commonWithShowcase")
         self.fix_missing_balance("afr", "commonWithShowcase")
         self.fix_missing_balance("mid", "sfcCommonWithShowcase")
-        self.fix_missing_balance("clb", "nonlegendaryCommon")
+        self.fix_missing_balance("clb", "nonlegendaryCommonWithShowcase")
         self.fix_missing_balance("one", "common")
-        self.fix_missing_balance("mom", "sfcCommonWithShowcase")
+        self.fix_missing_balance("mom", "sfcCommon")
 
         self.sets_with_boosters: list[str] = [
             set_code
@@ -64,21 +64,44 @@ class MtgPackGenerator:
         return num_warnings
 
     def get_packs(
-        self, set: str, n: int = 1, balance: bool = True
+        self,
+        set: str,
+        n: int = 1,
+        balance: bool = True,
+        booster_type: Optional[str] = None,
     ) -> Sequence[MtgPack]:
-        return [self.get_pack(set, balance=balance) for _ in range(n)]
+        return [
+            self.get_pack(set, balance=balance, booster_type=booster_type)
+            for _ in range(n)
+        ]
 
-    def get_pack(self, set: str, balance: bool = True) -> MtgPack:
+    def get_pack(
+        self,
+        set: str,
+        balance: bool = True,
+        booster_type: Optional[str] = None,
+    ) -> MtgPack:
         logger.debug(f"Generating {set.upper()} pack...")
         iterations = self.max_balancing_iterations if balance else 1
-        return self._get_pack_internal(set, iterations)
+        return self._get_pack_internal(
+            set, iterations, booster_type=booster_type
+        )
 
-    def _get_pack_internal(self, set: str, iterations: int) -> MtgPack:
+    def _get_pack_internal(
+        self, set: str, iterations: int, booster_type: Optional[str] = None
+    ) -> MtgPack:
         set_meta = self.data.sets.get(set.upper())
         assert set_meta is not None
 
         booster = set_meta.booster
-        if "default" in booster:
+        if booster_type:
+            if booster_type.lower() in booster:
+                booster_meta = booster[booster_type.lower()]
+            else:
+                raise ValueError(
+                    f"Booster type {booster_type} not available for set {set}"
+                )
+        elif "default" in booster:
             booster_meta = booster["default"]
         elif set.upper() == "SIR":
             sis_variant = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
@@ -86,8 +109,8 @@ class MtgPackGenerator:
         elif "arena" in booster:
             booster_meta = booster["arena"]
         else:
-            booster_type = next(iter(booster))
-            booster_meta = booster[booster_type]
+            first_booster_type = next(iter(booster))
+            booster_meta = booster[first_booster_type]
 
         boosters_p = [
             x["weight"] / booster_meta["boostersTotalWeight"]
@@ -167,6 +190,7 @@ class MtgPackGenerator:
         n: int = 1,
         replace: bool = False,
         balance: bool = True,
+        booster_type: Optional[str] = None,
     ) -> Sequence[MtgPack]:
         if sets is None:
             sets = self.sets_with_boosters
@@ -174,7 +198,10 @@ class MtgPackGenerator:
         assert replace or n <= len(sets)
 
         boosters = choice(sets, size=n, replace=replace)
-        return [self.get_pack(set=b, balance=balance) for b in boosters]
+        return [
+            self.get_pack(set=b, balance=balance, booster_type=booster_type)
+            for b in boosters
+        ]
 
     def get_random_jmp_decks(
         self, n: int = 1, replace: bool = True
@@ -242,10 +269,18 @@ class MtgPackGenerator:
         currency: str,
         eur_usd_rate: Optional[float] = None,
         bulk_threshold: float = 0.0,
+        booster_type: Optional[str] = None,
     ) -> float:
         assert set.upper() in self.data.sets
         booster = self.data.sets[set.upper()].booster
-        if "default" in booster:
+        if booster_type:
+            if booster_type.lower() in booster:
+                booster_meta = booster[booster_type.lower()]
+            else:
+                raise ValueError(
+                    f"Booster type {booster_type} not available for set {set}"
+                )
+        elif "default" in booster:
             booster_meta = booster["default"]
         else:
             logger.warning(

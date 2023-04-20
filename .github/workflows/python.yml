@@ -57,7 +57,7 @@ jobs:
     - name: Download data
       run: |
         mkdir -p data/JMP
-        python -m boostertutor.utils.mtgjson_downloader --jmp
+        python -m boostertutor mtgjson --jmp
     - name: Test with pytest
       run: |
         pytest --cov=boostertutor --cov-report term-missing:skip-covered
