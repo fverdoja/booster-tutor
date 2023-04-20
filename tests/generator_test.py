@@ -53,9 +53,19 @@ def test_pack(generator: MtgPackGenerator):
     assert p.is_balanced(rebalance=False)
 
 
+def test_collector_pack(generator: MtgPackGenerator):
+    p = generator.get_pack("m21", booster_type="collector")
+    assert len(p.cards) == 15
+
+
 def test_pack_raises(generator: MtgPackGenerator):
     with pytest.raises(AssertionError):
         generator.get_pack("non existing set")
+
+
+def test_pack_collector_raises(generator: MtgPackGenerator):
+    with pytest.raises(ValueError):
+        generator.get_pack("inv", booster_type="collector")
 
 
 def test_pack_list(generator: MtgPackGenerator):
