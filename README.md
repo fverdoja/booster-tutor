@@ -26,6 +26,8 @@ The bot responds to the following commands:
   a *Zendikar Rising* pack)
 * `!{setcode}sealed`: generates 6 packs from the indicated set (e.g.,
   `!znrsealed` generates 6 *Zendikar Rising* packs)
+* `!{setcode}box`: generates a draft boooster box from the indicated set (e.g.,
+  `!draftbox znr` generates 36 *Zendikar Rising* packs)
 
 ### *Jumpstart* decks
 
