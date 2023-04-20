@@ -84,7 +84,16 @@ class DiscordBot(commands.Bot):
             path_to_jmp=self.config.jmp_decklists_path,
             jmp_arena=True,
         )
-        self.standard_sets = ["mid", "vow", "neo", "snc", "dmu", "bro", "one"]
+        self.standard_sets = [
+            "mid",
+            "vow",
+            "neo",
+            "snc",
+            "dmu",
+            "bro",
+            "one",
+            "mom",
+        ]
         self.explorer_sets = [
             "xln",
             "rix",
@@ -133,6 +142,12 @@ class DiscordBot(commands.Bot):
                     "sealed", "", 1
                 ).replace(
                     self.command_prefix, self.command_prefix + "setsealed ", 1
+                )
+            elif command.removesuffix("box") in self.all_sets:
+                message.content = message.content.replace(
+                    "box", "", 1
+                ).replace(
+                    self.command_prefix, self.command_prefix + "draftbox ", 1
                 )
 
         ctx = await self.get_context(message)
@@ -542,6 +557,40 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         member: Optional[discord.Member] = None,
     ) -> None:
         await self.set(ctx, set_code, 6, member)
+
+    @commands.command(
+        name="draftbox",
+        help=help_msg(
+            "Generates a draft boooster box from the indicated set",
+            long_description="It can also be called as `{set_code}box`",
+            args={
+                "set_code": "Three-letter code of the set to generate packs "
+                "from"
+            },
+            examples={
+                "draftbox znr": "generates 36 *Zendikar Rising* packs",
+                "emabox": "generates 24 *Eternal Masters* packs",
+            },
+        ),
+    )
+    async def draft_box(
+        self,
+        ctx: commands.Context,
+        set_code: str,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        if set_code.lower() in self.bot.all_sets:
+            set = self.generator.data.sets[set_code.upper()]
+            num_packs = 36
+            if hasattr(set, "sealedProduct"):
+                for product in set.sealedProduct:
+                    if (
+                        product.get("category") == "booster_box"
+                        and product.get("subtype") == "draft"
+                    ):
+                        num_packs = product.get("productSize", 36)
+
+            await self.set(ctx, set_code, num_packs, member)
 
     @commands.command(
         name="addpack",

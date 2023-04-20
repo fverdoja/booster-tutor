@@ -24,7 +24,17 @@ class MtgPackGenerator:
         self.has_jmp = False
         if path_to_jmp is not None:
             self.import_jmp(path_to_jmp, arena=jmp_arena)
-        self.fix_iko()
+        self.fix_missing_balance("eld", "common")
+        self.fix_missing_balance("iko", "commonWithShowcase")
+        self.fix_missing_balance("m21", "nongainlandCommon")
+        self.fix_missing_balance("znr", "commonWithShowcase")
+        self.fix_missing_balance("mh2", "commonWithShowcase")
+        self.fix_missing_balance("afr", "commonWithShowcase")
+        self.fix_missing_balance("mid", "sfcCommonWithShowcase")
+        self.fix_missing_balance("clb", "nonlegendaryCommon")
+        self.fix_missing_balance("one", "common")
+        self.fix_missing_balance("mom", "sfcCommonWithShowcase")
+
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
@@ -268,17 +278,18 @@ class MtgPackGenerator:
             booster_ev += composition_ev * weight / booster_total_weight
         return round(booster_ev, 2)
 
-    def fix_iko(self) -> None:
-        iko_commons: dict[str, Any] = self.data.sets["IKO"].booster["default"][
-            "sheets"
-        ]["common"]
-        if iko_commons.get("balanceColors"):
+    def fix_missing_balance(self, set: str, sheet: str) -> None:
+        commons: dict[str, Any] = self.data.sets[set.upper()].booster[
+            "default"
+        ]["sheets"][sheet]
+        if commons.get("balanceColors"):
             logger.warning(
-                "`generator.fix_iko()` function can be removed. IKO common "
-                "sheet doesn't need to be fixed anymore."
+                f"`generator.fix_missing_balance({set}, {sheet})` function "
+                f"can be removed. Common sheet doesn't need to be fixed "
+                f"anymore."
             )
         else:
-            iko_commons["balanceColors"] = True
+            commons["balanceColors"] = True
 
     def import_jmp(self, path_to_jmp: str, arena: bool = False) -> None:
         self.data.add_decks_from_folder(path_to_jmp + "decks/")

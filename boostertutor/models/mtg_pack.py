@@ -38,11 +38,6 @@ class MtgPack:
         return any([slot["balance"] for slot in self.content.values()])
 
     def is_balanced(self, rebalance: bool = False) -> bool:
-        # Pack must never have duplicates (foil excluded)
-        if self.has_duplicates():
-            logger.warning(f"Discarded pack: duplicates\n{self}")
-            return False
-
         for slot_name, slot in self.content.items():
             card_names = [c.card.name for c in slot["cards"]]
 
@@ -79,6 +74,12 @@ class MtgPack:
                         f"{card_names}"
                     )
                     return False
+
+        # Pack must never have duplicates (foil excluded)
+        if self.has_duplicates():
+            logger.warning(f"Discarded pack: duplicates\n{self}")
+            return False
+
         return True
 
     def has_duplicates(self) -> bool:
