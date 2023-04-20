@@ -95,22 +95,19 @@ class MtgPackGenerator:
 
         booster = set_meta.booster
         if booster_type:
-            if booster_type.lower() in booster:
-                booster_meta = booster[booster_type.lower()]
-            else:
+            if booster_type.lower() not in booster:
                 raise ValueError(
                     f"Booster type {booster_type} not available for set {set}"
                 )
-        elif "default" in booster:
-            booster_meta = booster["default"]
         elif set.upper() == "SIR":
-            sis_variant = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
-            booster_meta = booster[sis_variant]
+            booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
+        elif "default" in booster:
+            booster_type = "default"
         elif "arena" in booster:
-            booster_meta = booster["arena"]
+            booster_type = "arena"
         else:
-            first_booster_type = next(iter(booster))
-            booster_meta = booster[first_booster_type]
+            booster_type = next(iter(booster))
+        booster_meta = booster[booster_type]
 
         boosters_p = [
             x["weight"] / booster_meta["boostersTotalWeight"]
@@ -177,7 +174,8 @@ class MtgPackGenerator:
 
         if iterations <= 1 or pack.is_balanced(rebalance=True):
             logger.info(
-                f"{set.upper()} pack generated, iterations needed: "
+                f"{set.upper()} {booster_type} pack generated, iterations "
+                f"needed: "
                 f"{str(self.max_balancing_iterations - iterations + 1)}"
             )
             return pack
