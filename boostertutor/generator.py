@@ -32,7 +32,7 @@ class MtgPackGenerator:
         self.fix_missing_balance("afr", "commonWithShowcase")
         self.fix_missing_balance("mid", "sfcCommonWithShowcase")
         self.fix_missing_balance("clb", "nonlegendaryCommonWithShowcase")
-        self.fix_missing_balance("one", "common")
+        self.fix_missing_balance("one", "commonWithShowcase")
         self.fix_missing_balance("mom", "sfcCommon")
 
         self.sets_with_boosters: list[str] = [
