@@ -115,7 +115,7 @@ class MtgCard:
         )
         return (
             is_common_land + is_basic_land,
-            self.foil,
+            not self.foil,
             r.index(self.card.rarity),
         )
 
