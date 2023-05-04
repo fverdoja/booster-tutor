@@ -105,12 +105,19 @@ class MtgCard:
             number = self.card.number
         return f"1 {self.card.name} ({self.card.setCode}) {number}"
 
-    def pack_sort_key(self) -> tuple[bool, bool, int]:
+    def pack_sort_key(self) -> tuple[int, bool, int]:
         r = ["mythic", "rare", "uncommon", "common", "special", "bonus"]
         is_common_land = (
             "Land" in self.card.types and self.card.rarity == "common"
         )
-        return (is_common_land, self.foil, r.index(self.card.rarity))
+        is_basic_land = (
+            "Land" in self.card.types and "Basic" in self.card.supertypes
+        )
+        return (
+            is_common_land + is_basic_land,
+            self.foil,
+            r.index(self.card.rarity),
+        )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, MtgCard):
