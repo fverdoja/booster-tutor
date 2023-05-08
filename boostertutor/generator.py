@@ -27,7 +27,7 @@ class MtgPackGenerator:
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
-            if hasattr(set, "booster")
+            if hasattr(set, "booster") and set_code not in ["JMP", "J22"]
         ]
         self.validate_booster_data()
 
