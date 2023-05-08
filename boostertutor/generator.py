@@ -24,17 +24,6 @@ class MtgPackGenerator:
         self.has_jmp = False
         if path_to_jmp is not None:
             self.import_jmp(path_to_jmp, arena=jmp_arena)
-        self.fix_missing_balance("eld", "common")
-        self.fix_missing_balance("iko", "commonWithShowcase")
-        self.fix_missing_balance("m21", "nongainlandCommon")
-        self.fix_missing_balance("znr", "commonWithShowcase")
-        self.fix_missing_balance("mh2", "commonWithShowcase")
-        self.fix_missing_balance("afr", "commonWithShowcase")
-        self.fix_missing_balance("mid", "sfcCommonWithShowcase")
-        self.fix_missing_balance("clb", "nonlegendaryCommonWithShowcase")
-        self.fix_missing_balance("one", "commonWithShowcase")
-        self.fix_missing_balance("mom", "sfcCommon")
-
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
