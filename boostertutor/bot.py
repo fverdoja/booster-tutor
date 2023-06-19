@@ -479,6 +479,8 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             await message.reply(
                 ":warning: The provided Cube ID cannot be found on CubeCobra."
             )
+        else:
+            logger.error(error)
 
     @commands.command(
         name="cubesealed",

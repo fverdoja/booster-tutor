@@ -234,14 +234,14 @@ class MtgPackGenerator:
             cube_cards = {"cards": cube["cards"]["mainboard"]}
         logger.debug(f"Using pack format: {pack_format}")
 
-        pack_list = []
+        pack_list: list[dict[str, Any]] = []
         for key, num in pack_format.items():
             pack_list.extend(choice(cube_cards[key], num, replace=replace))
 
         pack_cards = [
             MtgCard(
                 self.data.cards_by_scryfall_id[card_dict["cardID"]],
-                foil=card_dict["finish"] != "Non-foil",
+                foil=card_dict.get("finish", "Non-foil") != "Non-foil",
             )
             for card_dict in pack_list
         ]
