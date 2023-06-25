@@ -24,6 +24,7 @@ class MtgPackGenerator:
         self.has_jmp = False
         if path_to_jmp is not None:
             self.import_jmp(path_to_jmp, arena=jmp_arena)
+        self.fix_missing_balance("LTR", "commonWithShowcase")
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
