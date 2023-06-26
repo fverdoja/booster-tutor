@@ -18,8 +18,7 @@ def main():
         ),
         epilog=(
             "Run without subcommands to run the Discord bot, or add one of "
-            "the subcommands to run the downloader subutils (some subcommand "
-            "might have specific arguments, check subcommands' help for them)."
+            "the subcommands to run the downloader subutils."
         ),
     )
     parser.add_argument(

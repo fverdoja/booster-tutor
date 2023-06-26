@@ -118,7 +118,6 @@ running:
 
 ```bash
   python -m boostertutor -h          # general help
-  python -m boostertutor mtgjson -h  # MTGjson downloader help
 ```
 
 ## Under the hood
