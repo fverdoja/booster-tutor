@@ -6,7 +6,6 @@ from collections import OrderedDict
 from functools import total_ordering
 from operator import itemgetter
 from types import SimpleNamespace
-from typing import Sequence
 
 import requests
 
@@ -207,12 +206,3 @@ class CardDb:
             raise TypeError(
                 f"Unsupported content-type {r.headers['content-type']}"
             )
-
-    def replace_cards(self, card_list: Sequence[dict]) -> Sequence[CardProxy]:
-        cards: list[CardProxy] = []
-        for c in card_list:
-            n = c.get("count", 1)
-            for _ in range(n):
-                cards.append(self.cards_by_id[c["uuid"]])
-
-        return cards
