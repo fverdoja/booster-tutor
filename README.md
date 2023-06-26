@@ -117,7 +117,7 @@ For a complete list of commands and parameters you can check the help by
 running:
 
 ```bash
-  python -m boostertutor -h          # general help
+  python -m boostertutor -h
 ```
 
 ## Under the hood
