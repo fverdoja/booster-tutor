@@ -40,16 +40,10 @@ def main():
         help="Download set symbols",
         description="Download set symbols",
     )
-    parser_mtgjson_downloader = subparsers.add_parser(
+    subparsers.add_parser(
         "mtgjson",
         help="Download MTGJSON data",
         description="Download MTGJSON data",
-    )
-    parser_mtgjson_downloader.add_argument(
-        "--jmp", help="download JMP decks", action="store_true"
-    )
-    parser_mtgjson_downloader.add_argument(
-        "--jmp-backup", help="backup old JMP decks", action="store_true"
     )
     args = parser.parse_args()
     config = get_config(Path(args.config))
@@ -74,7 +68,7 @@ def main():
                 "Config does not contain set_img_path setting, doing nothing."
             )
     elif args.downloader == "mtgjson":
-        mtgjson.main(config, jmp=args.jmp, jmp_backup=args.jmp_backup)
+        mtgjson.main(config)
     else:
         bot = DiscordBot(config)
         bot.run(config.discord_token)

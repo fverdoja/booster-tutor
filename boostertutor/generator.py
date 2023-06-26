@@ -15,21 +15,17 @@ class MtgPackGenerator:
     def __init__(
         self,
         path_to_mtgjson: str = "data/AllPrintings.json",
-        path_to_jmp: Optional[str] = None,
-        jmp_arena: bool = False,
         max_balancing_iterations: int = 100,
     ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
-        self.has_jmp = False
-        if path_to_jmp is not None:
-            self.import_jmp(path_to_jmp, arena=jmp_arena)
         self.fix_missing_balance("LTR", "commonWithShowcase")
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
             if hasattr(set, "booster") and set_code not in ["JMP", "J22"]
         ]
+        self.sets_with_decks: list[str] = ["JMP", "J22"]
         self.validate_booster_data()
 
     def validate_booster_data(self) -> int:
@@ -191,21 +187,72 @@ class MtgPackGenerator:
             for b in boosters
         ]
 
-    def get_random_jmp_decks(
+    def get_random_arena_jmp_decks(
         self, n: int = 1, replace: bool = True
     ) -> Sequence[MtgPack]:
-        assert self.has_jmp
-        jmp_decks = self.data.sets["JMP"].decks
-        decks = choice(jmp_decks, size=n, replace=replace)
+        m21 = self.data.sets["M21"].cards_by_name
+        ajmp = self.data.sets["AJMP"].cards_by_name
+        replacements = {
+            "Chain Lightning": "Lightning Strike",
+            "Lightning Bolt": "Lightning Strike",
+            "Ball Lightning": "Lightning Serpent",
+            "Ajani's Chosen": "Archon of Sun's Grace",
+            "Angelic Arbiter": "Serra's Guardian",
+            "Draconic Roar": "Scorching Dragonfire",
+            "Goblin Lore": "Goblin Oriflamme",
+            "Flametongue Kavu": "Fanatic of Mogis",
+            "Exhume": "Bond of Revival",
+            "Fa'adiyah Seer": "Dryad Greenseeker",
+            "Mausoleum Turnkey": "Audacious Thief",
+            "Path to Exile": "Banishing Light",
+            "Read the Runes": "Gadwick, the Wizened",
+            "Reanimate": "Doomed Necromancer",
+            "Rhystic Study": "Teferi's Ageless Insight",
+            "Sheoldred, Whispering One": "Carnifex Demon",
+            "Scourge of Nel Toth": "Woe Strider",
+            "Scrounging Bandar": "Pollenbright Druid",
+            "Thought Scour": "Weight of Memory",
+            "Time to Feed": "Prey Upon",
+        }
+
+        p_list = self.get_random_decks(set="JMP", n=n, replace=replace)
+        for p in p_list:
+            for i, c in enumerate(p.content["deck"]["cards"]):
+                if c.card.name in replacements:
+                    r = replacements[c.card.name]
+                    if r in m21:
+                        card = MtgCard(m21[r], foil=c.foil)
+                    else:
+                        card = MtgCard(ajmp[r], foil=c.foil)
+                        card.card.setCode = "JMP"
+                    p.content["deck"]["cards"][i] = card
+
+        return p_list
+
+    def get_random_decks(
+        self, set: str, n: int = 1, replace: bool = True
+    ) -> Sequence[MtgPack]:
+        assert set.upper() in self.sets_with_decks
+        set_meta = self.data.sets.get(set.upper())
+        assert set_meta is not None
+        all_decks = set_meta.decks
+        decks = choice(all_decks, size=n, replace=replace)
         packs = []
         for d in decks:
-            logger.debug("Generating JMP pack...")
-            cards = [MtgCard(c) for c in d["mainBoard"]]
+            logger.debug(f"Generating {set.upper()} pack...")
+            cards: list[MtgCard] = []
+            for c in d["cards"]:
+                n = c.get("count", 1)
+                for _ in range(n):
+                    cards.append(
+                        MtgCard(
+                            self.data.cards_by_id[c["uuid"]],
+                            foil=c.get("finish", "nonfoil") != "nonfoil",
+                        )
+                    )
             content = {"deck": {"cards": cards, "balance": False}}
-            packs.append(
-                MtgPack(content, set=self.data.sets["JMP"], name=d["name"])
-            )
-            logger.info(f"{d['name']} (JMP) pack generated")
+            packs.append(MtgPack(content, set=set_meta, name=d["name"]))
+            logger.info(f"{d['name']} ({set.upper()}) pack generated")
         return packs
 
     def get_cube_packs(self, cube: dict, n: int = 1) -> Sequence[MtgPack]:
@@ -313,42 +360,3 @@ class MtgPackGenerator:
             )
         else:
             commons["balanceColors"] = True
-
-    def import_jmp(self, path_to_jmp: str, arena: bool = False) -> None:
-        self.data.add_decks_from_folder(path_to_jmp + "decks/")
-        if arena:
-            replacements = {
-                "Chain Lightning": "Lightning Strike",
-                "Lightning Bolt": "Lightning Strike",
-                "Ball Lightning": "Lightning Serpent",
-                "Ajani's Chosen": "Archon of Sun's Grace",
-                "Angelic Arbiter": "Serra's Guardian",
-                "Draconic Roar": "Scorching Dragonfire",
-                "Goblin Lore": "Goblin Oriflamme",
-                "Flametongue Kavu": "Fanatic of Mogis",
-                "Exhume": "Bond of Revival",
-                "Fa'adiyah Seer": "Dryad Greenseeker",
-                "Mausoleum Turnkey": "Audacious Thief",
-                "Path to Exile": "Banishing Light",
-                "Read the Runes": "Gadwick, the Wizened",
-                "Reanimate": "Doomed Necromancer",
-                "Rhystic Study": "Teferi's Ageless Insight",
-                "Sheoldred, Whispering One": "Carnifex Demon",
-                "Scourge of Nel Toth": "Woe Strider",
-                "Scrounging Bandar": "Pollenbright Druid",
-                "Thought Scour": "Weight of Memory",
-                "Time to Feed": "Prey Upon",
-            }
-            m21 = self.data.sets["M21"].cards_by_name
-            ajmp = self.data.sets["AJMP"].cards_by_name
-            for d in self.data.sets["JMP"].decks:
-                for i, c in enumerate(d["mainBoard"]):
-                    if c.name in replacements:
-                        r = replacements[c.name]
-                        if r in m21:
-                            card = m21[r]
-                        else:
-                            card = ajmp[r]
-                            card.setCode = "JMP"
-                        d["mainBoard"][i] = card
-        self.has_jmp = True

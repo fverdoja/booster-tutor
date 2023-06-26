@@ -1,7 +1,4 @@
-import json
-from io import BytesIO
 from pathlib import Path
-from zipfile import ZipFile
 
 import pytest
 from boostertutor.generator import MtgPackGenerator
@@ -13,11 +10,7 @@ from boostertutor.utils.utils import Config, get_config
 @pytest.fixture(scope="session")
 def generator() -> MtgPackGenerator:
     config = get_config()
-    return MtgPackGenerator(
-        path_to_mtgjson=config.mtgjson_path,
-        path_to_jmp=config.jmp_decklists_path,
-        jmp_arena=True,
-    )
+    return MtgPackGenerator(path_to_mtgjson=config.mtgjson_path)
 
 
 @pytest.fixture(scope="module")
@@ -172,30 +165,11 @@ def cube() -> dict:
 
 
 @pytest.fixture
-def zip_one() -> BytesIO:
-    content = BytesIO()
-    with ZipFile(content, "w") as zip:
-        zip.writestr("deck1_JMP.json", json.dumps({"deck1": True}))
-    content.seek(0)
-    return content
-
-
-@pytest.fixture
-def zip_two() -> BytesIO:
-    content = BytesIO()
-    with ZipFile(content, "w") as zip:
-        zip.writestr("deck2_JMP.json", json.dumps({"deck2": True}))
-    content.seek(0)
-    return content
-
-
-@pytest.fixture
 def temp_config(tmp_path: Path) -> Config:
     config_dict = {
         "discord_token": "0000",
         "imgur_client_id": "0000",
         "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
-        "jmp_decklists_path": (tmp_path / "JMP/").as_posix(),
         "command_prefix": "!",
     }
     return Config(**config_dict)

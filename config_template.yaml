@@ -10,8 +10,6 @@ imgur_client_id: your_imgur_client_id
 # Check utils folder for scripts to download what the bot needs to work
 # Path to the AllPrintings.json file downloaded from MTGjson
 mtgjson_path: /absolute/path/to/AllPrintings.json
-# comment to exclude JMP
-jmp_decklists_path: /absolute/path/to/JMP/
 # comment to exclude set images
 set_img_path: /absolute/path/to/img/sets/
 

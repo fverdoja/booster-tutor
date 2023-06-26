@@ -23,7 +23,6 @@ class Config:
     discord_token: str
     imgur_client_id: str
     mtgjson_path: str
-    jmp_decklists_path: Optional[str] = None
     set_img_path: Optional[str] = None
     command_prefix: str = "!"
     logging_level: Union[int, str] = logging.INFO

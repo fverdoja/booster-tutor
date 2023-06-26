@@ -22,9 +22,6 @@ def test_get_config(
     assert config.discord_token == "0000"
     assert config.imgur_client_id == "0000"
     assert config.mtgjson_path.endswith("AllPrintings.json")
-    assert config.jmp_decklists_path and config.jmp_decklists_path.endswith(
-        "JMP"
-    )
     assert config.set_img_path is None
     assert config.command_prefix == "!"
     assert config.logging_level == 20  # logging.INFO

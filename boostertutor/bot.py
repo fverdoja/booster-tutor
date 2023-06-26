@@ -80,9 +80,7 @@ class DiscordBot(commands.Bot):
         )
         self.config = config
         self.generator = MtgPackGenerator(
-            path_to_mtgjson=self.config.mtgjson_path,
-            path_to_jmp=self.config.jmp_decklists_path,
-            jmp_arena=True,
+            path_to_mtgjson=self.config.mtgjson_path
         )
         self.standard_sets = [
             "mid",
@@ -417,7 +415,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
 
     @commands.command(
         help=help_msg(
-            "Generates ramdom *Jumpstart* decks (with Arena replacements)",
+            "Generates ramdom *Jumpstart* decks (without Arena replacements)",
             has_num_packs=True,
             examples={
                 "jmp": "generates one deck",
@@ -432,10 +430,52 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         member: Optional[discord.Member] = None,
     ) -> None:
         num_packs = self.process_num_packs(num_packs)
-        p_list = (
-            self.generator.get_random_jmp_decks(n=num_packs, replace=True)
-            if self.generator.has_jmp
-            else []  # TODO: consider exception?
+        p_list = self.generator.get_random_decks(
+            set="JMP", n=num_packs, replace=True
+        )
+        await self.send_plist_msg(p_list, ctx, member)
+
+    @commands.command(
+        help=help_msg(
+            "Generates ramdom *Jumpstart 2022* decks",
+            has_num_packs=True,
+            examples={
+                "j22": "generates one deck",
+                "j22 3": "generates three decks",
+            },
+        )
+    )
+    async def j22(
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = self.process_num_packs(num_packs)
+        p_list = self.generator.get_random_decks(
+            set="J22", n=num_packs, replace=True
+        )
+        await self.send_plist_msg(p_list, ctx, member)
+
+    @commands.command(
+        help=help_msg(
+            "Generates ramdom *Jumpstart* decks (with Arena replacements)",
+            has_num_packs=True,
+            examples={
+                "ajmp": "generates one deck",
+                "ajmp 3": "generates three decks",
+            },
+        )
+    )
+    async def ajmp(
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = self.process_num_packs(num_packs)
+        p_list = self.generator.get_random_arena_jmp_decks(
+            n=num_packs, replace=True
         )
         await self.send_plist_msg(p_list, ctx, member)
 

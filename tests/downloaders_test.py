@@ -1,5 +1,4 @@
 import json
-from io import BytesIO
 from pathlib import Path
 
 import numpy as np
@@ -72,94 +71,20 @@ def test_download_mtgjson_data_400(
         assert json.load(f)["first"]
 
 
-@pytest.mark.parametrize("backup", [False, True])
-def test_download_jmp_decks(
-    tmp_path: Path,
-    requests_mock: Mocker,
-    zip_one: BytesIO,
-    zip_two: BytesIO,
-    backup: bool,
-):
-    jmp_dir = tmp_path / "JMP"
-    backup_dir = tmp_path / "JMP_last"
-    temp_dir = tmp_path / "temp_decks"
-
-    requests_mock.get(mtgjson_downloader.DECKFILE_URL, body=zip_one)
-    mtgjson_downloader.download_jmp_decks(
-        dir=jmp_dir.as_posix(), temp_dir=tmp_path.as_posix(), backup=False
-    )
-    assert not temp_dir.exists()
-    assert (jmp_dir / "decks" / "deck1_JMP.json").is_file()
-    assert not backup_dir.exists()
-
-    requests_mock.get(mtgjson_downloader.DECKFILE_URL, body=zip_two)
-    mtgjson_downloader.download_jmp_decks(
-        dir=jmp_dir.as_posix(), temp_dir=tmp_path.as_posix(), backup=backup
-    )
-    assert not temp_dir.exists()
-    assert (jmp_dir / "decks" / "deck2_JMP.json").is_file()
-    assert (backup_dir / "decks" / "deck1_JMP.json").is_file() == backup
-    with open(jmp_dir / "decks" / "deck2_JMP.json") as f:
-        assert json.load(f)["deck2"]
-    if backup:
-        with open(backup_dir / "decks" / "deck1_JMP.json") as f:
-            assert json.load(f)["deck1"]
-
-
-@pytest.mark.parametrize("backup", [False, True])
-def test_download_jmp_decks_400(
-    tmp_path: Path,
-    requests_mock: Mocker,
-    backup: bool,
-):
-    jmp_dir = tmp_path / "JMP"
-    backup_dir = tmp_path / "JMP_last"
-    temp_dir = tmp_path / "temp_decks"
-
-    requests_mock.get(mtgjson_downloader.DECKFILE_URL, status_code=400)
-    with pytest.raises(HTTPError):
-        mtgjson_downloader.download_jmp_decks(
-            dir=jmp_dir.as_posix(), temp_dir=tmp_path.as_posix(), backup=backup
-        )
-    assert not temp_dir.exists()
-    assert not jmp_dir.exists()
-    assert not backup_dir.exists()
-
-    jmp_dir.mkdir()
-    with pytest.raises(HTTPError):
-        mtgjson_downloader.download_jmp_decks(
-            dir=jmp_dir.as_posix(), temp_dir=tmp_path.as_posix(), backup=backup
-        )
-    assert not temp_dir.exists()
-    assert jmp_dir.exists()
-    assert not backup_dir.exists()
-
-
-@pytest.mark.parametrize(
-    ["jmp", "jmp_backup"], [(False, False), (True, False), (True, True)]
-)
 def test_mtgjson_downloader_main(
     tmp_path: Path,
     requests_mock: Mocker,
-    zip_one: BytesIO,
-    jmp: bool,
-    jmp_backup: bool,
     temp_config: Config,
 ):
     mtgjson_file = tmp_path / "AllPrintings.json"
     backup_file = tmp_path / "AllPrintings_last.json"
-    jmp_dir = tmp_path / "JMP"
-    backup_dir = tmp_path / "JMP_last"
     temp_dir = tmp_path / "temp_decks"
 
     with open(mtgjson_file, "w") as f:
         json.dump({"first": True}, f)
-    if jmp_backup:
-        jmp_dir.mkdir()
 
     requests_mock.get(mtgjson_downloader.MTGJSON_URL, json={"second": True})
-    requests_mock.get(mtgjson_downloader.DECKFILE_URL, body=zip_one)
-    mtgjson_downloader.main(config=temp_config, jmp=jmp, jmp_backup=jmp_backup)
+    mtgjson_downloader.main(config=temp_config)
     assert mtgjson_file.is_file()
     assert backup_file.is_file()
     with open(mtgjson_file) as f:
@@ -167,8 +92,6 @@ def test_mtgjson_downloader_main(
     with open(backup_file) as f:
         assert json.load(f)["first"]
     assert not temp_dir.exists()
-    assert jmp_dir.exists() == jmp
-    assert backup_dir.exists() == jmp_backup
 
 
 def test_set_symbols_downloader(

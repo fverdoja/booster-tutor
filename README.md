@@ -33,7 +33,9 @@ The bot responds to the following commands:
 
 ### *Jumpstart* decks
 
-* `!jmp`: generates a ramdom *Jumpstart* deck (with Arena replacements)
+* `!jmp`: generates a ramdom *Jumpstart* deck (without Arena replacements)
+* `!ajmp`: generates a ramdom *Jumpstart* deck (with Arena replacements)
+* `!j22`: generates a ramdom *Jumpstart 2022* deck
 
 ### CubeCobra cube packs
 
@@ -104,10 +106,6 @@ you have procured those for yourself, follow these steps:
 ```bash
   python -m boostertutor mtgjson
 ```
-
-For the first run you might want to download JMP decks as well to allow the bot
-to be able to generate them. To download JMP decks, add the `--jmp` parameter
-to the previous command.
 
 * Run the bot:
 

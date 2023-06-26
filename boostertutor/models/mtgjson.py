@@ -208,22 +208,6 @@ class CardDb:
                 f"Unsupported content-type {r.headers['content-type']}"
             )
 
-    def add_decks_from_folder(self, deck_path: str) -> None:
-        file_list = [f for f in os.listdir(deck_path) if f.endswith(".json")]
-        for deck_file in file_list:
-            with open(deck_path + deck_file) as f:
-                j = json.load(f)
-            deck = j["data"]
-
-            deck["commander"] = self.replace_cards(deck["commander"])
-            deck["mainBoard"] = self.replace_cards(deck["mainBoard"])
-            deck["sideBoard"] = self.replace_cards(deck["sideBoard"])
-
-            set = self.sets[deck["code"]]
-            if not hasattr(set, "decks"):
-                set.__dict__["decks"] = []
-            set.decks.append(deck)
-
     def replace_cards(self, card_list: Sequence[dict]) -> Sequence[CardProxy]:
         cards: list[CardProxy] = []
         for c in card_list:

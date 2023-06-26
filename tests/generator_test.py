@@ -114,24 +114,26 @@ def test_random_packs_from_set_list_with_replacement(
 
 
 def test_has_jumpstart(generator: MtgPackGenerator):
-    assert generator.has_jmp
+    assert len(generator.data.sets["JMP"].decks) > 0
+    assert len(generator.data.sets["J22"].decks) > 0
 
 
 def test_jumpstart(generator: MtgPackGenerator):
-    p = generator.get_random_jmp_decks()[0]
+    p = generator.get_random_decks("JMP")[0]
     assert len(p.cards) == 20
 
 
 def test_jumpstart_list(generator: MtgPackGenerator):
-    p_list = generator.get_random_jmp_decks(n=2)
+    p_list = generator.get_random_decks("J22", n=2)
     assert len(p_list) == 2
-    assert all([pack.set.code == "JMP" for pack in p_list])
+    assert all([pack.set.code == "J22" for pack in p_list])
 
 
 def test_arena_jumpstart(generator: MtgPackGenerator):
-    for d in generator.data.sets["JMP"].decks:
-        for c in d["mainBoard"]:
-            assert c.name != "Path to Exile"
+    all_jmp_decks = generator.get_random_arena_jmp_decks(n=121, replace=False)
+    all_cards = [card for deck in all_jmp_decks for card in deck.cards]
+    assert all([c.card.name != "Rhystic Study" for c in all_cards])
+    assert all([c.card.setCode != "AJMP" for c in all_cards])
 
 
 def test_cube_pack(generator: MtgPackGenerator, cube: dict):
