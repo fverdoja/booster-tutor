@@ -91,6 +91,7 @@ class DiscordBot(commands.Bot):
             "bro",
             "one",
             "mom",
+            "woe",
         ]
         self.explorer_sets = [
             "xln",

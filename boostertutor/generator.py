@@ -25,6 +25,7 @@ class MtgPackGenerator:
             for set_code, set in self.data.sets.items()
             if hasattr(set, "booster") and set_code not in ["JMP", "J22"]
         ]
+        self.remove_broken_set("DBL")
         self.sets_with_decks: list[str] = ["JMP", "J22"]
         self.validate_booster_data()
 
@@ -360,3 +361,9 @@ class MtgPackGenerator:
             )
         else:
             commons["balanceColors"] = True
+
+    def remove_broken_set(self, set: str) -> None:
+        self.sets_with_boosters.remove(set.upper())
+        logger.warning(
+            f"Removed {set.upper()} from available sets because broken."
+        )
