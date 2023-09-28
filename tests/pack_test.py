@@ -36,23 +36,33 @@ def test_count_card_colors(cards: dict[str, MtgCard], count_hybrids: bool):
         "B": 1,
         "R": 1,
         "G": 2 if count_hybrids else 1,
-        "C": 2,
+        "C": 3,
     }
 
 
 def test_arena(cards: dict[str, MtgCard]):
-    card_list = [cards["Electrolyze"], cards["Mysterious Egg"]]
+    card_list = [
+        cards["Electrolyze"],
+        cards["The Mightstone and Weakstone"],
+        cards["Mysterious Egg"],
+    ]
     pack = MtgPack({"slot": {"cards": card_list}})
-    assert (
-        pack.arena_format()
-        == "1 Mysterious Egg (IKO) 3\n1 Electrolyze (STA) 123"
+    assert pack.arena_format() == (
+        "1 The Mightstone and Weakstone (BRO) 238a\n"
+        "1 Mysterious Egg (IKO) 3\n"
+        "1 Electrolyze (STA) 123"
     )
 
 
 def test_json(cards: dict[str, MtgCard]):
-    card_list = [cards["Electrolyze"], cards["Mysterious Egg"]]
+    card_list = [
+        cards["Electrolyze"],
+        cards["The Mightstone and Weakstone"],
+        cards["Mysterious Egg"],
+    ]
     pack = MtgPack({"slot": {"cards": card_list}})
     assert pack.json() == [
+        {"name": "The Mightstone and Weakstone", "count": 1},
         {"name": "Mysterious Egg", "count": 1},
         {"name": "Electrolyze", "count": 1},
     ]

@@ -92,7 +92,12 @@ class MtgCard:
         return im
 
     def json(self) -> dict:
-        return {"name": f"{self.card.name}", "count": 1}
+        name = (
+            self.card.name
+            if self.card.layout != "meld"
+            else self.card.faceName
+        )
+        return {"name": f"{name}", "count": 1}
 
     def arena_format(self) -> str:
         if (
@@ -103,7 +108,12 @@ class MtgCard:
             number = self.card.variations[0].number
         else:
             number = self.card.number
-        return f"1 {self.card.name} ({self.card.setCode}) {number}"
+        name = (
+            self.card.name
+            if self.card.layout != "meld"
+            else self.card.faceName
+        )
+        return f"1 {name} ({self.card.setCode}) {number}"
 
     def pack_sort_key(self) -> tuple[int, bool, int]:
         r = ["mythic", "rare", "uncommon", "common", "special", "bonus"]

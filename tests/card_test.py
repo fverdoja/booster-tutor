@@ -40,6 +40,11 @@ def test_colors(cards: dict[str, MtgCard], card: str, expected: Sequence[str]):
         ("Bojuka Bog", {"name": "Bojuka Bog", "count": 1}),
         ("Growing Ranks", {"name": "Growing Ranks", "count": 1}),
         ("Electrolyze", {"name": "Electrolyze", "count": 1}),
+        ("Urza, Lord Protector", {"name": "Urza, Lord Protector", "count": 1}),
+        (
+            "The Mightstone and Weakstone",
+            {"name": "The Mightstone and Weakstone", "count": 1},
+        ),
     ],
 )
 def test_json(cards: dict[str, MtgCard], card: str, expected: dict):
@@ -57,6 +62,11 @@ def test_json(cards: dict[str, MtgCard], card: str, expected: dict):
         ("Bojuka Bog", "1 Bojuka Bog (C19) 232"),
         ("Growing Ranks", "1 Growing Ranks (C19) 193"),
         ("Electrolyze", "1 Electrolyze (STA) 123"),
+        ("Urza, Lord Protector", "1 Urza, Lord Protector (BRO) 225"),
+        (
+            "The Mightstone and Weakstone",
+            "1 The Mightstone and Weakstone (BRO) 238a",
+        ),
     ],
 )
 def test_arena(cards: dict[str, MtgCard], card: str, expected: str):
@@ -75,8 +85,10 @@ def test_pack_sort_key(cards: dict[str, MtgCard]):
     names = [card.card.name for card in card_list]
     assert names == [
         "Clever Impersonator",
+        "Urza, Lord Protector // Urza, Planeswalker",
         "Grim Haruspex",
         "Growing Ranks",
+        "The Mightstone and Weakstone // Urza, Planeswalker",
         "Ghostly Prison",
         "Desperate Ravings",
         "Farseek",

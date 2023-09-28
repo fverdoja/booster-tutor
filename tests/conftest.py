@@ -18,6 +18,7 @@ def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
     c19 = generator.data.sets["C19"].cards_by_ascii_name
     iko = generator.data.sets["IKO"].cards_by_ascii_name
     sta = generator.data.sets["STA"].cards_by_ascii_name
+    bro = generator.data.sets["BRO"].cards_by_ascii_name
     return {
         "Ghostly Prison": MtgCard(c19["ghostly prison"]),  # uncommon
         "Clever Impersonator": MtgCard(c19["clever impersonator"]),  # mythic
@@ -28,6 +29,12 @@ def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
         "Bojuka Bog": MtgCard(c19["bojuka bog"]),  # common land
         "Growing Ranks": MtgCard(c19["growing ranks"]),  # rare
         "Electrolyze": MtgCard(sta["electrolyze"], foil=True),  # rare foil
+        "Urza, Lord Protector": MtgCard(
+            bro["urza, lord protector // urza, planeswalker"]
+        ),  # mythic, meld top
+        "The Mightstone and Weakstone": MtgCard(
+            bro["the mightstone and weakstone // urza, planeswalker"]
+        ),  # rare, meld bottom
     }
 
 

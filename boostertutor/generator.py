@@ -25,7 +25,6 @@ class MtgPackGenerator:
             for set_code, set in self.data.sets.items()
             if hasattr(set, "booster") and set_code not in ["JMP", "J22"]
         ]
-        self.remove_broken_set("DBL")
         self.sets_with_decks: list[str] = ["JMP", "J22"]
         self.validate_booster_data()
 
@@ -242,7 +241,7 @@ class MtgPackGenerator:
         for d in decks:
             logger.debug(f"Generating {set.upper()} pack...")
             cards: list[MtgCard] = []
-            for c in d["cards"]:
+            for c in d["mainBoard"]:
                 n = c.get("count", 1)
                 for _ in range(n):
                     cards.append(
