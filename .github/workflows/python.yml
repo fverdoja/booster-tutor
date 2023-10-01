@@ -15,7 +15,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9.1"
+        python-version: "3.9.10"
     - name: Install dependencies
       run: |
         pip install --upgrade pip
@@ -39,7 +39,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9.1"
+        python-version: "3.9.10"
     - name: Install dependencies
       run: |
         pip install --upgrade pip
