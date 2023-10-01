@@ -3,6 +3,7 @@ from typing import Optional, Sequence
 import aiohttp
 import imageio
 import numpy as np
+
 from boostertutor.models.mtgjson import CardProxy
 from boostertutor.utils.utils import foil_layer
 

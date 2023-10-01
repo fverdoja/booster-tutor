@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 import requests
+
 from boostertutor.utils.utils import Config, get_config
 
 # configs

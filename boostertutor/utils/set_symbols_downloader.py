@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import imageio
+
 from boostertutor.utils.utils import get_config
 
 from ..generator import MtgPackGenerator

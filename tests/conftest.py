@@ -1,16 +1,51 @@
+import re
+from io import BytesIO
 from pathlib import Path
+from typing import AsyncGenerator, Generator, TypeVar
 
+import discord.ext.test as dpytest
+import imageio
+import numpy as np
 import pytest
+from aioresponses import CallbackResult, aioresponses
+from discord import Intents
+
+from boostertutor.bot import DiscordBot
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
-from boostertutor.utils.utils import Config, get_config
+from boostertutor.utils.utils import (
+    CUBECOBRA_URL,
+    IMGUR_URL,
+    SEALEDDECK_URL,
+    Config,
+    get_config,
+)
+
+T = TypeVar("T")
+
+Yield = Generator[T, None, None]
+AsyncYield = AsyncGenerator[T, None]
 
 
 @pytest.fixture(scope="session")
 def generator() -> MtgPackGenerator:
     config = get_config()
     return MtgPackGenerator(path_to_mtgjson=config.mtgjson_path)
+
+
+@pytest.fixture
+async def bot(generator: MtgPackGenerator) -> AsyncYield[DiscordBot]:
+    config = get_config()
+    intents = Intents.default()
+    intents.members = True
+    bot = DiscordBot(config, generator, intents=intents)
+    dpytest.configure(bot)
+
+    yield bot
+
+    # Teardown
+    await dpytest.empty_queue()  # empty global message queue as test teardown
 
 
 @pytest.fixture(scope="module")
@@ -172,6 +207,13 @@ def cube() -> dict:
 
 
 @pytest.fixture
+def card_img_file() -> BytesIO:
+    img_file = BytesIO()
+    imageio.imwrite(img_file, np.zeros((10, 10, 3)), format="jpeg")
+    return img_file
+
+
+@pytest.fixture
 def temp_config(tmp_path: Path) -> Config:
     config_dict = {
         "discord_token": "0000",
@@ -180,3 +222,26 @@ def temp_config(tmp_path: Path) -> Config:
         "command_prefix": "!",
     }
     return Config(**config_dict)
+
+
+@pytest.fixture
+def mocked_aioresponses(cube: dict, card_img_file: BytesIO) -> Yield[None]:
+    pattern = re.compile(r"^https://api\.scryfall\.com/cards.*$")
+
+    def imgur_callback(url: str, **kargs):
+        return CallbackResult(
+            status=200, payload={"data": {"link": "http://foo.url"}}
+        )
+
+    def sealeddeck_callback(url: str, **kargs):
+        return CallbackResult(status=200, payload={"poolId": "yyy"})
+
+    with aioresponses() as mocked:
+        mocked.post(url=IMGUR_URL, callback=imgur_callback)
+        mocked.post(url=SEALEDDECK_URL, callback=sealeddeck_callback)
+        mocked.get(url=CUBECOBRA_URL + "mocked_cube", status=200, payload=cube)
+        mocked.get(url=CUBECOBRA_URL + "non_existent_cube", status=404)
+        mocked.get(
+            url=pattern, status=200, body=card_img_file.getvalue(), repeat=True
+        )
+        yield

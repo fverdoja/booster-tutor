@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 from aioresponses import aioresponses
+
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtgjson import SetProxy
 

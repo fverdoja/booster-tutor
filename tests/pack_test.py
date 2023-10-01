@@ -1,10 +1,5 @@
-import re
-from io import BytesIO
-
-import imageio
-import numpy as np
 import pytest
-from aioresponses import aioresponses
+
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
 
@@ -78,16 +73,8 @@ def test_balancing(unbalanced_pack: MtgPack):
     assert "Fortress Crab" in cards
 
 
-async def test_image(unbalanced_pack: MtgPack):
-    pattern = re.compile(r"^https://api\.scryfall\.com/cards.*$")
-    expected_img = np.zeros((10, 10, 3))
-    mock_img_file = BytesIO()
-    imageio.imwrite(mock_img_file, expected_img, format="jpeg")
-    with aioresponses() as mocked:
-        mocked.get(
-            url=pattern, status=200, body=mock_img_file.getvalue(), repeat=True
-        )
-        img_list = await unbalanced_pack.get_images()
+async def test_image(unbalanced_pack: MtgPack, mocked_aioresponses):
+    img_list = await unbalanced_pack.get_images()
 
-        assert len(img_list) == len(unbalanced_pack.cards)
-        assert all([i.shape == (10, 10, 3) for i in img_list])
+    assert len(img_list) == len(unbalanced_pack.cards)
+    assert all([i.shape == (10, 10, 3) for i in img_list])

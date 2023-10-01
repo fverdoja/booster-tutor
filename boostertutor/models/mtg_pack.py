@@ -3,6 +3,7 @@ from random import choice
 from typing import Optional, Sequence
 
 import numpy as np
+
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtgjson import SetProxy
 

@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from aiohttp import ClientResponseError
 from aioresponses import aioresponses
+
 from boostertutor.models.mtg_card import MtgCard
 
 

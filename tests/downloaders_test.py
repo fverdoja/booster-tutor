@@ -3,10 +3,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from boostertutor.utils import mtgjson_downloader, set_symbols_downloader
-from boostertutor.utils.utils import Config
 from requests import HTTPError
 from requests_mock import Mocker
+
+from boostertutor.utils import mtgjson_downloader, set_symbols_downloader
+from boostertutor.utils.utils import Config
 
 
 def test_download_file(tmp_path: Path, requests_mock: Mocker):

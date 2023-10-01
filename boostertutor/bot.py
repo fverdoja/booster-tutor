@@ -1,5 +1,5 @@
 import logging
-from io import BytesIO, StringIO
+from io import BytesIO
 from typing import Optional, Sequence
 
 import aiohttp
@@ -14,6 +14,13 @@ from boostertutor.models.mtg_pack import MtgPack
 logger = logging.getLogger(__name__)
 
 MAX_NUM_PACKS = 36
+
+
+def process_num_packs(num_packs: Optional[int]) -> int:
+    if num_packs:
+        return min(max(1, num_packs), MAX_NUM_PACKS)
+    else:
+        return 1
 
 
 def help_msg(
@@ -69,6 +76,7 @@ class DiscordBot(commands.Bot):
     def __init__(
         self,
         config: utils.Config,
+        pack_generator: Optional[MtgPackGenerator] = None,
         **options,
     ):
         super().__init__(
@@ -79,8 +87,10 @@ class DiscordBot(commands.Bot):
             **options,
         )
         self.config = config
-        self.generator = MtgPackGenerator(
-            path_to_mtgjson=self.config.mtgjson_path
+        self.generator = (
+            pack_generator
+            if pack_generator
+            else MtgPackGenerator(path_to_mtgjson=self.config.mtgjson_path)
         )
         self.standard_sets = [
             "mid",
@@ -159,24 +169,10 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         self.bot = bot
         self.generator = self.bot.generator
 
-    def emoji(self, name: str, guild: Optional[discord.Guild] = None) -> str:
-        """Return an emoji if it exists on the server or empty otherwise"""
-        for e in guild.emojis if guild else self.bot.emojis:
-            if e.name == name:
-                return str(e)
-        return ""
-
-    def process_num_packs(self, num_packs: Optional[int]) -> int:
-        if num_packs:
-            return min(max(1, num_packs), MAX_NUM_PACKS)
-        else:
-            return 1
-
     async def send_pack_msg(
         self,
         p: MtgPack,
         message: discord.Message,
-        emoji: str,
         member: Optional[discord.Member] = None,
     ) -> None:
         # First send the booster text with a loading message for the image
@@ -187,7 +183,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         )
 
         m = await message.reply(
-            f"**{emoji}{(' ' if len(emoji) else '')}{p.name}**\n"
+            f"**{p.name}**\n"
             f"{member.mention if member else ''}\n"
             f"```\n{p.arena_format()}\n```",
             embed=embed,
@@ -196,7 +192,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         try:
             # Then generate the image of booster content (takes a while)
             img_list = await p.get_images(size="normal")
-            p_img = utils.pack_img(img_list)
+            p_img = utils.cards_img(img_list)
             img_file = BytesIO()
             imageio.imwrite(img_file, p_img, format="jpeg")
 
@@ -222,10 +218,11 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         self,
         pool: Sequence[MtgPack],
         message: discord.Message,
-        emoji: str,
         member: Optional[discord.Member] = None,
     ) -> None:
-        pool_file = StringIO("\n".join([p.arena_format() for p in pool]))
+        pool_file = BytesIO(
+            bytes("\n".join([p.arena_format() for p in pool]), "utf-8")
+        )
         sets = ", ".join([p.set.code for p in pool])
         json_pool = [card_json for p in pool for card_json in p.json()]
 
@@ -238,7 +235,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} packs"
         name = member.display_name if member else message.author.display_name
         m = await message.reply(
-            f"**{emoji}{(' ' if len(emoji) else '')}{title}**\n"
+            f"**{title}**\n"
             f"{member.mention if member else ''}\n"
             f"Content: [{sets}]",
             embed=embed,
@@ -272,7 +269,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
                 for c in p.cards
                 if c.card.rarity in ["rare", "mythic"]
             ]
-            r_img = utils.rares_img(img_list)
+            r_img = utils.cards_img(img_list)
             r_file = BytesIO()
             imageio.imwrite(r_file, r_img, format="jpeg")
 
@@ -299,19 +296,14 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         p_list: Sequence[MtgPack],
         ctx: commands.Context,
         member: Optional[discord.Member] = None,
-        emoji: str = "",
     ) -> None:
         if p_list:
             assert ctx.message
-            message: discord.Message = ctx.message
+            msg: discord.Message = ctx.message
             if len(p_list) == 1:
-                await self.send_pack_msg(
-                    p_list[0], message=message, member=member, emoji=emoji
-                )
+                await self.send_pack_msg(p_list[0], message=msg, member=member)
             else:
-                await self.send_pool_msg(
-                    p_list, message=message, member=member, emoji=emoji
-                )
+                await self.send_pool_msg(p_list, message=msg, member=member)
 
     @commands.command(
         help=help_msg(
@@ -329,7 +321,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(n=num_packs, replace=True)
         await self.send_plist_msg(p_list, ctx, member)
 
@@ -349,7 +341,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
             self.bot.historic_sets, n=num_packs, replace=True
         )
@@ -386,7 +378,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
             self.bot.standard_sets, n=num_packs, replace=True
         )
@@ -408,7 +400,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
             self.bot.explorer_sets, n=num_packs, replace=True
         )
@@ -430,7 +422,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_decks(
             set="JMP", n=num_packs, replace=True
         )
@@ -452,7 +444,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_decks(
             set="J22", n=num_packs, replace=True
         )
@@ -474,7 +466,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_arena_jmp_decks(
             n=num_packs, replace=True
         )
@@ -503,7 +495,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         cube = await utils.get_cube(cube_id)
         p_list = self.generator.get_cube_packs(cube, n=num_packs)
         await self.send_plist_msg(p_list, ctx, member)
@@ -570,7 +562,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         p_list = (
             self.generator.get_packs(set_code, num_packs)
             if set_code.lower() in self.bot.all_sets
@@ -601,7 +593,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs: Optional[int] = None,
         member: Optional[discord.Member] = None,
     ) -> None:
-        num_packs = self.process_num_packs(num_packs)
+        num_packs = process_num_packs(num_packs)
         try:
             p_list = (
                 self.generator.get_packs(

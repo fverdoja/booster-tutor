@@ -2,13 +2,13 @@ import dataclasses
 from io import BytesIO
 from typing import Optional
 
-import boostertutor.utils.utils as utils
-import imageio
 import numpy as np
 import pytest
 import yaml
 from aiohttp import ClientResponseError
 from aioresponses import CallbackResult, aioresponses
+
+import boostertutor.utils.utils as utils
 
 
 def test_get_config(
@@ -64,14 +64,12 @@ async def test_pool_to_sealedpool(sealedpool_id: Optional[str]):
         assert pool_id == "yyy"
 
 
-async def test_upload_img():
+async def test_upload_img(card_img_file: BytesIO):
     client_id = "xxx"
     expected_link = "http://foo.url"
-    img_file = BytesIO()
-    imageio.imwrite(img_file, np.zeros((10, 10, 3)), format="jpeg")
 
     def callback(url: str, **kargs):
-        assert kargs["data"]["image"] == img_file.getvalue()
+        assert kargs["data"]["image"] == card_img_file.getvalue()
         assert kargs["headers"]["Authorization"] == f"Client-ID {client_id}"
         return CallbackResult(
             status=200, payload={"data": {"link": expected_link}}
@@ -79,7 +77,7 @@ async def test_upload_img():
 
     with aioresponses() as mocked:
         mocked.post(url=utils.IMGUR_URL, callback=callback)
-        link = await utils.upload_img(img_file, client_id)
+        link = await utils.upload_img(card_img_file, client_id)
         assert link == expected_link
 
 
@@ -100,42 +98,26 @@ def test_cards_img(num_images: int, expected_shape: tuple[int, int, int]):
 
 
 @pytest.mark.parametrize(
-    ["num_images", "expected_shape"],
+    ["num_images", "max_row_length", "expected_shape"],
     [
-        (1, (10, 10, 3)),
-        (3, (10, 30, 3)),
-        (10, (10, 100, 3)),
-        (11, (20, 60, 3)),
-        (25, (30, 90, 3)),
+        (1, 2, (10, 10, 3)),
+        (2, 2, (10, 20, 3)),
+        (3, 2, (20, 20, 3)),
+        (4, 2, (20, 20, 3)),
+        (5, 2, (30, 20, 3)),
     ],
 )
-def test_pack_img(num_images: int, expected_shape: tuple[int, int, int]):
+def test_cards_img_max_row_length(
+    num_images: int, max_row_length: int, expected_shape: tuple[int, int, int]
+):
     card_list = [np.zeros((10, 10, 3)) for _ in range(num_images)]
-    img = utils.pack_img(card_list)
+    img = utils.cards_img(card_list, max_row_length)
     assert img.shape == expected_shape
 
 
-@pytest.mark.parametrize(
-    ["num_images", "expected_shape"],
-    [
-        (1, (10, 10, 3)),
-        (3, (10, 30, 3)),
-        (10, (10, 100, 3)),
-        (11, (20, 60, 3)),
-        (25, (30, 90, 3)),
-    ],
-)
-def test_rares_img(num_images: int, expected_shape: tuple[int, int, int]):
-    card_list = [np.zeros((10, 10, 3)) for _ in range(num_images)]
-    img = utils.rares_img(card_list)
-    assert img.shape == expected_shape
-
-
-def test_cards_pack_rares_img_empty():
+def test_cards_img_empty():
     with pytest.raises(AssertionError):
         utils.cards_img([])
-        utils.pack_img([])
-        utils.rares_img([])
 
 
 def test_arena_to_json():

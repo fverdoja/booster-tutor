@@ -4,11 +4,11 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from typing import Optional, Sequence, Union
-from parse import compile
 
 import aiohttp
 import numpy as np
 import yaml
+from parse import compile
 
 logger = logging.getLogger(__name__)
 
@@ -97,16 +97,6 @@ def cards_img(
             )
             cards = np.vstack((cards, row))
     return cards
-
-
-def pack_img(im_list: Sequence[np.ndarray]) -> np.ndarray:
-    """Generate an image of the cards in a pack"""
-    return cards_img(im_list)
-
-
-def rares_img(im_list: Sequence[np.ndarray]) -> np.ndarray:
-    """Generate an image of the rares in a sealed pool"""
-    return cards_img(im_list)
 
 
 def arena_to_json(arena_list: str) -> Sequence[dict]:
