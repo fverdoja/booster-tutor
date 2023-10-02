@@ -19,7 +19,7 @@ async def test_process_num_packs(num: int, expected: int):
     assert process_num_packs(num) == expected
 
 
-def test_bot_sets(bot: DiscordBot):
+def test_set_lists(bot: DiscordBot):
     assert set(bot.standard_sets).issubset(set(bot.explorer_sets))
     assert set(bot.explorer_sets).issubset(set(bot.historic_sets))
     assert set(bot.historic_sets).issubset(set(bot.all_sets))
@@ -36,23 +36,24 @@ async def test_donate(bot: DiscordBot):
     )
 
 
-async def test_send_pack_msg(bot: DiscordBot, mocked_aioresponses):
+async def test_send_pack_msg(bot: DiscordBot, mocked_aioresponses: None):
     await dpytest.message("!set znr")
+    await dpytest.run_all_events()
     assert dpytest.verify().message().contains().content("Zendikar Rising")
 
 
-async def test_send_pool_msg(bot: DiscordBot, mocked_aioresponses):
-    await dpytest.message("!set znr 6")
-    assert dpytest.verify().message().contains().content("Sealed pool")
-
-
-async def test_send_pool_msg_non_sealed(bot: DiscordBot, mocked_aioresponses):
-    await dpytest.message("!set znr 12")
-    assert dpytest.verify().message().contains().content("12 packs")
-
-
-async def test_send_pool_msg_above_max(bot: DiscordBot, mocked_aioresponses):
-    await dpytest.message("!set znr 100")
-    assert (
-        dpytest.verify().message().contains().content(f"{MAX_NUM_PACKS} packs")
-    )
+@pytest.mark.parametrize(
+    ["message", "title"],
+    [
+        ("!set znr 6", "Sealed pool"),
+        ("!set znr 4", "4 packs"),
+        (f"!set znr {MAX_NUM_PACKS}", f"{MAX_NUM_PACKS} packs"),
+        (f"!set znr {MAX_NUM_PACKS+1}", f"{MAX_NUM_PACKS} packs"),
+    ],
+)
+async def test_send_pool_msg(
+    bot: DiscordBot, message: str, title: str, mocked_aioresponses: None
+):
+    await dpytest.message(message)
+    await dpytest.run_all_events()
+    assert dpytest.verify().message().contains().content(title)
