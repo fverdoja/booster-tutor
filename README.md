@@ -90,9 +90,14 @@ that user instead. For example, `!znr @user#1234` has the bot mention
 ### Requirements
 
 The bot should works on `python 3.9+`. All dependencies are listed in
-`requirements.txt` and should be installed for the bot to run. If you are
-interested in running the tests or doing development, you should also install
-the dependencies in `requirements-dev.txt`.
+`requirements.txt` and should be installed for the bot to run.
+
+#### Development
+
+If you are interested in running the tests or doing development, you should also
+install the dependencies in `requirements-dev.txt`. The easiest way to setup
+your environment correctly is by using the provided `devcontainer.json`
+configuration file.
 
 ### Run the bot
 
