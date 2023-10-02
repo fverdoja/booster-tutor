@@ -34,20 +34,6 @@ def generator() -> MtgPackGenerator:
     return MtgPackGenerator(path_to_mtgjson=config.mtgjson_path)
 
 
-@pytest.fixture
-async def bot(generator: MtgPackGenerator) -> AsyncYield[DiscordBot]:
-    config = get_config()
-    intents = Intents.default()
-    intents.members = True
-    bot = DiscordBot(config, generator, intents=intents)
-    dpytest.configure(bot)
-
-    yield bot
-
-    # Teardown
-    await dpytest.empty_queue()  # empty global message queue as test teardown
-
-
 @pytest.fixture(scope="module")
 def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
     c19 = generator.data.sets["C19"].cards_by_ascii_name
@@ -245,3 +231,31 @@ def mocked_aioresponses(cube: dict, card_img_file: BytesIO) -> Yield[None]:
             url=pattern, status=200, body=card_img_file.getvalue(), repeat=True
         )
         yield
+
+
+@pytest.fixture
+async def bot(
+    temp_config: Config, generator: MtgPackGenerator
+) -> AsyncYield[DiscordBot]:
+    intents = Intents.default()
+    intents.members = True
+    bot = DiscordBot(temp_config, generator, intents=intents)
+    dpytest.configure(bot)
+
+    yield bot
+
+    # Teardown
+    await dpytest.empty_queue()  # empty global message queue as test teardown
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int):
+    """Code to execute after all tests."""
+
+    # dat files are created by dpytest when using attachements
+    print("\n-------------------------\nClean dpytest_*.dat files")
+    dat_files = Path(".").glob("dpytest_*.dat")
+    for file_path in dat_files:
+        try:
+            file_path.unlink()
+        except Exception:
+            print("Error while deleting file : ", file_path)
