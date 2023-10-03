@@ -132,7 +132,7 @@ async def test_prices(
         prices[currency] = None
         prices[currency + "_foil"] = None
     rate = None if rate_none else 1.3
-    scry_id = c.card.identifiers["scryfallId"]
+    scry_id = c.card.identifiers.scryfall_id
     card_url = f"https://api.scryfall.com/cards/{scry_id}"
     with aioresponses() as mocked:
         mocked.get(url=card_url, status=200, payload={"prices": prices})
@@ -157,7 +157,7 @@ async def test_image(
     expected_raise: ContextManager,
 ):
     c = cards["Electrolyze"]  # foil card, produces a foil image by default
-    scry_id = c.card.identifiers["scryfallId"]
+    scry_id = c.card.identifiers.scryfall_id
     img_url = (
         f"https://api.scryfall.com/cards/{scry_id}"
         f"?format=image&version={size}"
@@ -180,7 +180,7 @@ async def test_image(
 
 async def test_image_400(cards: dict[str, MtgCard]):
     c = cards["Electrolyze"]
-    scry_id = c.card.identifiers["scryfallId"]
+    scry_id = c.card.identifiers.scryfall_id
     img_url = (
         f"https://api.scryfall.com/cards/{scry_id}"
         f"?format=image&version=large"

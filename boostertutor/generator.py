@@ -6,7 +6,7 @@ from numpy.random import choice
 
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
-from boostertutor.models.mtgjson import CardDb
+from boostertutor.models.mtgjson_sql import CardDb, SheetCardProxy
 
 logger = logging.getLogger(__name__)
 
@@ -18,36 +18,36 @@ class MtgPackGenerator:
         max_balancing_iterations: int = 100,
     ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
-        self.data = CardDb.from_file(path_to_mtgjson)
-        self.fix_missing_balance("LTR", "commonWithShowcase")
+        self.data = CardDb(path_to_mtgjson)
+        # self.fix_missing_balance("LTR", "commonWithShowcase")
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
-            if hasattr(set, "booster") and set_code not in ["JMP", "J22"]
+            if set.boosters and set_code not in ["JMP", "J22"]
         ]
         self.sets_with_decks: list[str] = ["JMP", "J22"]
-        self.validate_booster_data()
+        # self.validate_booster_data()
 
-    def validate_booster_data(self) -> int:
-        num_warnings = 0
-        for set_code in self.sets_with_boosters:
-            set = self.data.sets[set_code]
-            for booster_name, booster in set.booster.items():
-                for sheet_name, sheet in booster["sheets"].items():
-                    for id in sheet["cards"]:
-                        if id not in self.data.cards_by_id:
-                            logger.warning(
-                                f"Found non-existent card id in a booster: "
-                                f"{set_code} {booster_name} {sheet_name} {id}"
-                            )
-                            num_warnings += 1
-        if num_warnings:
-            logger.warning(
-                "Generating boosters with non-existent card ids will result "
-                "in exceptions. Please consider reporting the non-existent "
-                "ids to the MTGJSON devs."
-            )
-        return num_warnings
+    # def validate_booster_data(self) -> int:
+    #     num_warnings = 0
+    #     for set_code in self.sets_with_boosters:
+    #         set = self.data.sets[set_code]
+    #         for booster_name, booster in set.boosters:
+    #             for sheet_name, sheet in booster["sheets"].items():
+    #                 for id in sheet["cards"]:
+    #                     if id not in self.data.cards_by_id:
+    #                         logger.warning(
+    #                             f"Found non-existent card id in a booster: "
+    #                             f"{set_code} {booster_name} {sheet_name} {id}"
+    #                         )
+    #                         num_warnings += 1
+    #     if num_warnings:
+    #         logger.warning(
+    #             "Generating boosters with non-existent card ids will result "
+    #             "in exceptions. Please consider reporting the non-existent "
+    #             "ids to the MTGJSON devs."
+    #         )
+    #     return num_warnings
 
     def get_packs(
         self,
@@ -79,80 +79,70 @@ class MtgPackGenerator:
         set_meta = self.data.sets.get(set.upper())
         assert set_meta is not None
 
-        booster = set_meta.booster
+        boosters = set_meta.boosters
         if booster_type:
-            if booster_type.lower() not in booster:
+            if booster_type.lower() not in boosters:
                 raise ValueError(
                     f"Booster type {booster_type} not available for set {set}"
                 )
         elif set.upper() == "SIR":
-            booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
-        elif "default" in booster:
+            booster_type: str = choice(
+                ["arena-1", "arena-2", "arena-3", "arena-4"]
+            )
+        elif "default" in boosters:
             booster_type = "default"
-        elif "arena" in booster:
+        elif "arena" in boosters:
             booster_type = "arena"
         else:
-            booster_type = next(iter(booster))
-        booster_meta = booster[booster_type]
+            booster_type = next(iter(boosters))
+        booster_meta = boosters[booster_type]
 
         boosters_p = [
-            x["weight"] / booster_meta["boostersTotalWeight"]
-            for x in booster_meta["boosters"]
+            v.weight / booster_meta.total_weight
+            for v in booster_meta.variations
         ]
 
-        booster = booster_meta["boosters"][
-            choice(len(booster_meta["boosters"]), p=boosters_p)
-        ]["contents"]
+        v_index: int = choice(len(booster_meta.variations), p=boosters_p)
+        booster_content = booster_meta.variations[v_index].content
 
         pack_content = {}
 
         balance = False
-        for sheet_name, k in booster.items():
-            sheet_meta = booster_meta["sheets"][sheet_name]
-            if "balanceColors" in sheet_meta.keys():
-                balance = balance or sheet_meta["balanceColors"]
+        for content in booster_content:
+            sheet = content.sheet
+            if sheet.balance_colors:
+                balance = balance or sheet.balance_colors
                 num_of_backups = 20
             else:
                 num_of_backups = 0
 
-            cards = list(sheet_meta["cards"].keys())
-            cards_p = [
-                x / sheet_meta["totalWeight"]
-                for x in sheet_meta["cards"].values()
-            ]
+            cards_p = [x.weight / sheet.total_weight for x in sheet.cards]
 
-            picks = choice(
-                cards, size=k + num_of_backups, replace=False, p=cards_p
+            picks: list[SheetCardProxy] = choice(
+                sheet.cards,
+                size=content.num_picks + num_of_backups,
+                replace=False,
+                p=cards_p,
             )
 
             pick_i = 0
-            slot_content = []
-            slot_backup = []
-            for card_id in picks:
-                if pick_i < k:
-                    slot_content.append(
-                        MtgCard(
-                            self.data.cards_by_id[card_id], sheet_meta["foil"]
-                        )
-                    )
+            slot_content: list[MtgCard] = []
+            slot_backup: list[MtgCard] = []
+            for card in picks:
+                if pick_i < content.num_picks:
+                    slot_content.append(MtgCard(card.data, sheet.is_foil))
                 else:
-                    slot_backup.append(
-                        MtgCard(
-                            self.data.cards_by_id[card_id], sheet_meta["foil"]
-                        )
-                    )
+                    slot_backup.append(MtgCard(card.data, sheet.is_foil))
                 pick_i += 1
 
             slot: dict[str, Any] = {"cards": slot_content}
-            slot["balance"] = "balanceColors" in sheet_meta.keys()
+            slot["balance"] = sheet.balance_colors
             if num_of_backups:
                 slot["backups"] = slot_backup
 
-            pack_content[sheet_name] = slot
+            pack_content[sheet.name] = slot
 
-        pack_name = booster_meta.get("name", None)
-
-        pack = MtgPack(pack_content, set=set_meta, name=pack_name)
+        pack = MtgPack(pack_content, set=set_meta)
 
         if not balance:
             logger.debug("Pack should not be balanced, skipping.")

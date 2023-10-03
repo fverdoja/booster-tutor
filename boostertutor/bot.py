@@ -655,15 +655,15 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         member: Optional[discord.Member] = None,
     ) -> None:
         if set_code.lower() in self.bot.all_sets:
-            set = self.generator.data.sets[set_code.upper()]
+            # set = self.generator.data.sets[set_code.upper()]
             num_packs = 36
-            if hasattr(set, "sealedProduct"):
-                for product in set.sealedProduct:
-                    if (
-                        product.get("category") == "booster_box"
-                        and product.get("subtype") == "draft"
-                    ):
-                        num_packs = product.get("productSize", 36)
+            # if hasattr(set, "sealedProduct"):
+            #     for product in set.sealedProduct:
+            #         if (
+            #             product.get("category") == "booster_box"
+            #             and product.get("subtype") == "draft"
+            #         ):
+            #             num_packs = product.get("productSize", 36)
 
             await self.set(ctx, set_code, num_packs, member)
 
