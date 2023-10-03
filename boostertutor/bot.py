@@ -739,9 +739,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await m.edit(content=content)
 
     # Cog error handler
-    async def cog_command_error(self, ctx, error):
-        message: discord.Message = ctx.message
+    async def cog_command_error(self, ctx: commands.Context, error: Exception):
         if isinstance(error, commands.MissingRequiredArgument):
+            message: discord.Message = ctx.message
             await message.reply(
                 f":warning: {error}\nFor more help, "
                 f"use `{self.bot.command_prefix}help {ctx.invoked_with}`."
