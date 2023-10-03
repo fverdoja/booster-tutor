@@ -1,21 +1,25 @@
 from functools import total_ordering
-from sqlalchemy.orm import (
-    Mapped,
-    mapped_column,
-    relationship,
-    Session,
-)
-from sqlalchemy.ext.automap import automap_base
 from typing import Optional
+
 from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
-    create_engine,
     column,
+    create_engine,
     table,
 )
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    Session,
+    mapped_column,
+    relationship,
+)
 
-Base = automap_base()
+
+class Base(DeclarativeBase):
+    pass
+
 
 booster_table = table(
     "setBoosterContentWeights",
@@ -265,7 +269,6 @@ class BoosterContentProxy(Base):
 
 
 engine = create_engine("sqlite:///data/AllPrintings.sqlite")
-Base.prepare(autoload_with=engine)
 
 with Session(engine) as session:
     c1 = session.query(CardProxy).first()
