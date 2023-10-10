@@ -20,6 +20,7 @@ class MtgPackGenerator:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
         self.fix_missing_balance("LTR", "commonWithShowcase")
+        self.fix_missing_balance("VOW", "sfcCommonWithShowcase")
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
