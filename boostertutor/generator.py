@@ -86,16 +86,14 @@ class MtgPackGenerator:
                     f"Booster type {booster_type} not available for set {set}"
                 )
         elif set.upper() == "SIR":
-            booster_type: str = choice(
-                ["arena-1", "arena-2", "arena-3", "arena-4"]
-            )
+            booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
         elif "default" in boosters:
             booster_type = "default"
         elif "arena" in boosters:
             booster_type = "arena"
         else:
             booster_type = next(iter(boosters))
-        booster_meta = boosters[booster_type]
+        booster_meta = boosters[booster_type]  # type: ignore
 
         boosters_p = [
             v.weight / booster_meta.total_weight

@@ -8,12 +8,14 @@ from sqlalchemy import (
     create_engine,
     select,
     table,
+    func,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
     mapped_column,
+    column_property,
     object_session,
     relationship,
 )
@@ -218,41 +220,16 @@ class BoosterProxy(Base):
         )
 
 
-class SheetProxy(Base):
-    __tablename__ = "setBoosterSheets"
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["boosterName", "setCode"],
-            [BoosterProxy.name, BoosterProxy.set_code],
-        ),
-    )
-
-    _booster_name: Mapped[str] = mapped_column(
-        name="boosterName", primary_key=True
-    )
-    _set_code: Mapped[str] = mapped_column(name="setCode", primary_key=True)
-    name: Mapped[str] = mapped_column(name="sheetName", primary_key=True)
-    is_foil: Mapped[bool] = mapped_column(name="sheetIsFoil")
-    balance_colors: Mapped[bool] = mapped_column(name="sheetHasBalanceColors")
-    cards: Mapped[list["SheetCardProxy"]] = relationship(viewonly=True)
-
-    @property
-    def total_weight(self) -> int:
-        return sum([c.weight for c in self.cards])
-
-    def __repr__(self) -> str:
-        return (
-            f"Sheet(name={self.name}, is_foil={self.is_foil}, "
-            f"balance={self.balance_colors}, total_weight={self.total_weight})"
-        )
-
-
 class SheetCardProxy(Base):
     __tablename__ = "setBoosterSheetCards"
     __table_args__ = (
         ForeignKeyConstraint(
             ["boosterName", "setCode", "sheetName"],
-            [SheetProxy._booster_name, SheetProxy._set_code, SheetProxy.name],
+            [
+                "setBoosterSheets.boosterName",
+                "setBoosterSheets.setCode",
+                "setBoosterSheets.sheetName",
+            ],
         ),
     )
 
@@ -273,6 +250,40 @@ class SheetCardProxy(Base):
         return (
             f"SheetCard(uuid={self._uuid}, name={self.data.name}, "
             f"weight={self.weight})"
+        )
+
+
+class SheetProxy(Base):
+    __tablename__ = "setBoosterSheets"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["boosterName", "setCode"],
+            [BoosterProxy.name, BoosterProxy.set_code],
+        ),
+    )
+
+    _booster_name: Mapped[str] = mapped_column(
+        name="boosterName", primary_key=True
+    )
+    _set_code: Mapped[str] = mapped_column(name="setCode", primary_key=True)
+    name: Mapped[str] = mapped_column(name="sheetName", primary_key=True)
+    is_foil: Mapped[bool] = mapped_column(name="sheetIsFoil")
+    balance_colors: Mapped[bool] = mapped_column(name="sheetHasBalanceColors")
+    cards: Mapped[list[SheetCardProxy]] = relationship(viewonly=True)
+    total_weight: Mapped[int] = column_property(
+        select(func.sum(SheetCardProxy.weight))
+        .where(
+            (SheetCardProxy._booster_name == _booster_name)
+            & (SheetCardProxy._set_code == _set_code)
+            & (SheetCardProxy._sheet_name == name)
+        )
+        .scalar_subquery()
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"Sheet(name={self.name}, is_foil={self.is_foil}, "
+            f"balance={self.balance_colors}, total_weight={self.total_weight})"
         )
 
 
@@ -370,4 +381,4 @@ class CardDb:
         return self.__get_card(name=name)
 
 
-# db = CardDb("/workspaces/booster-tutor/data/AllPrintings.sqlite")
+db = CardDb("/workspaces/booster-tutor/data/AllPrintings.sqlite")
