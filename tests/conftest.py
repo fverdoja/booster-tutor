@@ -42,31 +42,46 @@ def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
     bro = generator.data.sets["BRO"]
     return {
         "Ghostly Prison": MtgCard(
-            c19.card_by_name("ghostly prison")
+            c19.card_by_name("ghostly prison")  # type: ignore
         ),  # uncommon
         "Clever Impersonator": MtgCard(
-            c19.card_by_name("clever impersonator")
+            c19.card_by_name("clever impersonator")  # type: ignore
         ),  # mythic
-        "Grim Haruspex": MtgCard(c19.card_by_name("grim haruspex")),  # rare
+        "Grim Haruspex": MtgCard(
+            c19.card_by_name("grim haruspex")  # type: ignore
+        ),  # rare
         "Desperate Ravings": MtgCard(
-            c19.card_by_name("desperate ravings")
+            c19.card_by_name("desperate ravings")  # type: ignore
         ),  # uncommon
-        "Farseek": MtgCard(c19.card_by_name("farseek")),  # common
+        "Farseek": MtgCard(
+            c19.card_by_name("farseek")  # type: ignore
+        ),  # common
         "Mysterious Egg": MtgCard(
-            iko.card_by_uuid("5df3565b-ab85-5cc7-83c4-9cd3bb5674da")
+            iko.card_by_uuid(
+                "5df3565b-ab85-5cc7-83c4-9cd3bb5674da"
+            )  # type: ignore
         ),  # common, promo
-        "Bojuka Bog": MtgCard(c19.card_by_name("bojuka bog")),  # common land
-        "Growing Ranks": MtgCard(c19.card_by_name("growing ranks")),  # rare
+        "Bojuka Bog": MtgCard(
+            c19.card_by_name("bojuka bog")  # type: ignore
+        ),  # common land
+        "Growing Ranks": MtgCard(
+            c19.card_by_name("growing ranks")  # type: ignore
+        ),  # rare
         "Electrolyze": MtgCard(
-            sta.card_by_uuid("fd84e759-71d3-5168-8a2e-d664c45429f6"), foil=True
+            sta.card_by_uuid(
+                "fd84e759-71d3-5168-8a2e-d664c45429f6"
+            ),  # type: ignore
+            foil=True,
         ),  # rare foil
         "Urza, Lord Protector": MtgCard(
-            bro.card_by_name("urza, lord protector // urza, planeswalker")
+            bro.card_by_name(
+                "urza, lord protector // urza, planeswalker"
+            )  # type: ignore
         ),  # mythic, meld top
         "The Mightstone and Weakstone": MtgCard(
             bro.card_by_name(
                 "the mightstone and weakstone // urza, planeswalker"
-            )
+            )  # type: ignore
         ),  # rare, meld bottom
     }
 
@@ -81,34 +96,44 @@ def unbalanced_pack(generator: MtgPackGenerator) -> MtgPack:
     m20 = generator.data.sets["M20"]
     content = {
         "basicOrCommonLand": {
-            "cards": [MtgCard(m20.card_by_name("bloodfell caves"))],
+            "cards": [
+                MtgCard(m20.card_by_name("bloodfell caves"))  # type: ignore
+            ],
             "balance": False,
         },
         "nonlandCommon": {
             "cards": [
-                MtgCard(m20.card_by_name("thicket crasher")),
-                MtgCard(m20.card_by_name("destructive digger")),
-                MtgCard(m20.card_by_name("raise the alarm")),
-                MtgCard(m20.card_by_name("angelic gift")),
-                MtgCard(m20.card_by_name("ripscale predator")),
-                MtgCard(m20.card_by_name("inspiring captain")),
-                MtgCard(m20.card_by_name("bladebrand")),
-                MtgCard(m20.card_by_name("gorging vulture")),
-                MtgCard(m20.card_by_name("griffin protector")),
-                MtgCard(m20.card_by_name("act of treason")),
+                MtgCard(m20.card_by_name("thicket crasher")),  # type: ignore
+                MtgCard(
+                    m20.card_by_name("destructive digger")  # type: ignore
+                ),
+                MtgCard(m20.card_by_name("raise the alarm")),  # type: ignore
+                MtgCard(m20.card_by_name("angelic gift")),  # type: ignore
+                MtgCard(m20.card_by_name("ripscale predator")),  # type: ignore
+                MtgCard(m20.card_by_name("inspiring captain")),  # type: ignore
+                MtgCard(m20.card_by_name("bladebrand")),  # type: ignore
+                MtgCard(m20.card_by_name("gorging vulture")),  # type: ignore
+                MtgCard(m20.card_by_name("griffin protector")),  # type: ignore
+                MtgCard(m20.card_by_name("act of treason")),  # type: ignore
             ],
-            "backups": [MtgCard(m20.card_by_name("fortress crab"))],
+            "backups": [
+                MtgCard(m20.card_by_name("fortress crab"))  # type: ignore
+            ],
             "balance": True,
         },
         "rareMythic": {
-            "cards": [MtgCard(m20.card_by_name("thunderkin awakener"))],
+            "cards": [
+                MtgCard(
+                    m20.card_by_name("thunderkin awakener")  # type: ignore
+                )
+            ],
             "balance": False,
         },
         "uncommon": {
             "cards": [
-                MtgCard(m20.card_by_name("blightbeetle")),
-                MtgCard(m20.card_by_name("overcome")),
-                MtgCard(m20.card_by_name("herald of the sun")),
+                MtgCard(m20.card_by_name("blightbeetle")),  # type: ignore
+                MtgCard(m20.card_by_name("overcome")),  # type: ignore
+                MtgCard(m20.card_by_name("herald of the sun")),  # type: ignore
             ],
             "balance": False,
         },
@@ -216,7 +241,7 @@ def temp_config(tmp_path: Path) -> Config:
     config_dict = {
         "discord_token": "0000",
         "imgur_client_id": "0000",
-        "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
+        "mtgjson_path": (tmp_path / "AllPrintings.sqlite").as_posix(),
         "command_prefix": "!",
     }
     return Config(**config_dict)

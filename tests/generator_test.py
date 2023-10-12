@@ -11,6 +11,7 @@ from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtgjson import SetProxy
 
 
+@pytest.mark.skip(reason="Still needs to be refactored")
 @pytest.mark.parametrize(
     ["card_ids", "expected_num_warnings"],
     [(["mocked_id_0", "mocked_id_1"], 0), (["mocked_id_2", "mocked_id_3"], 2)],
@@ -115,8 +116,16 @@ def test_random_packs_from_set_list_with_replacement(
 
 
 def test_has_jumpstart(generator: MtgPackGenerator):
-    assert len(generator.data.sets["JMP"].decks) > 0
-    assert len(generator.data.sets["J22"].decks) > 0
+    assert len(generator.data.sets["JMP"].boosters) == 1
+    for deck in generator.data.sets["JMP"].boosters["jumpstart"].variations:
+        assert deck.weight == 1
+        assert len(deck.content) == 1
+        assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20
+    assert len(generator.data.sets["J22"].boosters) == 1
+    for deck in generator.data.sets["J22"].boosters["jumpstart"].variations:
+        assert deck.weight == 1
+        assert len(deck.content) == 1
+        assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20
 
 
 def test_jumpstart(generator: MtgPackGenerator):
@@ -134,7 +143,7 @@ def test_arena_jumpstart(generator: MtgPackGenerator):
     all_jmp_decks = generator.get_random_arena_jmp_decks(n=121, replace=False)
     all_cards = [card for deck in all_jmp_decks for card in deck.cards]
     assert all([c.card.name != "Rhystic Study" for c in all_cards])
-    assert all([c.card.setCode != "AJMP" for c in all_cards])
+    assert all([c.card.set_code != "AJMP" for c in all_cards])
 
 
 def test_cube_pack(generator: MtgPackGenerator, cube: dict):

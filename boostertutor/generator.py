@@ -6,7 +6,11 @@ from numpy.random import choice
 
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
-from boostertutor.models.mtgjson_sql import CardDb, SheetCardProxy
+from boostertutor.models.mtgjson_sql import (
+    BoosterVariationProxy,
+    CardDb,
+    SheetCardProxy,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,36 +23,37 @@ class MtgPackGenerator:
     ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb(path_to_mtgjson)
-        # self.fix_missing_balance("LTR", "commonWithShowcase")
-        # self.fix_missing_balance("VOW", "sfcCommonWithShowcase")
+        self.fix_missing_balance("LTR", "commonWithShowcase")
+        self.fix_missing_balance("VOW", "sfcCommonWithShowcase")
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
             if set.boosters and set_code not in ["JMP", "J22"]
         ]
         self.sets_with_decks: list[str] = ["JMP", "J22"]
-        # self.validate_booster_data()
+        self.validate_booster_data()
 
-    # def validate_booster_data(self) -> int:
-    #     num_warnings = 0
-    #     for set_code in self.sets_with_boosters:
-    #         set = self.data.sets[set_code]
-    #         for booster_name, booster in set.boosters:
-    #             for sheet_name, sheet in booster["sheets"].items():
-    #                 for id in sheet["cards"]:
-    #                     if id not in self.data.cards_by_id:
-    #                         logger.warning(
-    #                             f"Found non-existent card id in a booster: "
-    #                             f"{set_code} {booster_name} {sheet_name} {id}"
-    #                         )
-    #                         num_warnings += 1
-    #     if num_warnings:
-    #         logger.warning(
-    #             "Generating boosters with non-existent card ids will result "
-    #             "in exceptions. Please consider reporting the non-existent "
-    #             "ids to the MTGJSON devs."
-    #         )
-    #     return num_warnings
+    def validate_booster_data(self) -> int:
+        num_warnings = 0
+        for set_code in self.sets_with_boosters:
+            set = self.data.sets[set_code]
+            for booster_name, booster in set.boosters.items():
+                for sheet in booster.sheets:
+                    for card in sheet.cards:
+                        if not card.data:
+                            logger.warning(
+                                f"Found non-existent card id in a booster: "
+                                f"{set_code} {booster_name} {sheet.name} "
+                                f"{card._uuid}"
+                            )
+                            num_warnings += 1
+        if num_warnings:
+            logger.warning(
+                "Generating boosters with non-existent card ids will result "
+                "in exceptions. Please consider reporting the non-existent "
+                "ids to the MTGJSON devs."
+            )
+        return num_warnings
 
     def get_packs(
         self,
@@ -141,7 +146,13 @@ class MtgPackGenerator:
 
             pack_content[sheet.name] = slot
 
-        pack = MtgPack(pack_content, set=set_meta)
+        pack_name = (
+            f"{set_meta.name} ({booster_meta.name})"
+            if booster_meta.name != "default"
+            else None
+        )
+
+        pack = MtgPack(pack_content, set=set_meta, name=pack_name)
 
         if not balance:
             logger.debug("Pack should not be balanced, skipping.")
@@ -170,7 +181,7 @@ class MtgPackGenerator:
 
         assert replace or n <= len(sets)
 
-        boosters = choice(sets, size=n, replace=replace)
+        boosters: list[str] = choice(sets, size=n, replace=replace)
         return [
             self.get_pack(set=b, balance=balance, booster_type=booster_type)
             for b in boosters
@@ -179,8 +190,8 @@ class MtgPackGenerator:
     def get_random_arena_jmp_decks(
         self, n: int = 1, replace: bool = True
     ) -> Sequence[MtgPack]:
-        m21 = self.data.sets["M21"].cards_by_name
-        ajmp = self.data.sets["AJMP"].cards_by_name
+        m21 = self.data.sets["M21"]
+        ajmp = self.data.sets["AJMP"]
         replacements = {
             "Chain Lightning": "Lightning Strike",
             "Lightning Bolt": "Lightning Strike",
@@ -209,11 +220,14 @@ class MtgPackGenerator:
             for i, c in enumerate(p.content["deck"]["cards"]):
                 if c.card.name in replacements:
                     r = replacements[c.card.name]
-                    if r in m21:
-                        card = MtgCard(m21[r], foil=c.foil)
-                    else:
-                        card = MtgCard(ajmp[r], foil=c.foil)
-                        card.card.setCode = "JMP"
+                    r_card = (
+                        m21.card_by_name(r)
+                        if m21.card_by_name(r)
+                        else ajmp.card_by_name(r)
+                    )
+                    assert r_card
+                    card = MtgCard(r_card, foil=c.foil)
+                    card.card.set_code = "JMP"
                     p.content["deck"]["cards"][i] = card
 
         return p_list
@@ -224,24 +238,21 @@ class MtgPackGenerator:
         assert set.upper() in self.sets_with_decks
         set_meta = self.data.sets.get(set.upper())
         assert set_meta is not None
-        all_decks = set_meta.decks
-        decks = choice(all_decks, size=n, replace=replace)
+        all_decks = set_meta.boosters["jumpstart"].variations
+        decks: list[BoosterVariationProxy] = choice(
+            all_decks, size=n, replace=replace
+        )
         packs = []
         for d in decks:
-            logger.debug(f"Generating {set.upper()} pack...")
+            logger.debug(f"Generating {set.upper()} deck...")
             cards: list[MtgCard] = []
-            for c in d["mainBoard"]:
-                n = c.get("count", 1)
-                for _ in range(n):
-                    cards.append(
-                        MtgCard(
-                            self.data.cards_by_id[c["uuid"]],
-                            foil=c.get("finish", "nonfoil") != "nonfoil",
-                        )
-                    )
+            sheet = d.content[0].sheet
+            for c in sheet.cards:
+                for _ in range(c.weight):
+                    cards.append(MtgCard(c.data, foil=sheet.is_foil))
             content = {"deck": {"cards": cards, "balance": False}}
-            packs.append(MtgPack(content, set=set_meta, name=d["name"]))
-            logger.info(f"{d['name']} ({set.upper()}) pack generated")
+            packs.append(MtgPack(content, set=set_meta, name=sheet.name))
+            logger.info(f"{sheet.name} ({set.upper()}) pack generated")
         return packs
 
     def get_cube_packs(self, cube: dict, n: int = 1) -> Sequence[MtgPack]:
@@ -277,10 +288,13 @@ class MtgPackGenerator:
 
         pack_cards = [
             MtgCard(
-                self.data.cards_by_scryfall_id[card_dict["cardID"]],
+                self.data.get_card_by_scryfall_id(
+                    card_dict["cardID"]
+                ),  # type:ignore
                 foil=card_dict.get("finish", "Non-foil") != "Non-foil",
             )
             for card_dict in pack_list
+            if self.data.get_card_by_scryfall_id(card_dict["cardID"])
         ]
         logger.info(f"{cube['shortId']} cube pack generated")
         return MtgPack(
@@ -296,7 +310,7 @@ class MtgPackGenerator:
         booster_type: Optional[str] = None,
     ) -> float:
         assert set.upper() in self.data.sets
-        booster = self.data.sets[set.upper()].booster
+        booster = self.data.sets[set.upper()].boosters
         if booster_type:
             if booster_type.lower() in booster:
                 booster_meta = booster[booster_type.lower()]
@@ -312,43 +326,50 @@ class MtgPackGenerator:
                 f"paper booster metadata found for it. Returning 0."
             )
             return 0
-        sheets_ev = {}
-        for sheet_name, sheet_meta in booster_meta["sheets"].items():
-            total_weight = sheet_meta["totalWeight"]
-            foil = sheet_meta["foil"]
+
+        sheets_ev: dict[str, float] = {}
+        for sheet_meta in booster_meta.sheets:
             sheet_total = 0.0
-            for card_id, weight in sheet_meta["cards"].items():
-                card = MtgCard(self.data.cards_by_id[card_id], foil)
+            for sheet_card in sheet_meta.cards:
+                card = MtgCard(sheet_card.data, sheet_meta.is_foil)
                 price = await card.get_price(currency, eur_usd_rate)
                 if price and price >= bulk_threshold:
-                    sheet_total += price * weight
-            sheets_ev[sheet_name] = sheet_total / total_weight
+                    sheet_total += price * sheet_card.weight
+            sheets_ev[sheet_meta.name] = sheet_total / sheet_meta.total_weight
 
         booster_ev = 0.0
-        booster_total_weight = booster_meta["boostersTotalWeight"]
-        for composition in booster_meta["boosters"]:
-            weight = composition["weight"]
+        for composition in booster_meta.variations:
             composition_ev = sum(
                 [
-                    sheets_ev[sheet_name] * count
-                    for sheet_name, count in composition["contents"].items()
+                    sheets_ev[content.sheet.name] * content.num_picks
+                    for content in composition.content
                 ]
             )
-            booster_ev += composition_ev * weight / booster_total_weight
+            booster_ev += (
+                composition_ev * composition.weight / booster_meta.total_weight
+            )
         return round(booster_ev, 2)
 
-    def fix_missing_balance(self, set: str, sheet: str) -> None:
-        commons: dict[str, Any] = self.data.sets[set.upper()].booster[
-            "default"
-        ]["sheets"][sheet]
-        if commons.get("balanceColors"):
+    def fix_missing_balance(
+        self, set: str, sheet_name: str, booster_type: str = "default"
+    ) -> None:
+        sheets = self.data.sets[set.upper()].boosters[booster_type].sheets
+        commons = next(
+            (sheet for sheet in sheets if sheet.name == sheet_name), None
+        )
+        if not commons:
+            logger.error(
+                f"`generator.fix_missing_balance({set}, {sheet_name})` did not"
+                f"find sheet '{sheet_name}' in {set}."
+            )
+        elif commons.balance_colors:
             logger.warning(
-                f"`generator.fix_missing_balance({set}, {sheet})` function "
+                f"`generator.fix_missing_balance({set}, {sheet_name})` call "
                 f"can be removed. Common sheet doesn't need to be fixed "
                 f"anymore."
             )
         else:
-            commons["balanceColors"] = True
+            commons.balance_colors = True
 
     def remove_broken_set(self, set: str) -> None:
         self.sets_with_boosters.remove(set.upper())

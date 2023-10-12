@@ -1,5 +1,5 @@
 from functools import total_ordering
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from sqlalchemy import (
     ForeignKey,
@@ -168,18 +168,19 @@ class SetProxy(Base):
 
     def card_by_name(
         self, name: str, case_sensitive: bool = False
-    ) -> CardProxy:
+    ) -> Union[CardProxy, None]:
         return next(
             (
                 c
                 for c in self.cards
                 if (c.name == name or not case_sensitive)
                 and (c.name.lower() == name.lower() or case_sensitive)
-            )
+            ),
+            None,
         )
 
-    def card_by_uuid(self, uuid: str) -> CardProxy:
-        return next((c for c in self.cards if c.uuid == uuid))
+    def card_by_uuid(self, uuid: str) -> Union[CardProxy, None]:
+        return next((c for c in self.cards if c.uuid == uuid), None)
 
     def __repr__(self) -> str:
         return (
@@ -208,6 +209,7 @@ class BoosterProxy(Base):
     variations: Mapped[list["BoosterVariationProxy"]] = relationship(
         viewonly=True
     )
+    sheets: Mapped[list["SheetProxy"]] = relationship(viewonly=True)
 
     @property
     def total_weight(self) -> int:
@@ -364,21 +366,25 @@ class CardDb:
         res_list = self.__session.scalars(stmt).all()
         return list(res_list)
 
-    def __get_card(self, **kwargs) -> CardProxy:
+    def __get_card(self, **kwargs) -> Union[CardProxy, None]:
         res_list: list[CardProxy] = self.__query_db(
             select(CardProxy).filter_by(**kwargs).limit(1)
         )
-        assert len(res_list) == 1
-        return res_list[0]
+        return res_list[0] if res_list else None
 
-    def get_card_by_id(self, uuid: str) -> CardProxy:
-        return self.__get_card(uuid=uuid)
-
-    def get_card_by_scryfall_id(self, scryfall_id: str) -> CardProxy:
-        return self.__get_card(scryfall_id=scryfall_id)
-
-    def get_card_by_name(self, name: str) -> CardProxy:
+    def get_card_by_name(self, name: str) -> Union[CardProxy, None]:
         return self.__get_card(name=name)
 
+    def get_card_by_id(self, uuid: str) -> Union[CardProxy, None]:
+        return self.__get_card(uuid=uuid)
 
-db = CardDb("/workspaces/booster-tutor/data/AllPrintings.sqlite")
+    def get_card_by_scryfall_id(
+        self, scryfall_id: str
+    ) -> Union[CardProxy, None]:
+        res_list: list[CardIDs] = self.__query_db(
+            select(CardIDs).filter_by(scryfall_id=scryfall_id).limit(1)
+        )
+        return res_list[0].card if res_list else None
+
+
+# db = CardDb("/workspaces/booster-tutor/data/AllPrintings.sqlite")

@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import numpy as np
@@ -11,15 +10,15 @@ from boostertutor.utils.utils import Config
 
 
 def test_download_file(tmp_path: Path, requests_mock: Mocker):
-    requests_mock.get("http://foo.bar", json={"ok": True})
-    tmp_file = tmp_path / "file.json"
+    requests_mock.get("http://foo.bar", text="CONTENT")
+    tmp_file = tmp_path / "file"
     mtgjson_downloader.download_file(url="http://foo.bar", path=tmp_file)
     assert tmp_file.is_file()
 
 
 def test_download_file_400(tmp_path: Path, requests_mock: Mocker):
     requests_mock.get("http://foo.bar", status_code=400)
-    tmp_file = tmp_path / "file.json"
+    tmp_file = tmp_path / "file"
     with pytest.raises(HTTPError):
         mtgjson_downloader.download_file(url="http://foo.bar", path=tmp_file)
     assert not tmp_file.exists()
@@ -29,37 +28,37 @@ def test_download_file_400(tmp_path: Path, requests_mock: Mocker):
 def test_download_mtgjson_data(
     tmp_path: Path, requests_mock: Mocker, backup: bool
 ):
-    mtgjson_file = tmp_path / "AllPrintings.json"
-    backup_file = tmp_path / "AllPrintings_last.json"
+    mtgjson_file = tmp_path / "AllPrintings.sqlite"
+    backup_file = tmp_path / "AllPrintings_last.sqlite"
 
-    requests_mock.get(mtgjson_downloader.MTGJSON_URL, json={"first": True})
+    requests_mock.get(mtgjson_downloader.MTGJSON_URL, text="FIRST")
     mtgjson_downloader.download_mtgjson_data(
         file=mtgjson_file.as_posix(), backup=False
     )
     assert mtgjson_file.is_file()
     assert not backup_file.exists()
 
-    requests_mock.get(mtgjson_downloader.MTGJSON_URL, json={"second": True})
+    requests_mock.get(mtgjson_downloader.MTGJSON_URL, text="SECOND")
     mtgjson_downloader.download_mtgjson_data(
         file=mtgjson_file.as_posix(), backup=backup
     )
     assert mtgjson_file.is_file()
     assert backup_file.is_file() == backup
     with open(mtgjson_file) as f:
-        assert json.load(f)["second"]
+        assert f.read() == "SECOND"
     if backup:
         with open(backup_file) as f:
-            assert json.load(f)["first"]
+            assert f.read() == "FIRST"
 
 
 @pytest.mark.parametrize("backup", [False, True])
 def test_download_mtgjson_data_400(
     tmp_path: Path, requests_mock: Mocker, backup: bool
 ):
-    mtgjson_file = tmp_path / "AllPrintings.json"
-    backup_file = tmp_path / "AllPrintings_last.json"
+    mtgjson_file = tmp_path / "AllPrintings.sqlite"
+    backup_file = tmp_path / "AllPrintings_last.sqlite"
     with open(mtgjson_file, "w") as f:
-        json.dump({"first": True}, f)
+        f.write("FIRST")
 
     requests_mock.get(mtgjson_downloader.MTGJSON_URL, status_code=400)
     with pytest.raises(HTTPError):
@@ -69,7 +68,7 @@ def test_download_mtgjson_data_400(
     assert mtgjson_file.exists()
     assert not backup_file.exists()
     with open(mtgjson_file) as f:
-        assert json.load(f)["first"]
+        assert f.read() == "FIRST"
 
 
 def test_mtgjson_downloader_main(
@@ -77,22 +76,20 @@ def test_mtgjson_downloader_main(
     requests_mock: Mocker,
     temp_config: Config,
 ):
-    mtgjson_file = tmp_path / "AllPrintings.json"
-    backup_file = tmp_path / "AllPrintings_last.json"
-    temp_dir = tmp_path / "temp_decks"
+    mtgjson_file = tmp_path / "AllPrintings.sqlite"
+    backup_file = tmp_path / "AllPrintings_last.sqlite"
 
     with open(mtgjson_file, "w") as f:
-        json.dump({"first": True}, f)
+        f.write("FIRST")
 
-    requests_mock.get(mtgjson_downloader.MTGJSON_URL, json={"second": True})
+    requests_mock.get(mtgjson_downloader.MTGJSON_URL, text="SECOND")
     mtgjson_downloader.main(config=temp_config)
     assert mtgjson_file.is_file()
     assert backup_file.is_file()
     with open(mtgjson_file) as f:
-        assert json.load(f)["second"]
+        assert f.read() == "SECOND"
     with open(backup_file) as f:
-        assert json.load(f)["first"]
-    assert not temp_dir.exists()
+        assert f.read() == "FIRST"
 
 
 def test_set_symbols_downloader(
