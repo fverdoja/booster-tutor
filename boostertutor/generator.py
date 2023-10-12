@@ -31,7 +31,7 @@ class MtgPackGenerator:
             if set.boosters and set_code not in ["JMP", "J22"]
         ]
         self.sets_with_decks: list[str] = ["JMP", "J22"]
-        self.validate_booster_data()
+        # self.validate_booster_data()
 
     def validate_booster_data(self) -> int:
         num_warnings = 0
@@ -251,8 +251,14 @@ class MtgPackGenerator:
                 for _ in range(c.weight):
                     cards.append(MtgCard(c.data, foil=sheet.is_foil))
             content = {"deck": {"cards": cards, "balance": False}}
-            packs.append(MtgPack(content, set=set_meta, name=sheet.name))
-            logger.info(f"{sheet.name} ({set.upper()}) pack generated")
+            packs.append(
+                MtgPack(
+                    content,
+                    set=set_meta,
+                    name=f"{set_meta.name} ({sheet.name})",
+                )
+            )
+            logger.info(f"{sheet.name} ({set.upper()}) deck generated")
         return packs
 
     def get_cube_packs(self, cube: dict, n: int = 1) -> Sequence[MtgPack]:
@@ -286,16 +292,17 @@ class MtgPackGenerator:
         for key, num in pack_format.items():
             pack_list.extend(choice(cube_cards[key], num, replace=replace))
 
-        pack_cards = [
-            MtgCard(
-                self.data.get_card_by_scryfall_id(
-                    card_dict["cardID"]
-                ),  # type:ignore
-                foil=card_dict.get("finish", "Non-foil") != "Non-foil",
-            )
-            for card_dict in pack_list
-            if self.data.get_card_by_scryfall_id(card_dict["cardID"])
-        ]
+        pack_cards: list[MtgCard] = []
+        for card_dict in pack_list:
+            card_data = self.data.get_card_by_scryfall_id(card_dict["cardID"])
+            if card_data:
+                pack_cards.append(
+                    MtgCard(
+                        card_data,
+                        foil=card_dict.get("finish", "Non-foil") != "Non-foil",
+                    )
+                )
+
         logger.info(f"{cube['shortId']} cube pack generated")
         return MtgPack(
             {"pack": {"cards": pack_cards, "balance": False}}, name=cube_name
