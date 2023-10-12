@@ -31,16 +31,17 @@ class MtgPackGenerator:
             if set.boosters and set_code not in ["JMP", "J22"]
         ]
         self.sets_with_decks: list[str] = ["JMP", "J22"]
-        # self.validate_booster_data()
+        self.validate_booster_data()
 
     def validate_booster_data(self) -> int:
+        logger.info("Booster data validation starting...")
         num_warnings = 0
         for set_code in self.sets_with_boosters:
             set = self.data.sets[set_code]
             for booster_name, booster in set.boosters.items():
                 for sheet in booster.sheets:
                     for card in sheet.cards:
-                        if not card.data:
+                        if card._uuid not in self.data.cards_by_id:
                             logger.warning(
                                 f"Found non-existent card id in a booster: "
                                 f"{set_code} {booster_name} {sheet.name} "
@@ -53,6 +54,7 @@ class MtgPackGenerator:
                 "in exceptions. Please consider reporting the non-existent "
                 "ids to the MTGJSON devs."
             )
+        logger.info("Concluded booster data validation.")
         return num_warnings
 
     def get_packs(

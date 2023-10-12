@@ -1,5 +1,5 @@
 from functools import total_ordering
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 from sqlalchemy import (
     ForeignKey,
@@ -357,34 +357,34 @@ class BoosterContentProxy(Base):
 class CardDb:
     def __init__(self, database_file: str) -> None:
         self.__engine = create_engine("sqlite:///" + database_file)
-        self.__session = Session(self.__engine)
-        sets: list[SetProxy] = self.__query_db(select(SetProxy))
+        self.__session = Session(self.__engine, autoflush=False)
+
+        sets: list[SetProxy] = list(
+            self.__session.scalars(select(SetProxy)).all()
+        )
         sets.sort()
         self.sets = {s.code: s for s in sets}
 
-    def __query_db(self, stmt) -> list[Any]:
-        res_list = self.__session.scalars(stmt).all()
-        return list(res_list)
-
-    def __get_card(self, **kwargs) -> Union[CardProxy, None]:
-        res_list: list[CardProxy] = self.__query_db(
-            select(CardProxy).filter_by(**kwargs).limit(1)
-        )
-        return res_list[0] if res_list else None
+        cards_with_ids = self.__session.execute(
+            select(
+                CardIDs.uuid, CardIDs.scryfall_id, CardProxy.name, CardProxy
+            ).where(CardIDs.uuid == CardProxy.uuid)
+        ).all()
+        self.cards_by_id: dict[str, CardProxy] = {}
+        self.cards_by_scryfall_id: dict[str, CardProxy] = {}
+        self.cards_by_name: dict[str, CardProxy] = {}
+        for uuid, scryfall_id, name, card in cards_with_ids:
+            self.cards_by_id[uuid] = card
+            self.cards_by_scryfall_id[scryfall_id] = card
+            self.cards_by_name[name] = card
 
     def get_card_by_name(self, name: str) -> Union[CardProxy, None]:
-        return self.__get_card(name=name)
+        return self.cards_by_name.get(name, None)
 
     def get_card_by_id(self, uuid: str) -> Union[CardProxy, None]:
-        return self.__get_card(uuid=uuid)
+        return self.cards_by_id.get(uuid, None)
 
     def get_card_by_scryfall_id(
         self, scryfall_id: str
     ) -> Union[CardProxy, None]:
-        res_list: list[CardIDs] = self.__query_db(
-            select(CardIDs).filter_by(scryfall_id=scryfall_id).limit(1)
-        )
-        return res_list[0].card if res_list else None
-
-
-# db = CardDb("/workspaces/booster-tutor/data/AllPrintings.sqlite")
+        return self.cards_by_scryfall_id.get(scryfall_id, None)

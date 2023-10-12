@@ -8,10 +8,9 @@ import pytest
 from aioresponses import aioresponses
 
 from boostertutor.generator import MtgPackGenerator
-from boostertutor.models.mtgjson import SetProxy
+from boostertutor.models.mtgjson_sql import BoosterProxy, SetProxy, SheetProxy
 
 
-@pytest.mark.skip(reason="Still needs to be refactored")
 @pytest.mark.parametrize(
     ["card_ids", "expected_num_warnings"],
     [(["mocked_id_0", "mocked_id_1"], 0), (["mocked_id_2", "mocked_id_3"], 2)],
@@ -32,10 +31,13 @@ def test_booster_data_validation(
             "mocked_id_1": "mocked_card_1",
         },
     )
+    mocked_sheet: SheetProxy = mock.MagicMock(
+        name="mocked_sheet",
+        cards=[mock.MagicMock(_uuid=card_id) for card_id in card_ids],
+    )
+    mocked_booster: BoosterProxy = mock.MagicMock(sheets=[mocked_sheet])
     mocked_set: SetProxy = mock.MagicMock(
-        booster={
-            "mocked_booster": {"sheets": {"mocked_sheet": {"cards": card_ids}}}
-        }
+        boosters={"mocked_booster": mocked_booster}
     )
     monkeypatch.setitem(generator.data.sets, "mocked_set", mocked_set)
 
