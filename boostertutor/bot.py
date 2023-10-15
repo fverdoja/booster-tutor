@@ -90,7 +90,10 @@ class DiscordBot(commands.Bot):
         self.generator = (
             pack_generator
             if pack_generator
-            else MtgPackGenerator(path_to_mtgjson=self.config.mtgjson_path)
+            else MtgPackGenerator(
+                path_to_mtgjson=self.config.mtgjson_path,
+                validate_data=self.config.validate_data,
+            )
         )
         self.standard_sets = [
             "mid",

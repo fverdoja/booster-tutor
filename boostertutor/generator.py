@@ -16,6 +16,7 @@ class MtgPackGenerator:
         self,
         path_to_mtgjson: str = "data/AllPrintings.json",
         max_balancing_iterations: int = 100,
+        validate_data: bool = True,
     ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb.from_file(path_to_mtgjson)
@@ -27,7 +28,8 @@ class MtgPackGenerator:
             if hasattr(set, "booster") and set_code not in ["JMP", "J22"]
         ]
         self.sets_with_decks: list[str] = ["JMP", "J22"]
-        self.validate_booster_data()
+        if validate_data:
+            self.validate_booster_data()
 
     def validate_booster_data(self) -> int:
         num_warnings = 0

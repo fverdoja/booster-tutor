@@ -1,6 +1,8 @@
+from aiohttp_client_cache.session import CachedSession
+from aiohttp_client_cache.backends.sqlite import SQLiteBackend
+from datetime import timedelta
 from typing import Optional, Sequence
 
-import aiohttp
 import imageio
 import numpy as np
 
@@ -8,6 +10,14 @@ from boostertutor.models.mtgjson import CardProxy
 from boostertutor.utils.utils import foil_layer
 
 SCRYFALL_CARD_BASE_URL = "https://api.scryfall.com/cards"
+
+cache = SQLiteBackend(
+    cache_name=".aiohttp_cache/scryfall.sqlite",
+    urls_expire_after={
+        f"{SCRYFALL_CARD_BASE_URL}/*?format=image*": timedelta(days=30),
+        f"{SCRYFALL_CARD_BASE_URL}/*": timedelta(days=1),
+    },
+)
 
 
 class MtgCard:
@@ -48,7 +58,7 @@ class MtgCard:
         scry_id = self.card.identifiers["scryfallId"]
         card_url = f"{SCRYFALL_CARD_BASE_URL}/{scry_id}"
 
-        async with aiohttp.ClientSession() as session:
+        async with CachedSession(cache=cache) as session:
             async with session.get(card_url) as resp:
                 resp.raise_for_status()
                 card = await resp.json()
@@ -79,7 +89,7 @@ class MtgCard:
         if foil is None:
             foil = self.foil
 
-        async with aiohttp.ClientSession() as session:
+        async with CachedSession(cache=cache) as session:
             async with session.get(img_url) as resp:
                 resp.raise_for_status()
                 resp_bytes = await resp.read()
