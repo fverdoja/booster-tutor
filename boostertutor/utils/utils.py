@@ -26,6 +26,7 @@ class Config:
     set_img_path: Optional[str] = None
     command_prefix: str = "!"
     logging_level: Union[int, str] = logging.INFO
+    validate_data: bool = True
 
 
 def get_config(path: Path = Path("config.yaml")) -> Config:
@@ -74,8 +75,8 @@ def cards_img(
     """Generate an image of the cards in im_list"""
     num_cards = len(im_list)
     assert num_cards
-    num_rows = int(np.ceil(num_cards / max_row_length))
-    num_cards_per_row = int(np.ceil(num_cards / num_rows))
+    num_rows = int(np.ceil(num_cards / max_row_length))  # type: ignore
+    num_cards_per_row = int(np.ceil(num_cards / num_rows))  # type: ignore
 
     cards = None
     for row_i in range(num_rows):
@@ -87,7 +88,7 @@ def cards_img(
         if cards is None:
             cards = row
         else:
-            pad_amount = cards.shape[1] - row.shape[1]
+            pad_amount = cards.shape[1] - row.shape[1]  # type: ignore
             assert pad_amount >= 0
             row = np.pad(
                 row,
@@ -96,7 +97,7 @@ def cards_img(
                 constant_values=255 if cards.shape[2] == 3 else 0,
             )
             cards = np.vstack((cards, row))
-    return cards
+    return cards  # type: ignore
 
 
 def arena_to_json(arena_list: str) -> Sequence[dict]:
@@ -105,7 +106,7 @@ def arena_to_json(arena_list: str) -> Sequence[dict]:
     p = compile("{count:d} {name} ({set}) {:d}")
     for line in arena_list.rstrip("\n ").split("\n"):
         card = p.parse(line)
-        json_list.append(card.named)
+        json_list.append(card.named)  # type: ignore
     return json_list
 
 
@@ -144,12 +145,20 @@ def foil_layer(size: tuple[int, int]) -> np.ndarray:
     color_width, offset = 0.3, 0.0
     foil = np.empty((h, w, 3), dtype="uint8")
     foil[:, :, 0] = (
-        (1 - np.exp(-0.5 * ((Y - offset) ** 2) / (color_width * 3) ** 2)) * 255
+        (
+            1
+            - np.exp(
+                -0.5 * ((Y - offset) ** 2) / (color_width * 3) ** 2
+            )  # type: ignore
+        )
+        * 255
     ).astype("uint8")
     foil[:, :, 1] = (
-        np.exp(-0.5 * ((Y - offset) ** 2) / color_width**2) * 255
+        np.exp(-0.5 * ((Y - offset) ** 2) / color_width**2)  # type: ignore
+        * 255
     ).astype("uint8")
     foil[:, :, 2] = (
-        (1 - 1 / (1 + np.exp((Y - offset) / color_width))) * 255
+        (1 - 1 / (1 + np.exp((Y - offset) / color_width)))  # type: ignore
+        * 255
     ).astype("uint8")
     return foil

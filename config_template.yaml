@@ -18,3 +18,5 @@ set_img_path: /absolute/path/to/img/sets/
 command_prefix: "!"
 # Logging level can be: DEBUG, INFO, WARNING, ERROR
 logging_level: INFO
+# Validate MTGjson data before starting the bot
+validate_data: TRUE
