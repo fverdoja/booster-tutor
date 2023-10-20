@@ -32,19 +32,34 @@ def test_colors(cards: dict[str, MtgCard], card: str, expected: Sequence[str]):
 @pytest.mark.parametrize(
     ["card", "expected"],
     [
-        ("Ghostly Prison", {"name": "Ghostly Prison", "count": 1}),
-        ("Clever Impersonator", {"name": "Clever Impersonator", "count": 1}),
-        ("Grim Haruspex", {"name": "Grim Haruspex", "count": 1}),
-        ("Desperate Ravings", {"name": "Desperate Ravings", "count": 1}),
-        ("Farseek", {"name": "Farseek", "count": 1}),
-        ("Mysterious Egg", {"name": "Mysterious Egg", "count": 1}),
-        ("Bojuka Bog", {"name": "Bojuka Bog", "count": 1}),
-        ("Growing Ranks", {"name": "Growing Ranks", "count": 1}),
-        ("Electrolyze", {"name": "Electrolyze", "count": 1}),
-        ("Urza, Lord Protector", {"name": "Urza, Lord Protector", "count": 1}),
+        (
+            "Ghostly Prison",
+            {"name": "Ghostly Prison", "set": "C19", "count": 1},
+        ),
+        (
+            "Clever Impersonator",
+            {"name": "Clever Impersonator", "set": "C19", "count": 1},
+        ),
+        ("Grim Haruspex", {"name": "Grim Haruspex", "set": "C19", "count": 1}),
+        (
+            "Desperate Ravings",
+            {"name": "Desperate Ravings", "set": "C19", "count": 1},
+        ),
+        ("Farseek", {"name": "Farseek", "set": "C19", "count": 1}),
+        (
+            "Mysterious Egg",
+            {"name": "Mysterious Egg", "set": "IKO", "count": 1},
+        ),
+        ("Bojuka Bog", {"name": "Bojuka Bog", "set": "C19", "count": 1}),
+        ("Growing Ranks", {"name": "Growing Ranks", "set": "C19", "count": 1}),
+        ("Electrolyze", {"name": "Electrolyze", "set": "STA", "count": 1}),
+        (
+            "Urza, Lord Protector",
+            {"name": "Urza, Lord Protector", "set": "BRO", "count": 1},
+        ),
         (
             "The Mightstone and Weakstone",
-            {"name": "The Mightstone and Weakstone", "count": 1},
+            {"name": "The Mightstone and Weakstone", "set": "BRO", "count": 1},
         ),
     ],
 )

@@ -108,7 +108,7 @@ class MtgCard:
             if self.card.layout != "meld"
             else self.card.face_name
         )
-        return {"name": f"{name}", "count": 1}
+        return {"name": name, "set": self.card.set.code, "count": 1}
 
     def arena_format(self) -> str:
         if (
