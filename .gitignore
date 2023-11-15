@@ -146,3 +146,6 @@ img
 
 # test notebooks
 *.ipynb
+
+# aihttp cache
+.aiohttp_cache

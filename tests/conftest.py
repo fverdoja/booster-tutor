@@ -31,7 +31,9 @@ AsyncYield = AsyncGenerator[T, None]
 @pytest.fixture(scope="session")
 def generator() -> MtgPackGenerator:
     config = get_config()
-    return MtgPackGenerator(path_to_mtgjson=config.mtgjson_path)
+    return MtgPackGenerator(
+        path_to_mtgjson=config.mtgjson_path, validate_data=False
+    )
 
 
 @pytest.fixture(scope="module")
@@ -206,8 +208,9 @@ def temp_config(tmp_path: Path) -> Config:
         "imgur_client_id": "0000",
         "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
         "command_prefix": "!",
+        "validate_data": False,
     }
-    return Config(**config_dict)
+    return Config(**config_dict)  # type: ignore
 
 
 @pytest.fixture
