@@ -24,9 +24,6 @@ class MtgPackGenerator:
     ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb(path_to_mtgjson)
-        self.fix_missing_balance("LCI", "sfcCommonWithShowcase")
-        self.fix_missing_balance("LTR", "commonWithShowcase")
-        self.fix_missing_balance("VOW", "sfcCommonWithShowcase")
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
@@ -371,8 +368,8 @@ class MtgPackGenerator:
         )
         if not commons:
             logger.error(
-                f"`generator.fix_missing_balance({set}, {sheet_name})` did not"
-                f"find sheet '{sheet_name}' in {set}."
+                f"`generator.fix_missing_balance({set}, {sheet_name})` did "
+                f"not find sheet '{sheet_name}' in {set}."
             )
         elif commons.balance_colors:
             logger.warning(
