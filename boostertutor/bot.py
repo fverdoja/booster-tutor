@@ -108,6 +108,7 @@ class DiscordBot(commands.Bot):
             "lci",
         ]
         self.explorer_sets = [
+            "ktk",
             "xln",
             "rix",
             "dom",
