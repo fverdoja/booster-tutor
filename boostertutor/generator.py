@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class MtgPackGenerator:
     def __init__(
         self,
-        path_to_mtgjson: str = "data/AllPrintings.json",
+        path_to_mtgjson: str = "data/AllPrintings.sqlite",
         max_balancing_iterations: int = 100,
         validate_data: bool = True,
     ) -> None:
@@ -29,6 +29,9 @@ class MtgPackGenerator:
             for set_code, set in self.data.sets.items()
             if set.boosters and set_code not in ["JMP", "J22"]
         ]
+        self.fix_missing_balance(
+            "mkm", "commonWithShowcase", booster_type="play"
+        )
         self.sets_with_decks: list[str] = ["JMP", "J22"]
         if validate_data:
             self.validate_booster_data()
@@ -85,7 +88,9 @@ class MtgPackGenerator:
         self, set: str, iterations: int, booster_type: Optional[str] = None
     ) -> MtgPack:
         set_meta = self.data.sets.get(set.upper())
-        assert set_meta is not None
+        assert (
+            set_meta is not None
+        ), f"No booster for set code {set.upper()} exist."
 
         boosters = set_meta.boosters
         if booster_type:
@@ -97,8 +102,6 @@ class MtgPackGenerator:
             booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
         elif "default" in boosters:
             booster_type = "default"
-        elif "arena" in boosters:
-            booster_type = "arena"
         else:
             booster_type = next(iter(boosters))
         booster_meta = boosters[booster_type]  # type: ignore
@@ -150,7 +153,7 @@ class MtgPackGenerator:
 
         pack_name = (
             f"{set_meta.name} ({booster_meta.name})"
-            if booster_meta.name != "default"
+            if booster_meta.name != "default" and booster_meta.name != "play"
             else None
         )
 
