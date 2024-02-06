@@ -8,7 +8,7 @@ import pytest
 from aioresponses import aioresponses
 
 from boostertutor.generator import MtgPackGenerator
-from boostertutor.models.mtgjson import SetProxy
+from boostertutor.models.mtgjson_sql import BoosterProxy, SetProxy, SheetProxy
 
 
 @pytest.mark.parametrize(
@@ -31,10 +31,13 @@ def test_booster_data_validation(
             "mocked_id_1": "mocked_card_1",
         },
     )
+    mocked_sheet: SheetProxy = mock.MagicMock(
+        name="mocked_sheet",
+        cards=[mock.MagicMock(_uuid=card_id) for card_id in card_ids],
+    )
+    mocked_booster: BoosterProxy = mock.MagicMock(sheets=[mocked_sheet])
     mocked_set: SetProxy = mock.MagicMock(
-        booster={
-            "mocked_booster": {"sheets": {"mocked_sheet": {"cards": card_ids}}}
-        }
+        boosters={"mocked_booster": mocked_booster}
     )
     monkeypatch.setitem(generator.data.sets, "mocked_set", mocked_set)
 
@@ -115,8 +118,16 @@ def test_random_packs_from_set_list_with_replacement(
 
 
 def test_has_jumpstart(generator: MtgPackGenerator):
-    assert len(generator.data.sets["JMP"].decks) > 0
-    assert len(generator.data.sets["J22"].decks) > 0
+    assert len(generator.data.sets["JMP"].boosters) == 1
+    for deck in generator.data.sets["JMP"].boosters["jumpstart"].variations:
+        assert deck.weight == 1
+        assert len(deck.content) == 1
+        assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20
+    assert len(generator.data.sets["J22"].boosters) == 1
+    for deck in generator.data.sets["J22"].boosters["jumpstart"].variations:
+        assert deck.weight == 1
+        assert len(deck.content) == 1
+        assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20
 
 
 def test_jumpstart(generator: MtgPackGenerator):
@@ -134,7 +145,7 @@ def test_arena_jumpstart(generator: MtgPackGenerator):
     all_jmp_decks = generator.get_random_arena_jmp_decks(n=121, replace=False)
     all_cards = [card for deck in all_jmp_decks for card in deck.cards]
     assert all([c.card.name != "Rhystic Study" for c in all_cards])
-    assert all([c.card.setCode != "AJMP" for c in all_cards])
+    assert all([c.card.set_code != "AJMP" for c in all_cards])
 
 
 def test_cube_pack(generator: MtgPackGenerator, cube: dict):

@@ -8,8 +8,8 @@ imgur_client_id: your_imgur_client_id
 
 ###### PATHS #####
 # Check utils folder for scripts to download what the bot needs to work
-# Path to the AllPrintings.json file downloaded from MTGjson
-mtgjson_path: /absolute/path/to/AllPrintings.json
+# Path to the AllPrintings.sqlite file downloaded from MTGjson
+mtgjson_path: /absolute/path/to/AllPrintings.sqlite
 # comment to exclude set images
 set_img_path: /absolute/path/to/img/sets/
 

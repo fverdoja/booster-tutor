@@ -1,12 +1,12 @@
 from aiohttp_client_cache.session import CachedSession
 from aiohttp_client_cache.backends.sqlite import SQLiteBackend
 from datetime import timedelta
-from typing import Optional, Sequence
+from typing import Optional
 
 import imageio
 import numpy as np
 
-from boostertutor.models.mtgjson import CardProxy
+from boostertutor.models.mtgjson_sql import CardProxy
 from boostertutor.utils.utils import foil_layer
 
 SCRYFALL_CARD_BASE_URL = "https://api.scryfall.com/cards"
@@ -25,11 +25,11 @@ class MtgCard:
         self.card = card
         self.foil = foil
 
-    def mana(self) -> Sequence[str]:
+    def mana(self) -> list[str]:
         colors = ["W", "U", "B", "R", "G"]
 
-        if hasattr(self.card, "manaCost"):
-            cost = self.card.manaCost.lstrip("{").rstrip("}").split("}{")
+        if self.card.mana_cost:
+            cost = self.card.mana_cost.lstrip("{").rstrip("}").split("}{")
             mana = [c for c in colors if c in cost]
             if not mana:
                 hybrid = []
@@ -55,7 +55,7 @@ class MtgCard:
             currency += "_foil"
             alt_currency += "_foil"
 
-        scry_id = self.card.identifiers["scryfallId"]
+        scry_id = self.card.identifiers.scryfall_id
         card_url = f"{SCRYFALL_CARD_BASE_URL}/{scry_id}"
 
         async with CachedSession(cache=cache) as session:
@@ -82,7 +82,7 @@ class MtgCard:
         sizes = ["large", "normal", "small", "png", "border_crop"]
         assert size in sizes
 
-        scry_id = self.card.identifiers["scryfallId"]
+        scry_id = self.card.identifiers.scryfall_id
         img_url = (
             f"{SCRYFALL_CARD_BASE_URL}/{scry_id}?format=image&version={size}"
         )
@@ -106,15 +106,15 @@ class MtgCard:
         name = (
             self.card.name
             if self.card.layout != "meld"
-            else self.card.faceName
+            else self.card.face_name
         )
-        return {"name": f"{name}", "count": 1}
+        return {"name": name, "set": self.card.set.code, "count": 1}
 
     def arena_format(self) -> str:
         if (
-            self.card.setCode != "STA"
-            and hasattr(self.card, "promoTypes")
-            and hasattr(self.card, "variations")
+            self.card.set_code != "STA"
+            and self.card.promo_types
+            and self.card.variations
         ):
             number = self.card.variations[0].number
         else:
@@ -122,9 +122,9 @@ class MtgCard:
         name = (
             self.card.name
             if self.card.layout != "meld"
-            else self.card.faceName
+            else self.card.face_name
         )
-        return f"1 {name} ({self.card.setCode}) {number}"
+        return f"1 {name} ({self.card.set_code}) {number}"
 
     def pack_sort_key(self) -> tuple[int, bool, int]:
         r = ["mythic", "rare", "uncommon", "common", "special", "bonus"]
@@ -146,11 +146,13 @@ class MtgCard:
         return self.card == other.card
 
     def __lt__(self, other: object) -> bool:
-        return self < other
+        if not isinstance(other, MtgCard):
+            return NotImplemented
+        return self.card < other.card
 
     def __str__(self) -> str:
         foil_str = " (foil)" if self.foil else ""
-        return f"{self.card.name} ({self.card.setCode}){foil_str}"
+        return f"{self.card.name} ({self.card.set_code}){foil_str}"
 
     def __repr__(self) -> str:
         return f"<boostertutor.models.mtg_card.MtgCard: {str(self)}>"

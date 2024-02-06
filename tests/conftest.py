@@ -38,25 +38,52 @@ def generator() -> MtgPackGenerator:
 
 @pytest.fixture(scope="module")
 def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
-    c19 = generator.data.sets["C19"].cards_by_ascii_name
-    iko = generator.data.sets["IKO"].cards_by_ascii_name
-    sta = generator.data.sets["STA"].cards_by_ascii_name
-    bro = generator.data.sets["BRO"].cards_by_ascii_name
+    c19 = generator.data.sets["C19"]
+    iko = generator.data.sets["IKO"]
+    sta = generator.data.sets["STA"]
+    bro = generator.data.sets["BRO"]
     return {
-        "Ghostly Prison": MtgCard(c19["ghostly prison"]),  # uncommon
-        "Clever Impersonator": MtgCard(c19["clever impersonator"]),  # mythic
-        "Grim Haruspex": MtgCard(c19["grim haruspex"]),  # rare
-        "Desperate Ravings": MtgCard(c19["desperate ravings"]),  # uncommon
-        "Farseek": MtgCard(c19["farseek"]),  # common
-        "Mysterious Egg": MtgCard(iko["mysterious egg"]),  # common, promo
-        "Bojuka Bog": MtgCard(c19["bojuka bog"]),  # common land
-        "Growing Ranks": MtgCard(c19["growing ranks"]),  # rare
-        "Electrolyze": MtgCard(sta["electrolyze"], foil=True),  # rare foil
+        "Ghostly Prison": MtgCard(
+            c19.card_by_name("ghostly prison")  # type: ignore
+        ),  # uncommon
+        "Clever Impersonator": MtgCard(
+            c19.card_by_name("clever impersonator")  # type: ignore
+        ),  # mythic
+        "Grim Haruspex": MtgCard(
+            c19.card_by_name("grim haruspex")  # type: ignore
+        ),  # rare
+        "Desperate Ravings": MtgCard(
+            c19.card_by_name("desperate ravings")  # type: ignore
+        ),  # uncommon
+        "Farseek": MtgCard(
+            c19.card_by_name("farseek")  # type: ignore
+        ),  # common
+        "Mysterious Egg": MtgCard(
+            iko.card_by_uuid(
+                "5df3565b-ab85-5cc7-83c4-9cd3bb5674da"
+            )  # type: ignore
+        ),  # common, promo
+        "Bojuka Bog": MtgCard(
+            c19.card_by_name("bojuka bog")  # type: ignore
+        ),  # common land
+        "Growing Ranks": MtgCard(
+            c19.card_by_name("growing ranks")  # type: ignore
+        ),  # rare
+        "Electrolyze": MtgCard(
+            sta.card_by_uuid(
+                "fd84e759-71d3-5168-8a2e-d664c45429f6"
+            ),  # type: ignore
+            foil=True,
+        ),  # rare foil
         "Urza, Lord Protector": MtgCard(
-            bro["urza, lord protector // urza, planeswalker"]
+            bro.card_by_name(
+                "urza, lord protector // urza, planeswalker"
+            )  # type: ignore
         ),  # mythic, meld top
         "The Mightstone and Weakstone": MtgCard(
-            bro["the mightstone and weakstone // urza, planeswalker"]
+            bro.card_by_name(
+                "the mightstone and weakstone // urza, planeswalker"
+            )  # type: ignore
         ),  # rare, meld bottom
     }
 
@@ -68,37 +95,47 @@ def four_set_list() -> list[str]:
 
 @pytest.fixture
 def unbalanced_pack(generator: MtgPackGenerator) -> MtgPack:
-    m20 = generator.data.sets["M20"].cards_by_ascii_name
+    m20 = generator.data.sets["M20"]
     content = {
         "basicOrCommonLand": {
-            "cards": [MtgCard(m20["bloodfell caves"])],
+            "cards": [
+                MtgCard(m20.card_by_name("bloodfell caves"))  # type: ignore
+            ],
             "balance": False,
         },
         "nonlandCommon": {
             "cards": [
-                MtgCard(m20["thicket crasher"]),
-                MtgCard(m20["destructive digger"]),
-                MtgCard(m20["raise the alarm"]),
-                MtgCard(m20["angelic gift"]),
-                MtgCard(m20["ripscale predator"]),
-                MtgCard(m20["inspiring captain"]),
-                MtgCard(m20["bladebrand"]),
-                MtgCard(m20["gorging vulture"]),
-                MtgCard(m20["griffin protector"]),
-                MtgCard(m20["act of treason"]),
+                MtgCard(m20.card_by_name("thicket crasher")),  # type: ignore
+                MtgCard(
+                    m20.card_by_name("destructive digger")  # type: ignore
+                ),
+                MtgCard(m20.card_by_name("raise the alarm")),  # type: ignore
+                MtgCard(m20.card_by_name("angelic gift")),  # type: ignore
+                MtgCard(m20.card_by_name("ripscale predator")),  # type: ignore
+                MtgCard(m20.card_by_name("inspiring captain")),  # type: ignore
+                MtgCard(m20.card_by_name("bladebrand")),  # type: ignore
+                MtgCard(m20.card_by_name("gorging vulture")),  # type: ignore
+                MtgCard(m20.card_by_name("griffin protector")),  # type: ignore
+                MtgCard(m20.card_by_name("act of treason")),  # type: ignore
             ],
-            "backups": [MtgCard(m20["fortress crab"])],
+            "backups": [
+                MtgCard(m20.card_by_name("fortress crab"))  # type: ignore
+            ],
             "balance": True,
         },
         "rareMythic": {
-            "cards": [MtgCard(m20["thunderkin awakener"])],
+            "cards": [
+                MtgCard(
+                    m20.card_by_name("thunderkin awakener")  # type: ignore
+                )
+            ],
             "balance": False,
         },
         "uncommon": {
             "cards": [
-                MtgCard(m20["blightbeetle"]),
-                MtgCard(m20["overcome"]),
-                MtgCard(m20["herald of the sun"]),
+                MtgCard(m20.card_by_name("blightbeetle")),  # type: ignore
+                MtgCard(m20.card_by_name("overcome")),  # type: ignore
+                MtgCard(m20.card_by_name("herald of the sun")),  # type: ignore
             ],
             "balance": False,
         },
@@ -206,7 +243,7 @@ def temp_config(tmp_path: Path) -> Config:
     config_dict = {
         "discord_token": "0000",
         "imgur_client_id": "0000",
-        "mtgjson_path": (tmp_path / "AllPrintings.json").as_posix(),
+        "mtgjson_path": (tmp_path / "AllPrintings.sqlite").as_posix(),
         "command_prefix": "!",
         "validate_data": False,
     }

@@ -106,8 +106,10 @@ class DiscordBot(commands.Bot):
             "mom",
             "woe",
             "lci",
+            "mkm",
         ]
         self.explorer_sets = [
+            "ktk",
             "xln",
             "rix",
             "dom",
@@ -411,6 +413,53 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
+        name="from",
+        help=help_msg(
+            "Generates random packs from a list of sets",
+            has_num_packs=True,
+            args={
+                "sets": "A list of set codes separated only by '|', no spaces."
+            },
+            examples={
+                "from inv|pls|apc": (
+                    "generates one pack at random from either *Invasion*, "
+                    "*Planeshift*, or *Apocalypse*"
+                ),
+                "from inv|pls|apc 4": (
+                    "generates four packs at random from either *Invasion*, "
+                    "*Planeshift*, or *Apocalypse*"
+                ),
+            },
+        ),
+    )
+    async def from_list(
+        self,
+        ctx: commands.Context,
+        sets: str,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        set_list = sets.split("|")
+        num_packs = process_num_packs(num_packs)
+        p_list = self.generator.get_random_packs(
+            set_list, n=num_packs, replace=True
+        )
+        await self.send_plist_msg(p_list, ctx, member)
+
+    @from_list.error
+    async def from_list_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ):
+        assert ctx.message
+        message: discord.Message = ctx.message
+        if isinstance(error, commands.CommandInvokeError) and isinstance(
+            error.original, AssertionError
+        ):
+            await message.reply(f":warning: {error.original}")
+        else:
+            logger.error(error)
+
+    @commands.command(
         help=help_msg(
             "Generates ramdom *Jumpstart* decks (without Arena replacements)",
             has_num_packs=True,
@@ -615,6 +664,45 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             )
 
     @commands.command(
+        help=help_msg(
+            "Generates arena draft packs from the indicated set",
+            has_num_packs=True,
+            args={
+                "set_code": "Three-letter code of the set to generate packs "
+                "from"
+            },
+            examples={
+                "arena znr": "generates one *Zendikar Rising* arena draft"
+                "pack",
+                "arena stx 4": "generates four *Strixhaven* arena draft packs",
+            },
+        )
+    )
+    async def arena(
+        self,
+        ctx: commands.Context,
+        set_code: str,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = process_num_packs(num_packs)
+        try:
+            p_list = (
+                self.generator.get_packs(
+                    set_code, num_packs, booster_type="arena"
+                )
+                if set_code.lower() in self.bot.all_sets
+                else []
+            )
+            await self.send_plist_msg(p_list, ctx, member)
+        except ValueError:
+            assert ctx.message
+            message: discord.Message = ctx.message
+            await message.reply(
+                ":warning: The provided set does not have arena boosters."
+            )
+
+    @commands.command(
         name="setsealed",
         help=help_msg(
             "Generates six packs from the indicated set",
@@ -659,15 +747,15 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         member: Optional[discord.Member] = None,
     ) -> None:
         if set_code.lower() in self.bot.all_sets:
-            set = self.generator.data.sets[set_code.upper()]
+            # set = self.generator.data.sets[set_code.upper()]
             num_packs = 36
-            if hasattr(set, "sealedProduct"):
-                for product in set.sealedProduct:
-                    if (
-                        product.get("category") == "booster_box"
-                        and product.get("subtype") == "draft"
-                    ):
-                        num_packs = product.get("productSize", 36)
+            # if hasattr(set, "sealedProduct"):
+            #     for product in set.sealedProduct:
+            #         if (
+            #             product.get("category") == "booster_box"
+            #             and product.get("subtype") == "draft"
+            #         ):
+            #             num_packs = product.get("productSize", 36)
 
             await self.set(ctx, set_code, num_packs, member)
 

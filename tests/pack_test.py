@@ -57,9 +57,9 @@ def test_json(cards: dict[str, MtgCard]):
     ]
     pack = MtgPack({"slot": {"cards": card_list}})
     assert pack.json() == [
-        {"name": "The Mightstone and Weakstone", "count": 1},
-        {"name": "Mysterious Egg", "count": 1},
-        {"name": "Electrolyze", "count": 1},
+        {"name": "The Mightstone and Weakstone", "set": "BRO", "count": 1},
+        {"name": "Mysterious Egg", "set": "IKO", "count": 1},
+        {"name": "Electrolyze", "set": "STA", "count": 1},
     ]
 
 

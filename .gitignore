@@ -138,6 +138,7 @@ config*.yaml
 
 # MTGJSON database
 AllPrintings*.json
+AllPrintings*.sqlite
 
 # data/binary folders
 data

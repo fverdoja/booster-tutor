@@ -19,6 +19,9 @@ The bot responds to the following commands:
 * `!explorer`: generates a random explorer pack
 * `!historic`: generates a random (non-alchemy) historic pack
 * `!chaossealed`: generates 6 random (non-alchemy) historic packs
+* `!from {setcodes}`: generates random packs from a list of sets separated by
+  "|" (e.g., `!from inv|pls|apc` generates one pack at random from either
+  *Invasion*, *Planeshift*, or *Apocalypse*)
 
 ### Set-specific packs
 
@@ -30,6 +33,8 @@ The bot responds to the following commands:
   `!znrbox` generates 36 *Zendikar Rising* packs)
 * `!collector {setcode}`: generates a collector pack from the indicated set
   (e.g., `!collector znr` generates a *Zendikar Rising* collector booster)
+* `!arena {setcode}`: generates an arena draft pack from the indicated set
+  (e.g., `!arena znr` generates a *Zendikar Rising* arena draft booster)
 
 ### *Jumpstart* decks
 
