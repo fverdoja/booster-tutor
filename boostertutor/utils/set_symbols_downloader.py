@@ -14,7 +14,7 @@ IMAGE_URL = (
 
 def main(
     local_path: Path,
-    path_to_mtgjson: Path = Path("data/AllPrintings.json"),
+    path_to_mtgjson: Path = Path("data/AllPrintings.sqlite"),
     size: str = "large",
     rarity: str = "M",
 ) -> None:
