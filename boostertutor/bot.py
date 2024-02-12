@@ -106,7 +106,7 @@ class DiscordBot(commands.Bot):
             "mom",
             "woe",
             "lci",
-            "mkm",
+            "a-mkm",
         ]
         self.explorer_sets = [
             "ktk",
@@ -163,6 +163,10 @@ class DiscordBot(commands.Bot):
                     "box", "", 1
                 ).replace(
                     self.command_prefix, self.command_prefix + "draftbox ", 1
+                )
+            elif command.removeprefix("a-") in self.all_sets:
+                message.content = message.content.replace("a-", "", 1).replace(
+                    self.command_prefix, self.command_prefix + "arena ", 1
                 )
 
         ctx = await self.get_context(message)
@@ -418,7 +422,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             "Generates random packs from a list of sets",
             has_num_packs=True,
             args={
-                "sets": "A list of set codes separated only by '|', no spaces."
+                "sets": "A list of set codes separated only by '|', no "
+                "spaces. If a set code is preceeded by 'a-' an Arena pack of "
+                "that set is generated instead"
             },
             examples={
                 "from inv|pls|apc": (
@@ -504,14 +510,15 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
+        name="a-jmp",
         help=help_msg(
             "Generates ramdom *Jumpstart* decks (with Arena replacements)",
             has_num_packs=True,
             examples={
-                "ajmp": "generates one deck",
-                "ajmp 3": "generates three decks",
+                "a-jmp": "generates one deck",
+                "a-jmp 3": "generates three decks",
             },
-        )
+        ),
     )
     async def ajmp(
         self,
@@ -666,6 +673,8 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
     @commands.command(
         help=help_msg(
             "Generates arena draft packs from the indicated set",
+            long_description="It can also be called with the shortcut "
+            "`a-{set_code}`",
             has_num_packs=True,
             args={
                 "set_code": "Three-letter code of the set to generate packs "

@@ -33,13 +33,14 @@ The bot responds to the following commands:
   `!znrbox` generates 36 *Zendikar Rising* packs)
 * `!collector {setcode}`: generates a collector pack from the indicated set
   (e.g., `!collector znr` generates a *Zendikar Rising* collector booster)
-* `!arena {setcode}`: generates an arena draft pack from the indicated set
-  (e.g., `!arena znr` generates a *Zendikar Rising* arena draft booster)
+* `!arena {setcode}` or `!a-{setcode}`: generates an arena draft pack from the
+  indicated set (e.g., `!arena znr` generates a *Zendikar Rising* arena draft
+  booster)
 
 ### *Jumpstart* decks
 
 * `!jmp`: generates a ramdom *Jumpstart* deck (without Arena replacements)
-* `!ajmp`: generates a ramdom *Jumpstart* deck (with Arena replacements)
+* `!a-jmp`: generates a ramdom *Jumpstart* deck (with Arena replacements)
 * `!j22`: generates a ramdom *Jumpstart 2022* deck
 
 ### CubeCobra cube packs

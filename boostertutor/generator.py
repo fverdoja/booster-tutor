@@ -32,6 +32,7 @@ class MtgPackGenerator:
         self.fix_missing_balance(
             "mkm", "commonWithShowcase", booster_type="play"
         )
+        self.fix_missing_balance("mkm", "common", booster_type="play-arena")
         self.sets_with_decks: list[str] = ["JMP", "J22"]
         if validate_data:
             self.validate_booster_data()
@@ -87,6 +88,14 @@ class MtgPackGenerator:
     def _get_pack_internal(
         self, set: str, iterations: int, booster_type: Optional[str] = None
     ) -> MtgPack:
+        if set.upper().startswith("A-"):
+            set = set.upper().removeprefix("A-")
+            assert booster_type is None or booster_type in [
+                "arena",
+                "play-arena",
+            ]
+            booster_type = "arena"
+
         set_meta = self.data.sets.get(set.upper())
         assert (
             set_meta is not None
@@ -95,13 +104,22 @@ class MtgPackGenerator:
         boosters = set_meta.boosters
         if booster_type:
             if booster_type.lower() not in boosters:
-                raise ValueError(
-                    f"Booster type {booster_type} not available for set {set}"
-                )
+                if (
+                    booster_type.lower() == "arena"
+                    and "play-arena" in boosters
+                ):
+                    booster_type = "play-arena"
+                else:
+                    raise ValueError(
+                        f"Booster type {booster_type} not available for set "
+                        f"{set}"
+                    )
         elif set.upper() == "SIR":
             booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
         elif "default" in boosters:
             booster_type = "default"
+        elif "play" in boosters:
+            booster_type = "play"
         else:
             booster_type = next(iter(boosters))
         booster_meta = boosters[booster_type]  # type: ignore
@@ -171,7 +189,9 @@ class MtgPackGenerator:
             )
             return pack
         else:
-            return self._get_pack_internal(set, iterations - 1)
+            return self._get_pack_internal(
+                set, iterations - 1, booster_type=booster_type
+            )
 
     def get_random_packs(
         self,
