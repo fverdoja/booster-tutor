@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import imageio
+import imageio.v3 as iio
 
 from boostertutor.utils.utils import get_config
 
@@ -26,11 +26,11 @@ def main(
         for set in generator.sets_with_boosters:
             set = set.lower()
             try:
-                im = imageio.imread(
+                im = iio.imread(
                     IMAGE_URL.format(size=size, rarity=rarity, code=set)
                 )
                 print(f"{set}\tOK")
-                imageio.imwrite((local_path / f"{set}.png").as_posix(), im)
+                iio.imwrite((local_path / f"{set}.png").as_posix(), im)
             except ValueError:
                 print(f"{set}\tX")
     else:

@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -9,7 +10,7 @@ from boostertutor.bot import DiscordBot
 from boostertutor.utils.utils import get_config
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         prog="boostertutor",
         description=(
@@ -69,9 +70,10 @@ def main():
     elif args.downloader == "mtgjson":
         mtgjson.main(config)
     else:
-        bot = DiscordBot(config)
-        bot.run(config.discord_token)
+        async with DiscordBot(config) as bot:
+            await bot.add_boostertutor_cog()
+            await bot.start(config.discord_token)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -107,8 +107,8 @@ configuration file.
 
 ### Run the bot
 
-To host your own bot you will need a Discord token and an Imgur client ID. Once
-you have procured those for yourself, follow these steps:
+To host your own bot you will need a Discord token. Once you have procured those
+for yourself, follow these steps:
 
 * Make a `config.yaml` file (see `config_template.yaml` for help)
 

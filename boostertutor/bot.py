@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 
 import aiohttp
 import discord
-import imageio
+import imageio.v3 as iio
 from discord.ext import commands
 
 import boostertutor.utils.utils as utils
@@ -14,6 +14,8 @@ from boostertutor.models.mtg_pack import MtgPack
 logger = logging.getLogger(__name__)
 
 MAX_NUM_PACKS = 36
+DEFAULT_INTENTS = discord.Intents.default()
+DEFAULT_INTENTS.message_content = True
 
 
 def process_num_packs(num_packs: Optional[int]) -> int:
@@ -77,6 +79,7 @@ class DiscordBot(commands.Bot):
         self,
         config: utils.Config,
         pack_generator: Optional[MtgPackGenerator] = None,
+        intents: discord.Intents = DEFAULT_INTENTS,
         **options,
     ):
         super().__init__(
@@ -84,8 +87,10 @@ class DiscordBot(commands.Bot):
             help_command=commands.MinimalHelpCommand(no_category="Other"),
             description='A Discord bot to generate "Magic: the Gathering" '
             "boosters and sealed pools",
+            intents=intents,
             **options,
         )
+        self.prefix_str = config.command_prefix
         self.config = config
         self.generator = (
             pack_generator
@@ -129,8 +134,10 @@ class DiscordBot(commands.Bot):
         ] + self.standard_sets
         self.historic_sets = ["klr", "akr", "sir", "ltr"] + self.explorer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
-        self.add_cog(BotCommands(self))
         self.add_command(donate)
+
+    async def add_boostertutor_cog(self) -> None:
+        await self.add_cog(BotCommands(self))
 
     async def on_ready(self) -> None:
         logger.info(
@@ -140,33 +147,29 @@ class DiscordBot(commands.Bot):
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author != self.user and message.content.startswith(
-            self.command_prefix
+            self.prefix_str
         ):
             command = (
-                message.content.removeprefix(self.command_prefix)
+                message.content.removeprefix(self.prefix_str)
                 .split()[0]
                 .lower()
             )
             if command in self.all_sets:
                 message.content = message.content.replace(
-                    self.command_prefix, self.command_prefix + "set ", 1
+                    self.prefix_str, self.prefix_str + "set ", 1
                 )
                 logger.info(message.content)
             elif command.removesuffix("sealed") in self.all_sets:
                 message.content = message.content.replace(
                     "sealed", "", 1
-                ).replace(
-                    self.command_prefix, self.command_prefix + "setsealed ", 1
-                )
+                ).replace(self.prefix_str, self.prefix_str + "setsealed ", 1)
             elif command.removesuffix("box") in self.all_sets:
                 message.content = message.content.replace(
                     "box", "", 1
-                ).replace(
-                    self.command_prefix, self.command_prefix + "draftbox ", 1
-                )
+                ).replace(self.prefix_str, self.prefix_str + "draftbox ", 1)
             elif command.removeprefix("a-") in self.all_sets:
                 message.content = message.content.replace("a-", "", 1).replace(
-                    self.command_prefix, self.command_prefix + "arena ", 1
+                    self.prefix_str, self.prefix_str + "arena ", 1
                 )
 
         ctx = await self.get_context(message)
@@ -204,25 +207,23 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             img_list = await p.get_images(size="normal")
             p_img = utils.cards_img(img_list)
             img_file = BytesIO()
-            imageio.imwrite(img_file, p_img, format="jpeg")
-
-            # Upload it to imgur.com
-            link = await utils.upload_img(
-                img_file, self.bot.config.imgur_client_id
-            )
+            iio.imwrite(img_file, p_img, extension=".jpg")
+            img_file.seek(0)
         except aiohttp.ClientResponseError:
             # Send an error message if the upload failed...
-            embed = discord.Embed(
-                description=":x: Sorry, it seems your booster is lost in "
-                "the Blind Eternities...",
-                color=discord.Color.red(),
-            )
+            embeds = [
+                discord.Embed(
+                    description=":x: Sorry, it seems your booster is lost in "
+                    "the Blind Eternities...",
+                    color=discord.Color.red(),
+                )
+            ]
         else:
-            # ...or edit the message by embedding the link
-            embed = discord.Embed(color=discord.Color.dark_green())
-            embed.set_image(url=link)
+            # ...or edit the message by embedding the image
+            embeds = []
+            await m.add_files(discord.File(img_file, filename="booster.jpg"))
 
-        await m.edit(embed=embed)
+        await m.edit(embeds=embeds)
 
     async def send_pool_msg(
         self,
@@ -281,25 +282,23 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             ]
             r_img = utils.cards_img(img_list)
             r_file = BytesIO()
-            imageio.imwrite(r_file, r_img, format="jpeg")
-
-            # Upload it to imgur.com
-            link = await utils.upload_img(
-                r_file, self.bot.config.imgur_client_id
-            )
+            iio.imwrite(r_file, r_img, extension=".jpg")
+            r_file.seek(0)
         except aiohttp.ClientResponseError:
             # Send an error message if the upload failed...
-            embed = discord.Embed(
-                description=":x: Sorry, it seems your rares are lost in "
-                "the Blind Eternities...",
-                color=discord.Color.red(),
-            )
+            embeds = [
+                discord.Embed(
+                    description=":x: Sorry, it seems your rares are lost in "
+                    "the Blind Eternities...",
+                    color=discord.Color.red(),
+                )
+            ]
         else:
-            # ...or edit the message by embedding the link
-            embed = discord.Embed(color=discord.Color.dark_green())
-            embed.set_image(url=link)
+            # ...or edit the message by embedding the image
+            embeds = []
+            await m.add_files(discord.File(r_file, filename="rares.jpg"))
 
-        await m.edit(embed=embed)
+        await m.edit(embeds=embeds)
 
     async def send_plist_msg(
         self,
@@ -795,10 +794,11 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             await message.reply(
                 ":warning: To add packs to the sealeddeck.tech pool `xyz123`, "
                 "reply to my message with the pack content with the command "
-                f"`{self.bot.command_prefix}addpack xyz123`"
+                f"`{self.bot.prefix_str}addpack xyz123`"
             )
             return
 
+        assert message.reference.message_id
         ref = await message.channel.fetch_message(message.reference.message_id)
         if ref.author != self.bot.user or (
             len(ref.content.split("```")) < 2 and not ref.attachments
@@ -845,5 +845,5 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             message: discord.Message = ctx.message
             await message.reply(
                 f":warning: {error}\nFor more help, "
-                f"use `{self.bot.command_prefix}help {ctx.invoked_with}`."
+                f"use `{self.bot.prefix_str}help {ctx.invoked_with}`."
             )

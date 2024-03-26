@@ -36,12 +36,18 @@ async def test_donate(bot: DiscordBot):
     )
 
 
+@pytest.mark.skip(
+    reason="adding files to messages not currently supported by dpytest"
+)
 async def test_send_pack_msg(bot: DiscordBot, mocked_aioresponses: None):
     await dpytest.message("!set znr")
     await dpytest.run_all_events()
     assert dpytest.verify().message().contains().content("Zendikar Rising")
 
 
+@pytest.mark.skip(
+    reason="adding files to messages not currently supported by dpytest"
+)
 @pytest.mark.parametrize(
     ["message", "title"],
     [

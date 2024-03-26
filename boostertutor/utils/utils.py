@@ -1,7 +1,6 @@
 import logging
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from io import BytesIO
 from pathlib import Path
 from typing import Optional, Sequence, Union
 
@@ -14,14 +13,12 @@ logger = logging.getLogger(__name__)
 
 SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
 CUBECOBRA_URL = "https://cubecobra.com/cube/api/cubeJSON/"
-IMGUR_URL = "https://api.imgur.com/3/image"
 EXCHANGE_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 
 
 @dataclass(frozen=True)
 class Config:
     discord_token: str
-    imgur_client_id: str
     mtgjson_path: str
     set_img_path: Optional[str] = None
     command_prefix: str = "!"
@@ -51,22 +48,6 @@ async def pool_to_sealeddeck(
             resp_json = await resp.json()
 
     return resp_json["poolId"]
-
-
-async def upload_img(file: BytesIO, imgur_client_id: str) -> str:
-    """Upload an image file to imgur.com and returns the link"""
-
-    headers = {"Authorization": f"Client-ID {imgur_client_id}"}
-    payload = {"image": file.getvalue()}
-
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            IMGUR_URL, headers=headers, data=payload
-        ) as resp:
-            resp.raise_for_status()
-            resp_json = await resp.json()
-
-    return resp_json["data"]["link"]
 
 
 def cards_img(

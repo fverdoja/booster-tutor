@@ -2,7 +2,7 @@ from contextlib import nullcontext as does_not_raise
 from io import BytesIO
 from typing import ContextManager, Optional, Sequence
 
-import imageio
+import imageio.v3 as iio
 import numpy as np
 import pytest
 from aiohttp import ClientResponseError
@@ -161,7 +161,7 @@ async def test_prices(
         ("large", None, (936, 672, 3), does_not_raise()),
         ("normal", False, (680, 488, 3), does_not_raise()),
         ("small", True, (204, 146, 3), does_not_raise()),
-        ("wrong_size", None, (1, 1, 1), pytest.raises(AssertionError)),
+        ("wrong_size", None, (1, 1, 3), pytest.raises(AssertionError)),
     ],
 )
 async def test_image(
@@ -177,9 +177,9 @@ async def test_image(
         f"https://api.scryfall.com/cards/{scry_id}"
         f"?format=image&version={size}"
     )
-    expected_img = np.zeros(expected_shape)
+    expected_img = np.zeros(expected_shape, dtype="uint8")
     mock_img_file = BytesIO()
-    imageio.imwrite(mock_img_file, expected_img, format="jpeg")
+    iio.imwrite(mock_img_file, expected_img, extension=".jpg")
     with aioresponses() as mocked:
         mocked.get(url=img_url, status=200, body=mock_img_file.getvalue())
         with expected_raise:

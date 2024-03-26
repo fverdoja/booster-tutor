@@ -3,12 +3,12 @@ from io import BytesIO
 from pathlib import Path
 from typing import AsyncGenerator, Generator, TypeVar
 
+from discord import Intents
 import discord.ext.test as dpytest
-import imageio
+import imageio.v3 as iio
 import numpy as np
 import pytest
 from aioresponses import CallbackResult, aioresponses
-from discord import Intents
 
 from boostertutor.bot import DiscordBot
 from boostertutor.generator import MtgPackGenerator
@@ -16,7 +16,6 @@ from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
 from boostertutor.utils.utils import (
     CUBECOBRA_URL,
-    IMGUR_URL,
     SEALEDDECK_URL,
     Config,
     get_config,
@@ -234,7 +233,9 @@ def cube() -> dict:
 @pytest.fixture
 def card_img_file() -> BytesIO:
     img_file = BytesIO()
-    imageio.imwrite(img_file, np.zeros((10, 10, 3)), format="jpeg")
+    iio.imwrite(
+        img_file, np.zeros((10, 10, 3), dtype="uint8"), extension=".jpg"
+    )
     return img_file
 
 
@@ -242,7 +243,6 @@ def card_img_file() -> BytesIO:
 def temp_config(tmp_path: Path) -> Config:
     config_dict = {
         "discord_token": "0000",
-        "imgur_client_id": "0000",
         "mtgjson_path": (tmp_path / "AllPrintings.sqlite").as_posix(),
         "command_prefix": "!",
         "validate_data": False,
@@ -254,16 +254,10 @@ def temp_config(tmp_path: Path) -> Config:
 def mocked_aioresponses(cube: dict, card_img_file: BytesIO) -> Yield[None]:
     pattern = re.compile(r"^https://api\.scryfall\.com/cards.*$")
 
-    def imgur_callback(url: str, **kargs):
-        return CallbackResult(
-            status=200, payload={"data": {"link": "http://foo.url"}}
-        )
-
     def sealeddeck_callback(url: str, **kargs):
         return CallbackResult(status=200, payload={"poolId": "yyy"})
 
     with aioresponses() as mocked:
-        mocked.post(url=IMGUR_URL, callback=imgur_callback)
         mocked.post(url=SEALEDDECK_URL, callback=sealeddeck_callback)
         mocked.get(url=CUBECOBRA_URL + "mocked_cube", status=200, payload=cube)
         mocked.get(url=CUBECOBRA_URL + "non_existent_cube", status=404)
@@ -279,7 +273,10 @@ async def bot(
 ) -> AsyncYield[DiscordBot]:
     intents = Intents.default()
     intents.members = True
+    intents.message_content = True
     bot = DiscordBot(temp_config, generator, intents=intents)
+    await bot._async_setup_hook()
+    await bot.add_boostertutor_cog()
     dpytest.configure(bot)
 
     yield bot

@@ -96,7 +96,7 @@ def test_set_symbols_downloader(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     def im(*args, **kargs):
-        return np.zeros((10, 10, 3))
+        return np.zeros((10, 10, 3), dtype="uint8")
 
     def generator_init(self, *args, **kargs):
         self.sets_with_boosters = ["FOO", "Bar"]
@@ -104,7 +104,7 @@ def test_set_symbols_downloader(
     monkeypatch.setattr(
         set_symbols_downloader.MtgPackGenerator, "__init__", generator_init
     )
-    monkeypatch.setattr(set_symbols_downloader.imageio, "imread", im)
+    monkeypatch.setattr(set_symbols_downloader.iio, "imread", im)
     set_symbols_downloader.main(local_path=tmp_path)
     assert (tmp_path / "foo.png").is_file()
     assert (tmp_path / "bar.png").is_file()
@@ -122,7 +122,7 @@ def test_set_symbols_downloader_400(
     monkeypatch.setattr(
         set_symbols_downloader.MtgPackGenerator, "__init__", generator_init
     )
-    monkeypatch.setattr(set_symbols_downloader.imageio, "imread", exept)
+    monkeypatch.setattr(set_symbols_downloader.iio, "imread", exept)
     set_symbols_downloader.main(local_path=tmp_path)
     assert not (tmp_path / "foo.png").exists()
     assert not (tmp_path / "bar.png").exists()

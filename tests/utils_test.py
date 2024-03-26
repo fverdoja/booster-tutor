@@ -1,5 +1,4 @@
 import dataclasses
-from io import BytesIO
 from typing import Optional
 
 import numpy as np
@@ -20,7 +19,6 @@ def test_get_config(
     monkeypatch.setattr(yaml, "load", config_dict)
     config = utils.get_config()
     assert config.discord_token == "0000"
-    assert config.imgur_client_id == "0000"
     assert config.mtgjson_path.endswith("AllPrintings.sqlite")
     assert config.set_img_path is None
     assert config.command_prefix == "!"
@@ -29,7 +27,7 @@ def test_get_config(
 
 def test_get_config_missing(monkeypatch: pytest.MonkeyPatch):
     def missing_config(*args, **kargs):
-        return {"discord_token": "0000", "imgur_client_id": "0000"}
+        return {"discord_token": "0000"}
 
     monkeypatch.setattr(yaml, "load", missing_config)
     with pytest.raises(TypeError) as excinfo:
@@ -64,23 +62,6 @@ async def test_pool_to_sealedpool(sealedpool_id: Optional[str]):
         assert pool_id == "yyy"
 
 
-async def test_upload_img(card_img_file: BytesIO):
-    client_id = "xxx"
-    expected_link = "http://foo.url"
-
-    def callback(url: str, **kargs):
-        assert kargs["data"]["image"] == card_img_file.getvalue()
-        assert kargs["headers"]["Authorization"] == f"Client-ID {client_id}"
-        return CallbackResult(
-            status=200, payload={"data": {"link": expected_link}}
-        )
-
-    with aioresponses() as mocked:
-        mocked.post(url=utils.IMGUR_URL, callback=callback)
-        link = await utils.upload_img(card_img_file, client_id)
-        assert link == expected_link
-
-
 @pytest.mark.parametrize(
     ["num_images", "expected_shape"],
     [
@@ -92,7 +73,9 @@ async def test_upload_img(card_img_file: BytesIO):
     ],
 )
 def test_cards_img(num_images: int, expected_shape: tuple[int, int, int]):
-    card_list = [np.zeros((10, 10, 3)) for _ in range(num_images)]
+    card_list = [
+        np.zeros((10, 10, 3), dtype="uint8") for _ in range(num_images)
+    ]
     img = utils.cards_img(card_list)
     assert img.shape == expected_shape
 
@@ -110,7 +93,9 @@ def test_cards_img(num_images: int, expected_shape: tuple[int, int, int]):
 def test_cards_img_max_row_length(
     num_images: int, max_row_length: int, expected_shape: tuple[int, int, int]
 ):
-    card_list = [np.zeros((10, 10, 3)) for _ in range(num_images)]
+    card_list = [
+        np.zeros((10, 10, 3), dtype="uint8") for _ in range(num_images)
+    ]
     img = utils.cards_img(card_list, max_row_length)
     assert img.shape == expected_shape
 

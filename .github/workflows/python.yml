@@ -49,7 +49,6 @@ jobs:
     - name: Make config file
       run: |
         echo "discord_token: ${{ secrets.DISCORD_TOKEN }}" > config.yaml
-        echo "imgur_client_id: ${{ secrets.IMGUR_CLIENT_ID }}" >> config.yaml
         echo "mtgjson_path: data/AllPrintings.sqlite" >> config.yaml
         echo "set_img_path: boostertutor/img/sets/" >> config.yaml
         echo "command_prefix: '!'" >> config.yaml

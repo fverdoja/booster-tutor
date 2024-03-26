@@ -3,7 +3,7 @@ from aiohttp_client_cache.backends.sqlite import SQLiteBackend
 from datetime import timedelta
 from typing import Optional
 
-import imageio
+import imageio.v3 as iio
 import numpy as np
 
 from boostertutor.models.mtgjson_sql import CardProxy
@@ -94,7 +94,7 @@ class MtgCard:
                 resp.raise_for_status()
                 resp_bytes = await resp.read()
 
-        im: np.ndarray = imageio.imread(resp_bytes)
+        im: np.ndarray = iio.imread(resp_bytes)
 
         if foil:
             foil_im = foil_layer(size=im.shape[0:2])
