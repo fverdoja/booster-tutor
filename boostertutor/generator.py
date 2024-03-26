@@ -118,10 +118,10 @@ class MtgPackGenerator:
             booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
         elif "draft" in boosters:
             booster_type = "draft"
-        elif "default" in boosters:
-            booster_type = "default"
         elif "play" in boosters:
             booster_type = "play"
+        elif "default" in boosters:
+            booster_type = "default"
         else:
             booster_type = next(iter(boosters))
         booster_meta = boosters[booster_type]  # type: ignore
@@ -173,7 +173,7 @@ class MtgPackGenerator:
 
         pack_name = (
             f"{set_meta.name} ({booster_meta.name})"
-            if booster_meta.name != "default" and booster_meta.name != "play"
+            if booster_meta.name not in ["draft", "play", "default"]
             else None
         )
 
@@ -354,10 +354,10 @@ class MtgPackGenerator:
                 )
         elif "draft" in booster:
             booster_meta = booster["draft"]
-        elif "default" in booster:
-            booster_meta = booster["default"]
         elif "play" in booster:
             booster_meta = booster["play"]
+        elif "default" in booster:
+            booster_meta = booster["default"]
         else:
             logger.warning(
                 f"Requested EV of {set.upper()} booster, but no "
@@ -389,7 +389,7 @@ class MtgPackGenerator:
         return round(booster_ev, 2)
 
     def fix_missing_balance(
-        self, set: str, sheet_name: str, booster_type: str = "default"
+        self, set: str, sheet_name: str, booster_type: str = "draft"
     ) -> None:
         sheets = self.data.sets[set.upper()].boosters[booster_type].sheets
         commons = next(
