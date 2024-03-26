@@ -27,7 +27,7 @@ class MtgPackGenerator:
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
-            if set.boosters and set_code not in ["JMP", "J22"]
+            if set.boosters and set_code not in ["JMP", "J22", "CLU"]
         ]
         self.fix_missing_balance(
             "mkm", "commonWithShowcase", booster_type="play"
@@ -116,6 +116,8 @@ class MtgPackGenerator:
                     )
         elif set.upper() == "SIR":
             booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
+        elif "draft" in boosters:
+            booster_type = "draft"
         elif "default" in boosters:
             booster_type = "default"
         elif "play" in boosters:
@@ -350,8 +352,12 @@ class MtgPackGenerator:
                 raise ValueError(
                     f"Booster type {booster_type} not available for set {set}"
                 )
+        elif "draft" in booster:
+            booster_meta = booster["draft"]
         elif "default" in booster:
             booster_meta = booster["default"]
+        elif "play" in booster:
+            booster_meta = booster["play"]
         else:
             logger.warning(
                 f"Requested EV of {set.upper()} booster, but no "
