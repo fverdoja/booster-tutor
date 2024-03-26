@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -9,14 +10,14 @@ from boostertutor.utils import mtgjson_downloader, set_symbols_downloader
 from boostertutor.utils.utils import Config
 
 
-def test_download_file(tmp_path: Path, requests_mock: Mocker):
+def test_download_file(tmp_path: Path, requests_mock: Mocker) -> None:
     requests_mock.get("http://foo.bar", text="CONTENT")
     tmp_file = tmp_path / "file"
     mtgjson_downloader.download_file(url="http://foo.bar", path=tmp_file)
     assert tmp_file.is_file()
 
 
-def test_download_file_400(tmp_path: Path, requests_mock: Mocker):
+def test_download_file_400(tmp_path: Path, requests_mock: Mocker) -> None:
     requests_mock.get("http://foo.bar", status_code=400)
     tmp_file = tmp_path / "file"
     with pytest.raises(HTTPError):
@@ -27,7 +28,7 @@ def test_download_file_400(tmp_path: Path, requests_mock: Mocker):
 @pytest.mark.parametrize("backup", [False, True])
 def test_download_mtgjson_data(
     tmp_path: Path, requests_mock: Mocker, backup: bool
-):
+) -> None:
     mtgjson_file = tmp_path / "AllPrintings.sqlite"
     backup_file = tmp_path / "AllPrintings_last.sqlite"
 
@@ -54,7 +55,7 @@ def test_download_mtgjson_data(
 @pytest.mark.parametrize("backup", [False, True])
 def test_download_mtgjson_data_400(
     tmp_path: Path, requests_mock: Mocker, backup: bool
-):
+) -> None:
     mtgjson_file = tmp_path / "AllPrintings.sqlite"
     backup_file = tmp_path / "AllPrintings_last.sqlite"
     with open(mtgjson_file, "w") as f:
@@ -75,7 +76,7 @@ def test_mtgjson_downloader_main(
     tmp_path: Path,
     requests_mock: Mocker,
     temp_config: Config,
-):
+) -> None:
     mtgjson_file = tmp_path / "AllPrintings.sqlite"
     backup_file = tmp_path / "AllPrintings_last.sqlite"
 
@@ -94,11 +95,13 @@ def test_mtgjson_downloader_main(
 
 def test_set_symbols_downloader(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    def im(*args, **kargs):
+) -> None:
+    def im(*args: Any, **kargs: Any) -> np.ndarray:
         return np.zeros((10, 10, 3), dtype="uint8")
 
-    def generator_init(self, *args, **kargs):
+    def generator_init(
+        self: set_symbols_downloader.MtgPackGenerator, *args: Any, **kargs: Any
+    ) -> None:
         self.sets_with_boosters = ["FOO", "Bar"]
 
     monkeypatch.setattr(
@@ -112,11 +115,13 @@ def test_set_symbols_downloader(
 
 def test_set_symbols_downloader_400(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    def exept(*args, **kargs):
+) -> None:
+    def exept(*args: Any, **kargs: Any) -> None:
         raise ValueError
 
-    def generator_init(self, *args, **kargs):
+    def generator_init(
+        self: set_symbols_downloader.MtgPackGenerator, *args: Any, **kargs: Any
+    ) -> None:
         self.sets_with_boosters = ["FOO", "Bar"]
 
     monkeypatch.setattr(

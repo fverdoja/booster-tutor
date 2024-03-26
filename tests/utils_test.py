@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import pytest
@@ -12,8 +12,8 @@ import boostertutor.utils.utils as utils
 
 def test_get_config(
     monkeypatch: pytest.MonkeyPatch, temp_config: utils.Config
-):
-    def config_dict(*args, **kargs):
+) -> None:
+    def config_dict(*args: Any, **kargs: Any) -> dict[str, Any]:
         return dataclasses.asdict(temp_config)
 
     monkeypatch.setattr(yaml, "load", config_dict)
@@ -25,8 +25,8 @@ def test_get_config(
     assert config.logging_level == 20  # logging.INFO
 
 
-def test_get_config_missing(monkeypatch: pytest.MonkeyPatch):
-    def missing_config(*args, **kargs):
+def test_get_config_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    def missing_config(*args: Any, **kargs: Any) -> dict[str, str]:
         return {"discord_token": "0000"}
 
     monkeypatch.setattr(yaml, "load", missing_config)
@@ -37,8 +37,8 @@ def test_get_config_missing(monkeypatch: pytest.MonkeyPatch):
     )
 
 
-def test_get_config_wrong(monkeypatch: pytest.MonkeyPatch):
-    def wrong_config(*args, **kargs):
+def test_get_config_wrong(monkeypatch: pytest.MonkeyPatch) -> None:
+    def wrong_config(*args: Any, **kargs: Any) -> dict[str, str]:
         return {"diskord_token": "0000"}
 
     monkeypatch.setattr(yaml, "load", wrong_config)
@@ -48,10 +48,10 @@ def test_get_config_wrong(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.mark.parametrize("sealedpool_id", ["xxx", None])
-async def test_pool_to_sealedpool(sealedpool_id: Optional[str]):
+async def test_pool_to_sealedpool(sealedpool_id: Optional[str]) -> None:
     pool = [{"name": "Opt", "count": 2}]
 
-    def callback(url: str, **kargs):
+    def callback(url: str, **kargs: Any) -> CallbackResult:
         assert kargs["json"]["sideboard"] == pool
         assert kargs["json"].get("poolId", None) == sealedpool_id
         return CallbackResult(status=200, payload={"poolId": "yyy"})
@@ -72,7 +72,9 @@ async def test_pool_to_sealedpool(sealedpool_id: Optional[str]):
         (25, (30, 90, 3)),
     ],
 )
-def test_cards_img(num_images: int, expected_shape: tuple[int, int, int]):
+def test_cards_img(
+    num_images: int, expected_shape: tuple[int, int, int]
+) -> None:
     card_list = [
         np.zeros((10, 10, 3), dtype="uint8") for _ in range(num_images)
     ]
@@ -92,7 +94,7 @@ def test_cards_img(num_images: int, expected_shape: tuple[int, int, int]):
 )
 def test_cards_img_max_row_length(
     num_images: int, max_row_length: int, expected_shape: tuple[int, int, int]
-):
+) -> None:
     card_list = [
         np.zeros((10, 10, 3), dtype="uint8") for _ in range(num_images)
     ]
@@ -100,26 +102,26 @@ def test_cards_img_max_row_length(
     assert img.shape == expected_shape
 
 
-def test_cards_img_empty():
+def test_cards_img_empty() -> None:
     with pytest.raises(AssertionError):
         utils.cards_img([])
 
 
-def test_arena_to_json():
+def test_arena_to_json() -> None:
     arena = "1 Opt (INV) 000\n3 Ponder (C18) 001\n "
     json_list = utils.arena_to_json(arena)
     assert json_list[0] == {"name": "Opt", "count": 1, "set": "INV"}
     assert json_list[1] == {"name": "Ponder", "count": 3, "set": "C18"}
 
 
-def test_set_symbol_link():
+def test_set_symbol_link() -> None:
     assert utils.set_symbol_link(code="INV", size="normal", rarity="C") == (
         "https://gatherer.wizards.com/Handlers/Image.ashx?"
         "type=symbol&size=normal&rarity=C&set=inv"
     )
 
 
-async def test_eur_usd_rate():
+async def test_eur_usd_rate() -> None:
     exchange_xml = (
         "<root><zero /><one /><two><zero>"
         "<child currency='USD' rate='1.30'/>"
@@ -132,7 +134,7 @@ async def test_eur_usd_rate():
     assert rate == pytest.approx(1.3)
 
 
-async def test_get_cube():
+async def test_get_cube() -> None:
     cube1_id = "cube_one"
     cube1_json = {"name": "Cube 1"}
     cube2_id = "cube_two"
@@ -155,7 +157,7 @@ async def test_get_cube():
             await utils.get_cube(cube3_id)
 
 
-def test_foil_layer():
+def test_foil_layer() -> None:
     foil = utils.foil_layer(size=(10, 20))
     assert foil.shape == (10, 20, 3)
     assert foil.dtype == np.uint8

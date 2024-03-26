@@ -4,14 +4,14 @@ from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
 
 
-def test_duplicates(unbalanced_pack: MtgPack):
+def test_duplicates(unbalanced_pack: MtgPack) -> None:
     assert not unbalanced_pack.has_duplicates()
     card = unbalanced_pack.content["nonlandCommon"]["cards"][0]
     unbalanced_pack.content["nonlandCommon"]["cards"].append(card)
     assert unbalanced_pack.has_duplicates()
 
 
-def test_duplicates_in_foil(unbalanced_pack: MtgPack):
+def test_duplicates_in_foil(unbalanced_pack: MtgPack) -> None:
     card = unbalanced_pack.content["nonlandCommon"]["cards"][0]
     card.foil = True
     unbalanced_pack.content["foil"] = {"cards": [card], "balance": False}
@@ -19,7 +19,9 @@ def test_duplicates_in_foil(unbalanced_pack: MtgPack):
 
 
 @pytest.mark.parametrize("count_hybrids", [True, False])
-def test_count_card_colors(cards: dict[str, MtgCard], count_hybrids: bool):
+def test_count_card_colors(
+    cards: dict[str, MtgCard], count_hybrids: bool
+) -> None:
     card_list = list(cards.values())
     pack = MtgPack({"slot": {"cards": card_list}})
     colors, counts = pack.count_cards_colors(
@@ -35,7 +37,7 @@ def test_count_card_colors(cards: dict[str, MtgCard], count_hybrids: bool):
     }
 
 
-def test_arena(cards: dict[str, MtgCard]):
+def test_arena(cards: dict[str, MtgCard]) -> None:
     card_list = [
         cards["Electrolyze"],
         cards["The Mightstone and Weakstone"],
@@ -49,7 +51,7 @@ def test_arena(cards: dict[str, MtgCard]):
     )
 
 
-def test_json(cards: dict[str, MtgCard]):
+def test_json(cards: dict[str, MtgCard]) -> None:
     card_list = [
         cards["Electrolyze"],
         cards["The Mightstone and Weakstone"],
@@ -63,7 +65,7 @@ def test_json(cards: dict[str, MtgCard]):
     ]
 
 
-def test_balancing(unbalanced_pack: MtgPack):
+def test_balancing(unbalanced_pack: MtgPack) -> None:
     assert not unbalanced_pack.is_balanced()
     unbalanced_pack.is_balanced(rebalance=True)
     assert unbalanced_pack.is_balanced()
@@ -73,7 +75,9 @@ def test_balancing(unbalanced_pack: MtgPack):
     assert "Fortress Crab" in cards
 
 
-async def test_image(unbalanced_pack: MtgPack, mocked_aioresponses):
+async def test_image(
+    unbalanced_pack: MtgPack, mocked_aioresponses: None
+) -> None:
     img_list = await unbalanced_pack.get_images()
 
     assert len(img_list) == len(unbalanced_pack.cards)

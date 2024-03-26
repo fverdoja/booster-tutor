@@ -15,18 +15,18 @@ from boostertutor.bot import MAX_NUM_PACKS, DiscordBot, process_num_packs
         (MAX_NUM_PACKS + 1, MAX_NUM_PACKS),
     ],
 )
-async def test_process_num_packs(num: int, expected: int):
+async def test_process_num_packs(num: int, expected: int) -> None:
     assert process_num_packs(num) == expected
 
 
-def test_set_lists(bot: DiscordBot):
+def test_set_lists(bot: DiscordBot) -> None:
     assert set(bot.standard_sets).issubset(set(bot.explorer_sets))
     assert set(bot.explorer_sets).issubset(set(bot.historic_sets))
     assert set(bot.historic_sets).issubset(set(bot.all_sets + ["a-mkm"]))
 
 
 @pytest.mark.asyncio
-async def test_donate(bot: DiscordBot):
+async def test_donate(bot: DiscordBot) -> None:
     await dpytest.message("!donate")
     assert (
         dpytest.verify()
@@ -39,7 +39,9 @@ async def test_donate(bot: DiscordBot):
 @pytest.mark.skip(
     reason="adding files to messages not currently supported by dpytest"
 )
-async def test_send_pack_msg(bot: DiscordBot, mocked_aioresponses: None):
+async def test_send_pack_msg(
+    bot: DiscordBot, mocked_aioresponses: None
+) -> None:
     await dpytest.message("!set znr")
     await dpytest.run_all_events()
     assert dpytest.verify().message().contains().content("Zendikar Rising")
@@ -59,7 +61,7 @@ async def test_send_pack_msg(bot: DiscordBot, mocked_aioresponses: None):
 )
 async def test_send_pool_msg(
     bot: DiscordBot, message: str, title: str, mocked_aioresponses: None
-):
+) -> None:
     await dpytest.message(message)
     await dpytest.run_all_events()
     assert dpytest.verify().message().contains().content(title)

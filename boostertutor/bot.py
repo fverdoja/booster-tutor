@@ -1,6 +1,6 @@
 import logging
 from io import BytesIO
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import aiohttp
 import discord
@@ -80,7 +80,7 @@ class DiscordBot(commands.Bot):
         config: utils.Config,
         pack_generator: Optional[MtgPackGenerator] = None,
         intents: discord.Intents = DEFAULT_INTENTS,
-        **options,
+        **options: Any,
     ):
         super().__init__(
             command_prefix=config.command_prefix,
@@ -454,7 +454,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
     @from_list.error
     async def from_list_error(
         self, ctx: commands.Context, error: commands.CommandError
-    ):
+    ) -> None:
         assert ctx.message
         message: discord.Message = ctx.message
         if isinstance(error, commands.CommandInvokeError) and isinstance(
@@ -562,7 +562,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
     @cube.error
     async def cube_error(
         self, ctx: commands.Context, error: commands.CommandError
-    ):
+    ) -> None:
         assert ctx.message
         message: discord.Message = ctx.message
         if isinstance(error, commands.CommandInvokeError) and isinstance(
@@ -840,7 +840,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await m.edit(content=content)
 
     # Cog error handler
-    async def cog_command_error(self, ctx: commands.Context, error: Exception):
+    async def cog_command_error(
+        self, ctx: commands.Context, error: Exception
+    ) -> None:
         if isinstance(error, commands.MissingRequiredArgument):
             message: discord.Message = ctx.message
             await message.reply(

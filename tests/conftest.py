@@ -1,7 +1,7 @@
 import re
 from io import BytesIO
 from pathlib import Path
-from typing import AsyncGenerator, Generator, TypeVar
+from typing import Any, AsyncGenerator, Generator, TypeVar
 
 from discord import Intents
 import discord.ext.test as dpytest
@@ -254,7 +254,7 @@ def temp_config(tmp_path: Path) -> Config:
 def mocked_aioresponses(cube: dict, card_img_file: BytesIO) -> Yield[None]:
     pattern = re.compile(r"^https://api\.scryfall\.com/cards.*$")
 
-    def sealeddeck_callback(url: str, **kargs):
+    def sealeddeck_callback(url: str, **kargs: Any) -> CallbackResult:
         return CallbackResult(status=200, payload={"poolId": "yyy"})
 
     with aioresponses() as mocked:
@@ -285,7 +285,7 @@ async def bot(
     await dpytest.empty_queue()  # empty global message queue as test teardown
 
 
-def pytest_sessionfinish(session: pytest.Session, exitstatus: int):
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Code to execute after all tests."""
 
     # dat files are created by dpytest when using attachements

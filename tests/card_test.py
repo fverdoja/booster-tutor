@@ -25,7 +25,9 @@ from boostertutor.models.mtg_card import MtgCard
         ("Electrolyze", ["U", "R"]),
     ],
 )
-def test_colors(cards: dict[str, MtgCard], card: str, expected: Sequence[str]):
+def test_colors(
+    cards: dict[str, MtgCard], card: str, expected: Sequence[str]
+) -> None:
     assert cards[card].mana() == expected
 
 
@@ -63,7 +65,7 @@ def test_colors(cards: dict[str, MtgCard], card: str, expected: Sequence[str]):
         ),
     ],
 )
-def test_json(cards: dict[str, MtgCard], card: str, expected: dict):
+def test_json(cards: dict[str, MtgCard], card: str, expected: dict) -> None:
     assert cards[card].json() == expected
 
 
@@ -85,17 +87,17 @@ def test_json(cards: dict[str, MtgCard], card: str, expected: dict):
         ),
     ],
 )
-def test_arena(cards: dict[str, MtgCard], card: str, expected: str):
+def test_arena(cards: dict[str, MtgCard], card: str, expected: str) -> None:
     assert cards[card].arena_format() == expected
 
 
-def test_arena_promo(cards: dict[str, MtgCard]):
+def test_arena_promo(cards: dict[str, MtgCard]) -> None:
     promo = cards["Mysterious Egg"]
     assert promo.card.number == "385"  # check that it's the promo version
     assert promo.arena_format() == "1 Mysterious Egg (IKO) 3"
 
 
-def test_pack_sort_key(cards: dict[str, MtgCard]):
+def test_pack_sort_key(cards: dict[str, MtgCard]) -> None:
     card_list = list(cards.values())
     card_list.sort(key=lambda x: x.pack_sort_key())
     names = [card.card.name for card in card_list]
@@ -135,7 +137,7 @@ async def test_prices(
     is_none: bool,
     rate_none: bool,
     expected: float,
-):
+) -> None:
     c = cards[card]
     prices: dict[str, Optional[str]] = {
         "eur": "1.0",
@@ -170,7 +172,7 @@ async def test_image(
     foil: Optional[bool],
     expected_shape: tuple[int, int, int],
     expected_raise: ContextManager,
-):
+) -> None:
     c = cards["Electrolyze"]  # foil card, produces a foil image by default
     scry_id = c.card.identifiers.scryfall_id
     img_url = (
@@ -193,7 +195,7 @@ async def test_image(
             assert np.array_equal(img, expected_img) == expected_equal
 
 
-async def test_image_400(cards: dict[str, MtgCard]):
+async def test_image_400(cards: dict[str, MtgCard]) -> None:
     c = cards["Electrolyze"]
     scry_id = c.card.identifiers.scryfall_id
     img_url = (

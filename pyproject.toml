@@ -3,7 +3,17 @@
 line-length = 79
 
 
+#### Flake8 ####
+[tool.flake8]
+extend-ignore = ["E203", "W503"]
+
+
 #### Mypy ####
+[tool.mypy]
+disallow_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true 
+
 [[tool.mypy.overrides]]
 module = [
   "aiohttp.*",
@@ -20,3 +30,4 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = "tests"
 asyncio_mode = "auto"
+addopts = "--cov=boostertutor --cov-report term-missing:skip-covered"

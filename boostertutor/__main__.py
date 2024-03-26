@@ -10,7 +10,7 @@ from boostertutor.bot import DiscordBot
 from boostertutor.utils.utils import get_config
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(
         prog="boostertutor",
         description=(
