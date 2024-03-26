@@ -6,16 +6,16 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     column,
     create_engine,
+    func,
     select,
     table,
-    func,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
-    mapped_column,
     column_property,
+    mapped_column,
     object_session,
     relationship,
 )

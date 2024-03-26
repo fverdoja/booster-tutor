@@ -188,19 +188,17 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         message: discord.Message,
         member: Optional[discord.Member] = None,
     ) -> None:
-        # First send the booster text with a loading message for the image
-        embed = discord.Embed(
-            description=":hourglass: Summoning a vision of your booster "
-            "from the aether...",
-            color=discord.Color.orange(),
-        )
-
+        # First send the booster text with a preview for the image
         m = await message.reply(
             f"**{p.name}**\n"
             f"{member.mention if member else ''}\n"
-            f"```\n{p.arena_format()}\n```",
-            embed=embed,
+            f"```\n{p.arena_format()}\n```"
         )
+        back_img = utils.card_backs_img(len(p.cards))
+        back_img_file = BytesIO()
+        iio.imwrite(back_img_file, back_img, extension=".jpg")
+        back_img_file.seek(0)
+        await m.add_files(discord.File(back_img_file, filename="backs.jpg"))
 
         try:
             # Then generate the image of booster content (takes a while)
@@ -210,20 +208,12 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             iio.imwrite(img_file, p_img, extension=".jpg")
             img_file.seek(0)
         except aiohttp.ClientResponseError:
-            # Send an error message if the upload failed...
-            embeds = [
-                discord.Embed(
-                    description=":x: Sorry, it seems your booster is lost in "
-                    "the Blind Eternities...",
-                    color=discord.Color.red(),
-                )
-            ]
+            pass
         else:
-            # ...or edit the message by embedding the image
-            embeds = []
-            await m.add_files(discord.File(img_file, filename="booster.jpg"))
-
-        await m.edit(embeds=embeds)
+            # Edit the message by embedding the image
+            await m.edit(
+                attachments=[discord.File(img_file, filename="booster.jpg")]
+            )
 
     async def send_pool_msg(
         self,
@@ -236,25 +226,30 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         )
         sets = ", ".join([p.set.code for p in pool])
         json_pool = [card_json for p in pool for card_json in p.json()]
+        rare_list = [
+            c
+            for p in pool
+            for c in p.cards
+            if c.card.rarity in ["rare", "mythic"]
+        ]
 
-        # First send the pool content with a loading message for the image
-        embed = discord.Embed(
-            description=":hourglass: Summoning a vision of your rares "
-            "from the aether...",
-            color=discord.Color.orange(),
-        )
+        # First send the pool content with a preview for the image
         title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} packs"
         name = member.display_name if member else message.author.display_name
         m = await message.reply(
             f"**{title}**\n"
             f"{member.mention if member else ''}\n"
             f"Content: [{sets}]",
-            embed=embed,
             file=discord.File(
                 pool_file,
                 filename=f"{name}_pool.txt",
             ),
         )
+        back_img = utils.card_backs_img(len(rare_list))
+        back_img_file = BytesIO()
+        iio.imwrite(back_img_file, back_img, extension=".jpg")
+        back_img_file.seek(0)
+        await m.add_files(discord.File(back_img_file, filename="backs.jpg"))
 
         content = m.content
         try:
@@ -274,31 +269,22 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
 
         try:
             # Then generate the image of rares in pool (takes a while)
-            img_list = [
-                await c.get_image(size="normal")
-                for p in pool
-                for c in p.cards
-                if c.card.rarity in ["rare", "mythic"]
-            ]
+            img_list = [await c.get_image(size="normal") for c in rare_list]
             r_img = utils.cards_img(img_list)
             r_file = BytesIO()
             iio.imwrite(r_file, r_img, extension=".jpg")
             r_file.seek(0)
         except aiohttp.ClientResponseError:
-            # Send an error message if the upload failed...
-            embeds = [
-                discord.Embed(
-                    description=":x: Sorry, it seems your rares are lost in "
-                    "the Blind Eternities...",
-                    color=discord.Color.red(),
-                )
-            ]
+            pass
         else:
-            # ...or edit the message by embedding the image
-            embeds = []
-            await m.add_files(discord.File(r_file, filename="rares.jpg"))
-
-        await m.edit(embeds=embeds)
+            # Edit the message by embedding the image
+            pool_file_from_msg = m.attachments[0]
+            await m.edit(
+                attachments=[
+                    pool_file_from_msg,
+                    discord.File(r_file, filename="rares.jpg"),
+                ]
+            )
 
     async def send_plist_msg(
         self,

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional, Sequence, Union
 
 import aiohttp
+import imageio.v3 as iio
 import numpy as np
 import yaml
 from parse import compile
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
 CUBECOBRA_URL = "https://cubecobra.com/cube/api/cubeJSON/"
 EXCHANGE_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+MTG_CARD_BACK = iio.imread("boostertutor/img/magic_back.jpg")
 
 
 @dataclass(frozen=True)
@@ -79,6 +81,13 @@ def cards_img(
             )
             cards = np.vstack((cards, row))
     return cards  # type: ignore
+
+
+def card_backs_img(num_cards: int, max_row_length: int = 10) -> np.ndarray:
+    """Generate an image of num_cards Magic card backs"""
+    assert num_cards > 0
+    back_list = [MTG_CARD_BACK] * num_cards
+    return cards_img(back_list, max_row_length)
 
 
 def arena_to_json(arena_list: str) -> Sequence[dict]:

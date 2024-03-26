@@ -3,12 +3,12 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, AsyncGenerator, Generator, TypeVar
 
-from discord import Intents
 import discord.ext.test as dpytest
 import imageio.v3 as iio
 import numpy as np
 import pytest
 from aioresponses import CallbackResult, aioresponses
+from discord import Intents
 
 from boostertutor.bot import DiscordBot
 from boostertutor.generator import MtgPackGenerator

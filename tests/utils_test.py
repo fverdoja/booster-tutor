@@ -107,6 +107,45 @@ def test_cards_img_empty() -> None:
         utils.cards_img([])
 
 
+@pytest.mark.parametrize(
+    ["num_images", "expected_shape"],
+    [
+        (1, (680, 488, 3)),
+        (3, (680, 488 * 3, 3)),
+        (10, (680, 488 * 10, 3)),
+        (11, (680 * 2, 488 * 6, 3)),
+        (25, (680 * 3, 488 * 9, 3)),
+    ],
+)
+def test_card_backs_img(
+    num_images: int, expected_shape: tuple[int, int, int]
+) -> None:
+    img = utils.card_backs_img(num_images)
+    assert img.shape == expected_shape
+
+
+@pytest.mark.parametrize(
+    ["num_images", "max_row_length", "expected_shape"],
+    [
+        (1, 2, (680, 488, 3)),
+        (2, 2, (680, 488 * 2, 3)),
+        (3, 2, (680 * 2, 488 * 2, 3)),
+        (4, 2, (680 * 2, 488 * 2, 3)),
+        (5, 2, (680 * 3, 488 * 2, 3)),
+    ],
+)
+def test_card_backs_img_max_row_length(
+    num_images: int, max_row_length: int, expected_shape: tuple[int, int, int]
+) -> None:
+    img = utils.card_backs_img(num_images, max_row_length)
+    assert img.shape == expected_shape
+
+
+def test_card_backs_img_empty() -> None:
+    with pytest.raises(AssertionError):
+        utils.card_backs_img(0)
+
+
 def test_arena_to_json() -> None:
     arena = "1 Opt (INV) 000\n3 Ponder (C18) 001\n "
     json_list = utils.arena_to_json(arena)
