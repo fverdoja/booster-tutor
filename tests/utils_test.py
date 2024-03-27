@@ -141,6 +141,15 @@ def test_card_backs_img_max_row_length(
     assert img.shape == expected_shape
 
 
+def test_card_backs_img_a30() -> None:
+    default = utils.card_backs_img(1)
+    mtg = utils.card_backs_img(1, a30=False)
+    a30 = utils.card_backs_img(1, a30=True)
+    assert (default == mtg).all()
+    assert (default != a30).any()
+    assert default.shape == a30.shape
+
+
 def test_card_backs_img_empty() -> None:
     with pytest.raises(AssertionError):
         utils.card_backs_img(0)

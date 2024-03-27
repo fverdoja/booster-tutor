@@ -16,6 +16,7 @@ SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
 CUBECOBRA_URL = "https://cubecobra.com/cube/api/cubeJSON/"
 EXCHANGE_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 MTG_CARD_BACK = iio.imread("boostertutor/img/magic_back.jpg")
+A30_CARD_BACK = iio.imread("boostertutor/img/A30_back.jpg")
 
 
 @dataclass(frozen=True)
@@ -83,10 +84,12 @@ def cards_img(
     return cards  # type: ignore
 
 
-def card_backs_img(num_cards: int, max_row_length: int = 10) -> np.ndarray:
+def card_backs_img(
+    num_cards: int, max_row_length: int = 10, a30: bool = False
+) -> np.ndarray:
     """Generate an image of num_cards Magic card backs"""
     assert num_cards > 0
-    back_list = [MTG_CARD_BACK] * num_cards
+    back_list = [A30_CARD_BACK if a30 else MTG_CARD_BACK] * num_cards
     return cards_img(back_list, max_row_length)
 
 

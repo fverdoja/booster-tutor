@@ -194,7 +194,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             f"{member.mention if member else ''}\n"
             f"```\n{p.arena_format()}\n```"
         )
-        back_img = utils.card_backs_img(len(p.cards))
+        back_img = utils.card_backs_img(
+            len(p.cards), a30=(p.set.code.upper() == "30A")
+        )
         back_img_file = BytesIO()
         iio.imwrite(back_img_file, back_img, extension=".jpg")
         back_img_file.seek(0)
@@ -224,7 +226,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         pool_file = BytesIO(
             bytes("\n".join([p.arena_format() for p in pool]), "utf-8")
         )
-        sets = ", ".join([p.set.code for p in pool])
+        sets = [p.set.code for p in pool]
+        sets_str = ", ".join(sets)
+        is_a30 = all(s.upper() == "30A" for s in sets)
         json_pool = [card_json for p in pool for card_json in p.json()]
         rare_list = [
             c
@@ -239,13 +243,13 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         m = await message.reply(
             f"**{title}**\n"
             f"{member.mention if member else ''}\n"
-            f"Content: [{sets}]",
+            f"Content: [{sets_str}]",
             file=discord.File(
                 pool_file,
                 filename=f"{name}_pool.txt",
             ),
         )
-        back_img = utils.card_backs_img(len(rare_list))
+        back_img = utils.card_backs_img(len(rare_list), a30=is_a30)
         back_img_file = BytesIO()
         iio.imwrite(back_img_file, back_img, extension=".jpg")
         back_img_file.seek(0)

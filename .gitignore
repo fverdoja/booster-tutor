@@ -145,6 +145,7 @@ data
 pools
 boostertutor/img/*
 !boostertutor/img/magic_back.jpg
+!boostertutor/img/A30_back.jpg
 
 # test notebooks
 *.ipynb
