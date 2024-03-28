@@ -10,14 +10,14 @@ from aioresponses import CallbackResult, aioresponses
 import boostertutor.utils.utils as utils
 
 
-def test_get_config(
+def test_config(
     monkeypatch: pytest.MonkeyPatch, temp_config: utils.Config
 ) -> None:
     def config_dict(*args: Any, **kargs: Any) -> dict[str, Any]:
         return dataclasses.asdict(temp_config)
 
     monkeypatch.setattr(yaml, "load", config_dict)
-    config = utils.get_config()
+    config = utils.Config.from_file()
     assert config.discord_token == "0000"
     assert config.mtgjson_path.endswith("AllPrintings.sqlite")
     assert config.set_img_path is None
@@ -25,25 +25,25 @@ def test_get_config(
     assert config.logging_level == 20  # logging.INFO
 
 
-def test_get_config_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_config_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     def missing_config(*args: Any, **kargs: Any) -> dict[str, str]:
         return {"discord_token": "0000"}
 
     monkeypatch.setattr(yaml, "load", missing_config)
     with pytest.raises(TypeError) as excinfo:
-        utils.get_config()
+        utils.Config.from_file()
     assert "missing 1 required positional argument: 'mtgjson_path'" in str(
         excinfo.value
     )
 
 
-def test_get_config_wrong(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_config_wrong(monkeypatch: pytest.MonkeyPatch) -> None:
     def wrong_config(*args: Any, **kargs: Any) -> dict[str, str]:
         return {"diskord_token": "0000"}
 
     monkeypatch.setattr(yaml, "load", wrong_config)
     with pytest.raises(TypeError) as excinfo:
-        utils.get_config()
+        utils.Config.from_file()
     assert "unexpected keyword argument 'diskord_token'" in str(excinfo.value)
 
 
@@ -163,9 +163,9 @@ def test_arena_to_json() -> None:
 
 
 def test_set_symbol_link() -> None:
-    assert utils.set_symbol_link(code="INV", size="normal", rarity="C") == (
+    assert utils.set_symbol_link(code="ALA", size="medium", rarity="C") == (
         "https://gatherer.wizards.com/Handlers/Image.ashx?"
-        "type=symbol&size=normal&rarity=C&set=inv"
+        "type=symbol&size=medium&rarity=C&set=ala"
     )
 
 

@@ -7,6 +7,7 @@ from numpy.random import choice
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
 from boostertutor.models.mtgjson_sql import (
+    BoosterType,
     BoosterVariationProxy,
     CardDb,
     SheetCardProxy,
@@ -30,9 +31,11 @@ class MtgPackGenerator:
             if set.boosters and set_code not in ["JMP", "J22", "CLU"]
         ]
         self.fix_missing_balance(
-            "mkm", "commonWithShowcase", booster_type="play"
+            "mkm", "commonWithShowcase", booster_type=BoosterType.PLAY
         )
-        self.fix_missing_balance("mkm", "common", booster_type="play-arena")
+        self.fix_missing_balance(
+            "mkm", "common", booster_type=BoosterType.PLAY_ARENA
+        )
         self.sets_with_decks: list[str] = ["JMP", "J22"]
         if validate_data:
             self.validate_booster_data()
@@ -66,7 +69,7 @@ class MtgPackGenerator:
         set: str,
         n: int = 1,
         balance: bool = True,
-        booster_type: Optional[str] = None,
+        booster_type: Optional[BoosterType] = None,
     ) -> Sequence[MtgPack]:
         return [
             self.get_pack(set, balance=balance, booster_type=booster_type)
@@ -77,7 +80,7 @@ class MtgPackGenerator:
         self,
         set: str,
         balance: bool = True,
-        booster_type: Optional[str] = None,
+        booster_type: Optional[BoosterType] = None,
     ) -> MtgPack:
         logger.debug(f"Generating {set.upper()} pack...")
         iterations = self.max_balancing_iterations if balance else 1
@@ -86,15 +89,18 @@ class MtgPackGenerator:
         )
 
     def _get_pack_internal(
-        self, set: str, iterations: int, booster_type: Optional[str] = None
+        self,
+        set: str,
+        iterations: int,
+        booster_type: Optional[BoosterType] = None,
     ) -> MtgPack:
         if set.upper().startswith("A-"):
             set = set.upper().removeprefix("A-")
             assert booster_type is None or booster_type in [
-                "arena",
-                "play-arena",
+                BoosterType.DRAFT_ARENA,
+                BoosterType.PLAY_ARENA,
             ]
-            booster_type = "arena"
+            booster_type = BoosterType.DRAFT_ARENA
 
         set_meta = self.data.sets.get(set.upper())
         assert (
@@ -103,25 +109,32 @@ class MtgPackGenerator:
 
         boosters = set_meta.boosters
         if booster_type:
-            if booster_type.lower() not in boosters:
+            if booster_type not in boosters:
                 if (
-                    booster_type.lower() == "arena"
-                    and "play-arena" in boosters
+                    booster_type == BoosterType.DRAFT_ARENA
+                    and BoosterType.PLAY_ARENA in boosters
                 ):
-                    booster_type = "play-arena"
+                    booster_type = BoosterType.PLAY_ARENA
                 else:
                     raise ValueError(
                         f"Booster type {booster_type} not available for set "
                         f"{set}"
                     )
         elif set.upper() == "SIR":
-            booster_type = choice(["arena-1", "arena-2", "arena-3", "arena-4"])
-        elif "draft" in boosters:
-            booster_type = "draft"
-        elif "play" in boosters:
-            booster_type = "play"
-        elif "default" in boosters:
-            booster_type = "default"
+            booster_type = choice(
+                [
+                    BoosterType.SIR_1,
+                    BoosterType.SIR_2,
+                    BoosterType.SIR_3,
+                    BoosterType.SIR_4,
+                ]
+            )
+        elif BoosterType.DRAFT in boosters:
+            booster_type = BoosterType.DRAFT
+        elif BoosterType.PLAY in boosters:
+            booster_type = BoosterType.PLAY
+        elif BoosterType.DEFAULT in boosters:
+            booster_type = BoosterType.DEFAULT
         else:
             booster_type = next(iter(boosters))
         booster_meta = boosters[booster_type]  # type: ignore
@@ -171,13 +184,12 @@ class MtgPackGenerator:
 
             pack_content[sheet.name] = slot
 
-        pack_name = (
-            f"{set_meta.name} ({booster_meta.name})"
-            if booster_meta.name not in ["draft", "play", "default"]
-            else None
+        pack = MtgPack(
+            pack_content,
+            set=set_meta,
+            name=set_meta.name,
+            type=booster_type.value,  # type: ignore
         )
-
-        pack = MtgPack(pack_content, set=set_meta, name=pack_name)
 
         if not balance:
             logger.debug("Pack should not be balanced, skipping.")
@@ -201,7 +213,7 @@ class MtgPackGenerator:
         n: int = 1,
         replace: bool = False,
         balance: bool = True,
-        booster_type: Optional[str] = None,
+        booster_type: Optional[BoosterType] = None,
     ) -> Sequence[MtgPack]:
         if sets is None:
             sets = self.sets_with_boosters
@@ -265,7 +277,7 @@ class MtgPackGenerator:
         assert set.upper() in self.sets_with_decks
         set_meta = self.data.sets.get(set.upper())
         assert set_meta is not None
-        all_decks = set_meta.boosters["jumpstart"].variations
+        all_decks = set_meta.boosters[BoosterType.JUMPSTART].variations
         decks: list[BoosterVariationProxy] = choice(
             all_decks, size=n, replace=replace
         )
@@ -280,9 +292,7 @@ class MtgPackGenerator:
             content = {"deck": {"cards": cards, "balance": False}}
             packs.append(
                 MtgPack(
-                    content,
-                    set=set_meta,
-                    name=f"{set_meta.name} ({sheet.name})",
+                    content, set=set_meta, name=set_meta.name, type=sheet.name
                 )
             )
             logger.info(f"{sheet.name} ({set.upper()}) deck generated")
@@ -332,7 +342,9 @@ class MtgPackGenerator:
 
         logger.info(f"{cube['shortId']} cube pack generated")
         return MtgPack(
-            {"pack": {"cards": pack_cards, "balance": False}}, name=cube_name
+            {"pack": {"cards": pack_cards, "balance": False}},
+            name=cube_name,
+            type="cube",
         )
 
     async def get_pack_ev(
@@ -341,23 +353,23 @@ class MtgPackGenerator:
         currency: str,
         eur_usd_rate: Optional[float] = None,
         bulk_threshold: float = 0.0,
-        booster_type: Optional[str] = None,
+        booster_type: Optional[BoosterType] = None,
     ) -> float:
         assert set.upper() in self.data.sets
         booster = self.data.sets[set.upper()].boosters
         if booster_type:
-            if booster_type.lower() in booster:
-                booster_meta = booster[booster_type.lower()]
+            if booster_type in booster:
+                booster_meta = booster[booster_type]
             else:
                 raise ValueError(
                     f"Booster type {booster_type} not available for set {set}"
                 )
-        elif "draft" in booster:
-            booster_meta = booster["draft"]
-        elif "play" in booster:
-            booster_meta = booster["play"]
-        elif "default" in booster:
-            booster_meta = booster["default"]
+        elif BoosterType.DRAFT in booster:
+            booster_meta = booster[BoosterType.DRAFT]
+        elif BoosterType.PLAY in booster:
+            booster_meta = booster[BoosterType.PLAY]
+        elif BoosterType.DEFAULT in booster:
+            booster_meta = booster[BoosterType.DEFAULT]
         else:
             logger.warning(
                 f"Requested EV of {set.upper()} booster, but no "
@@ -389,7 +401,10 @@ class MtgPackGenerator:
         return round(booster_ev, 2)
 
     def fix_missing_balance(
-        self, set: str, sheet_name: str, booster_type: str = "draft"
+        self,
+        set: str,
+        sheet_name: str,
+        booster_type: BoosterType = BoosterType.DRAFT,
     ) -> None:
         sheets = self.data.sets[set.upper()].boosters[booster_type].sheets
         commons = next(

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import requests
 
-from boostertutor.utils.utils import Config, get_config
+from boostertutor.utils.utils import Config
 
 # configs
 MTGJSON_URL = "https://mtgjson.com/api/v5/AllPrintings.sqlite"
@@ -54,6 +54,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("Reading config...")
-    config = get_config(args.config)
+    config = Config.from_file(args.config)
 
     main(config)

@@ -117,7 +117,7 @@ def test_set_symbols_downloader_400(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     def exept(*args: Any, **kargs: Any) -> None:
-        raise ValueError
+        raise OSError
 
     def generator_init(
         self: set_symbols_downloader.MtgPackGenerator, *args: Any, **kargs: Any

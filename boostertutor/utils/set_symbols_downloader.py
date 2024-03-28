@@ -2,14 +2,9 @@ from pathlib import Path
 
 import imageio.v3 as iio
 
-from boostertutor.utils.utils import get_config
+from boostertutor.utils.utils import Config, set_symbol_link
 
 from ..generator import MtgPackGenerator
-
-IMAGE_URL = (
-    "https://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&"
-    "size={size}&rarity={rarity}&set={code}"
-)
 
 
 def main(
@@ -23,23 +18,22 @@ def main(
         generator = MtgPackGenerator(
             path_to_mtgjson=path_to_mtgjson.as_posix()
         )
-        for set in generator.sets_with_boosters:
-            set = set.lower()
+        for set_code in generator.sets_with_boosters:
             try:
-                im = iio.imread(
-                    IMAGE_URL.format(size=size, rarity=rarity, code=set)
+                im = iio.imread(set_symbol_link(set_code, size, rarity))
+                print(f"{set_code}\tOK")
+                iio.imwrite(
+                    (local_path / f"{set_code.lower()}.png").as_posix(), im
                 )
-                print(f"{set}\tOK")
-                iio.imwrite((local_path / f"{set}.png").as_posix(), im)
-            except ValueError:
-                print(f"{set}\tX")
+            except OSError:
+                print(f"{set_code}\tX")
     else:
         print(f"The directory {local_path.as_posix()} does not exist.")
 
 
 if __name__ == "__main__":
     print("Reading config...")
-    config = get_config()
+    config = Config.from_file()
     if config.set_img_path:
         main(
             local_path=Path(config.set_img_path),

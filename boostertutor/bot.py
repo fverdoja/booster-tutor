@@ -10,6 +10,7 @@ from discord.ext import commands
 import boostertutor.utils.utils as utils
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtg_pack import MtgPack
+from boostertutor.models.mtgjson_sql import BoosterType
 
 logger = logging.getLogger(__name__)
 
@@ -646,7 +647,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         try:
             p_list = (
                 self.generator.get_packs(
-                    set_code, num_packs, booster_type="collector"
+                    set_code, num_packs, booster_type=BoosterType.COLLECTOR
                 )
                 if set_code.lower() in self.bot.all_sets
                 else []
@@ -687,7 +688,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         try:
             p_list = (
                 self.generator.get_packs(
-                    set_code, num_packs, booster_type="arena"
+                    set_code, num_packs, booster_type=BoosterType.DRAFT_ARENA
                 )
                 if set_code.lower() in self.bot.all_sets
                 else []

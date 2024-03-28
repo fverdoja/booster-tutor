@@ -8,7 +8,12 @@ import pytest
 from aioresponses import aioresponses
 
 from boostertutor.generator import MtgPackGenerator
-from boostertutor.models.mtgjson_sql import BoosterProxy, SetProxy, SheetProxy
+from boostertutor.models.mtgjson_sql import (
+    BoosterProxy,
+    BoosterType,
+    SetProxy,
+    SheetProxy,
+)
 
 
 @pytest.mark.parametrize(
@@ -58,7 +63,7 @@ def test_pack(generator: MtgPackGenerator) -> None:
 
 
 def test_collector_pack(generator: MtgPackGenerator) -> None:
-    p = generator.get_pack("m21", booster_type="collector")
+    p = generator.get_pack("m21", booster_type=BoosterType.COLLECTOR)
     assert len(p.cards) == 15
 
 
@@ -69,7 +74,7 @@ def test_pack_raises(generator: MtgPackGenerator) -> None:
 
 def test_pack_collector_raises(generator: MtgPackGenerator) -> None:
     with pytest.raises(ValueError):
-        generator.get_pack("inv", booster_type="collector")
+        generator.get_pack("inv", booster_type=BoosterType.COLLECTOR)
 
 
 def test_pack_list(generator: MtgPackGenerator) -> None:
@@ -119,12 +124,16 @@ def test_random_packs_from_set_list_with_replacement(
 
 def test_has_jumpstart(generator: MtgPackGenerator) -> None:
     assert len(generator.data.sets["JMP"].boosters) == 1
-    for deck in generator.data.sets["JMP"].boosters["jumpstart"].variations:
+    for deck in (
+        generator.data.sets["JMP"].boosters[BoosterType.JUMPSTART].variations
+    ):
         assert deck.weight == 1
         assert len(deck.content) == 1
         assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20
     assert len(generator.data.sets["J22"].boosters) == 1
-    for deck in generator.data.sets["J22"].boosters["jumpstart"].variations:
+    for deck in (
+        generator.data.sets["J22"].boosters[BoosterType.JUMPSTART].variations
+    ):
         assert deck.weight == 1
         assert len(deck.content) == 1
         assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20

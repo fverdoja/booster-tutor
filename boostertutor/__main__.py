@@ -7,7 +7,7 @@ from pathlib import Path
 import boostertutor.utils.mtgjson_downloader as mtgjson
 import boostertutor.utils.set_symbols_downloader as symbols
 from boostertutor.bot import DiscordBot
-from boostertutor.utils.utils import get_config
+from boostertutor.utils.utils import Config
 
 
 async def main() -> None:
@@ -46,7 +46,7 @@ async def main() -> None:
         description="Download MTGJSON data",
     )
     args = parser.parse_args()
-    config = get_config(Path(args.config))
+    config = Config.from_file(Path(args.config))
     file_handler = RotatingFileHandler(
         "boostertutor.log", maxBytes=1024 * 1024 * 50
     )

@@ -1,7 +1,9 @@
+import enum
 from functools import total_ordering
 from typing import Optional, Union
 
 from sqlalchemy import (
+    Enum,
     ForeignKey,
     ForeignKeyConstraint,
     column,
@@ -21,6 +23,79 @@ from sqlalchemy.orm import (
 )
 
 SCRYFALL_CARD_BASE_URL = "https://api.scryfall.com/cards"
+
+
+class BoosterType(enum.Enum):
+    DEFAULT = "default"
+    DRAFT = "draft"
+    DRAFT_ARENA = "arena"
+    PLAY = "play"
+    PLAY_ARENA = "play-arena"
+    SIR_1 = "arena-1"
+    SIR_2 = "arena-2"
+    SIR_3 = "arena-3"
+    SIR_4 = "arena-4"
+    SET = "set"
+    SET_JP = "set-jp"
+    COLLECTOR = "collector"
+    COLLECTOR_SAMPLE = "collector-sample"
+    COLLECTOR_SPECIAL = "collector-special"
+    JUMPSTART = "jumpstart"
+    JUMPSTART_V2 = "jumpstart-v2"
+    STARTER = "starter"
+    TOURNAMENT = "tournament"
+    FAT_PACK = "fat-pack"
+    MTGO = "mtgo"
+    PREMIUM = "premium"
+    SIX = "six"
+    PRERELEASE = "prerelease"
+    PRERELEASE_BROKERS = "prerelease-brokers"
+    PRERELEASE_CABARETTI = "prerelease-cabaretti"
+    PRERELEASE_MAESTROS = "prerelease-maestros"
+    PRERELEASE_OBSCURA = "prerelease-obscura"
+    PRERELEASE_RIVETEERS = "prerelease-riveteers"
+    BOX_TOPPER = "box-topper"
+    BOX_TOPPER_FOIL = "box-topper-foil"
+    BUNDLE_PROMO = "bundle-promo"
+    GIFT_BUNDLE_PROMO = "gift-bundle-promo"
+    THEME_B = "theme-b"
+    THEME_G = "theme-g"
+    THEME_R = "theme-r"
+    THEME_U = "theme-u"
+    THEME_W = "theme-w"
+    THEME_BOROS = "theme-boros"
+    THEME_DIMIR = "theme-dimir"
+    THEME_GOLGARI = "theme-golgari"
+    THEME_IZZET = "theme-izzet"
+    THEME_SELESNYA = "theme-selesnya"
+    THEME_AZORIUS = "theme-azorius"
+    THEME_GRUUL = "theme-gruul"
+    THEME_ORZHOV = "theme-orzhov"
+    THEME_RAKDOS = "theme-rakdos"
+    THEME_SIMIC = "theme-simic"
+    CONVENTION = "convention"
+    CONVENTION_2021 = "convention-2021"
+    COLLECTOR_JP = "collector-jp"
+    THEME_MONSTERS = "theme-monsters"
+    THEME_PARTY = "theme-party"
+    THEME_VIKINGS = "theme-vikings"
+    THEME_LOREHOLD = "theme-lorehold"
+    THEME_PRISMARI = "theme-prismari"
+    THEME_QUANDRIX = "theme-quandrix"
+    THEME_SILVERQUILL = "theme-silverquill"
+    THEME_WITHERBLOOM = "theme-witherbloom"
+    THEME_DUNGEONS = "theme-dungeons"
+    THEME_WEREWOLVES = "theme-werewolves"
+    THEME_VAMPIRES = "theme-vampires"
+    THEME_NINJAS = "theme-ninjas"
+    THEME_BROKERS = "theme-brokers"
+    THEME_CABARETTI = "theme-cabaretti"
+    THEME_MAESTROS = "theme-maestros"
+    THEME_OBSCURA = "theme-obscura"
+    THEME_RIVETEERS = "theme-riveteers"
+    JP = "jp"
+    VIP = "vip"
+    COMPLEAT = "compleat"
 
 
 class Base(DeclarativeBase):
@@ -163,7 +238,7 @@ class SetProxy(Base):
     __boosters: Mapped[list["BoosterProxy"]] = relationship(viewonly=True)
 
     @property
-    def boosters(self) -> dict[str, "BoosterProxy"]:
+    def boosters(self) -> dict[BoosterType, "BoosterProxy"]:
         return {b.name: b for b in self.__boosters}
 
     def card_by_name(
@@ -202,7 +277,11 @@ class SetProxy(Base):
 class BoosterProxy(Base):
     __tablename__ = booster_table
 
-    name: Mapped[str] = mapped_column(name="boosterName", primary_key=True)
+    name: Mapped[BoosterType] = mapped_column(
+        Enum(BoosterType, values_callable=lambda x: [i.value for i in x]),
+        name="boosterName",
+        primary_key=True,
+    )
     set_code: Mapped[str] = mapped_column(
         ForeignKey("sets.code"), name="setCode", primary_key=True
     )

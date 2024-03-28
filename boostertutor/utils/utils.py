@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
 CUBECOBRA_URL = "https://cubecobra.com/cube/api/cubeJSON/"
 EXCHANGE_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+SET_SYMBOL_URL = (
+    "https://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&"
+    "size={size}&rarity={rarity}&set={code}"
+)
 MTG_CARD_BACK = iio.imread("boostertutor/img/magic_back.jpg")
 A30_CARD_BACK = iio.imread("boostertutor/img/A30_back.jpg")
 
@@ -28,12 +32,12 @@ class Config:
     logging_level: Union[int, str] = logging.INFO
     validate_data: bool = True
 
-
-def get_config(path: Path = Path("config.yaml")) -> Config:
-    with open(path) as file:
-        config_dict = yaml.load(file, Loader=yaml.FullLoader)
-    config = Config(**config_dict)
-    return config
+    @staticmethod
+    def from_file(path: Path = Path("config.yaml")) -> "Config":
+        with open(path) as file:
+            config_dict = yaml.load(file, Loader=yaml.FullLoader)
+        config = Config(**config_dict)
+        return config
 
 
 async def pool_to_sealeddeck(
@@ -104,10 +108,7 @@ def arena_to_json(arena_list: str) -> Sequence[dict]:
 
 
 def set_symbol_link(code: str, size: str = "large", rarity: str = "M") -> str:
-    return (
-        f"https://gatherer.wizards.com/Handlers/Image.ashx?"
-        f"type=symbol&size={size}&rarity={rarity}&set={code.lower()}"
-    )
+    return SET_SYMBOL_URL.format(size=size, rarity=rarity, code=code.lower())
 
 
 async def get_eur_usd_rate() -> float:

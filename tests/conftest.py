@@ -14,12 +14,7 @@ from boostertutor.bot import DiscordBot
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
-from boostertutor.utils.utils import (
-    CUBECOBRA_URL,
-    SEALEDDECK_URL,
-    Config,
-    get_config,
-)
+from boostertutor.utils.utils import CUBECOBRA_URL, SEALEDDECK_URL, Config
 
 T = TypeVar("T")
 
@@ -29,7 +24,7 @@ AsyncYield = AsyncGenerator[T, None]
 
 @pytest.fixture(scope="session")
 def generator() -> MtgPackGenerator:
-    config = get_config()
+    config = Config.from_file()
     return MtgPackGenerator(
         path_to_mtgjson=config.mtgjson_path, validate_data=False
     )

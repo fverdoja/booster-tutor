@@ -16,6 +16,7 @@ class MtgPack:
         content: dict,
         set: Optional[SetProxy] = None,
         name: Optional[str] = None,
+        type: Optional[str] = None,
     ):
         self.content = content
         if set:
@@ -26,6 +27,15 @@ class MtgPack:
             self.name = name
         else:
             self.name = self.set.name
+        self.type = type
+
+    @property
+    def type_str(self) -> str:
+        product = (
+            "deck" if self.set.code.upper() in ["JMP", "J22"] else "booster"
+        )
+        res = self.type + " " + product if self.type else product
+        return res.capitalize()
 
     @property
     def cards(self) -> Sequence[MtgCard]:
