@@ -204,7 +204,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         else:
             set_icon_url = utils.set_symbol_link(p.set.code)
         embed.set_author(name=p.name, icon_url=set_icon_url)
-        embed.set_image(url="attachment://pack.jpg")
+        embed.set_image(url="attachment://pack.webp")
         if member:
             embed.set_footer(
                 text=f"Generated for {member.display_name}",
@@ -216,16 +216,16 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             len(p.cards), a30=(p.set.code.upper() == "30A")
         )
         back_img_file = BytesIO()
-        iio.imwrite(back_img_file, back_img, extension=".jpg")
+        iio.imwrite(back_img_file, back_img, extension=".webp")
         back_img_file.seek(0)
-        await m.add_files(discord.File(back_img_file, filename="pack.jpg"))
+        await m.add_files(discord.File(back_img_file, filename="pack.webp"))
 
         try:
             # Then generate the image of booster content (takes a while)
-            img_list = await p.get_images(size="normal")
+            img_list = await p.get_images(size="png")
             p_img = utils.cards_img(img_list)
             img_file = BytesIO()
-            iio.imwrite(img_file, p_img, extension=".jpg")
+            iio.imwrite(img_file, p_img, extension=".webp")
             img_file.seek(0)
         except aiohttp.ClientResponseError:
             embed.colour = discord.Colour.dark_red()
@@ -235,7 +235,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             embed.colour = discord.Colour.dark_green()
             await m.edit(
                 embed=embed,
-                attachments=[discord.File(img_file, filename="pack.jpg")],
+                attachments=[discord.File(img_file, filename="pack.webp")],
             )
 
     async def send_pool_msg(
@@ -280,7 +280,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             pool_name = ", ".join(sets)
         if pool_icon_url:
             embed.set_author(name=pool_name, icon_url=pool_icon_url)
-        embed.set_image(url="attachment://rares.jpg")
+        embed.set_image(url="attachment://rares.webp")
         if member:
             embed.set_footer(
                 text=f"Generated for {member.display_name}",
@@ -294,9 +294,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
 
         back_img = utils.card_backs_img(len(rare_list), a30=is_a30)
         back_img_file = BytesIO()
-        iio.imwrite(back_img_file, back_img, extension=".jpg")
+        iio.imwrite(back_img_file, back_img, extension=".webp")
         back_img_file.seek(0)
-        await m.add_files(discord.File(back_img_file, filename="rares.jpg"))
+        await m.add_files(discord.File(back_img_file, filename="rares.webp"))
 
         try:
             sealeddeck_id = await utils.pool_to_sealeddeck(json_pool)
@@ -317,10 +317,10 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
 
         try:
             # Then generate the image of rares in pool (takes a while)
-            img_list = [await c.get_image(size="normal") for c in rare_list]
+            img_list = [await c.get_image(size="png") for c in rare_list]
             r_img = utils.cards_img(img_list)
             r_file = BytesIO()
-            iio.imwrite(r_file, r_img, extension=".jpg")
+            iio.imwrite(r_file, r_img, extension=".webp")
             r_file.seek(0)
         except aiohttp.ClientResponseError:
             embed.colour = discord.Colour.dark_red()
@@ -333,7 +333,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
                 embed=embed,
                 attachments=[
                     pool_file_from_msg,
-                    discord.File(r_file, filename="rares.jpg"),
+                    discord.File(r_file, filename="rares.webp"),
                 ],
             )
 
