@@ -19,8 +19,8 @@ SET_SYMBOL_URL = (
     "https://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&"
     "size={size}&rarity={rarity}&set={code}"
 )
-MTG_CARD_BACK = iio.imread("boostertutor/img/magic_back_normal.webp")
-A30_CARD_BACK = iio.imread("boostertutor/img/a30_back_normal.webp")
+MTG_CARD_BACK = iio.imread("boostertutor/img/magic_back.webp")
+A30_CARD_BACK = iio.imread("boostertutor/img/a30_back.webp")
 
 
 @dataclass(frozen=True)
