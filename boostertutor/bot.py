@@ -207,7 +207,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         embed.set_image(url="attachment://pack.jpg")
         if member:
             embed.set_footer(
-                text=f"Pack generated for {member.display_name}",
+                text=f"Generated for {member.display_name}",
                 icon_url=member.display_avatar,
             )
 
@@ -283,7 +283,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         embed.set_image(url="attachment://rares.jpg")
         if member:
             embed.set_footer(
-                text=f"Pack generated for {member.display_name}",
+                text=f"Generated for {member.display_name}",
                 icon_url=member.display_avatar,
             )
 
