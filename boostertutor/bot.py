@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 MAX_NUM_PACKS = 36
 DEFAULT_INTENTS = discord.Intents.default()
 DEFAULT_INTENTS.message_content = True
+CUBE_ICON_URL = (
+    "https://www.slightlymagic.net/forum/download/file.php?id=28613&mode=view"
+)
+SEALED_ICON_URL = "https://i.imgur.com/P7898ue.png"
 
 
 def process_num_packs(num_packs: Optional[int]) -> int:
@@ -190,18 +194,31 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         member: Optional[discord.Member] = None,
     ) -> None:
         # First send the booster text with a preview for the image
-        m = await message.reply(
-            f"**{p.name}**\n"
-            f"{member.mention if member else ''}\n"
-            f"```\n{p.arena_format()}\n```"
+        embed = discord.Embed(
+            title=p.type_str,
+            description=f"```\n{p.arena_format()}\n```",
+            colour=discord.Colour.dark_gold(),
         )
+        if p.type == "cube":
+            set_icon_url = CUBE_ICON_URL
+        else:
+            set_icon_url = utils.set_symbol_link(p.set.code)
+        embed.set_author(name=p.name, icon_url=set_icon_url)
+        embed.set_image(url="attachment://pack.jpg")
+        if member:
+            embed.set_footer(
+                text=f"Pack generated for {member.display_name}",
+                icon_url=member.display_avatar,
+            )
+
+        m = await message.reply(embed=embed)
         back_img = utils.card_backs_img(
             len(p.cards), a30=(p.set.code.upper() == "30A")
         )
         back_img_file = BytesIO()
         iio.imwrite(back_img_file, back_img, extension=".jpg")
         back_img_file.seek(0)
-        await m.add_files(discord.File(back_img_file, filename="backs.jpg"))
+        await m.add_files(discord.File(back_img_file, filename="pack.jpg"))
 
         try:
             # Then generate the image of booster content (takes a while)
@@ -211,11 +228,14 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             iio.imwrite(img_file, p_img, extension=".jpg")
             img_file.seek(0)
         except aiohttp.ClientResponseError:
-            pass
+            embed.colour = discord.Colour.dark_red()
+            await m.edit(embed=embed)
         else:
             # Edit the message by embedding the image
+            embed.colour = discord.Colour.dark_green()
             await m.edit(
-                attachments=[discord.File(img_file, filename="booster.jpg")]
+                embed=embed,
+                attachments=[discord.File(img_file, filename="pack.jpg")],
             )
 
     async def send_pool_msg(
@@ -228,7 +248,9 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             bytes("\n".join([p.arena_format() for p in pool]), "utf-8")
         )
         sets = [p.set.code for p in pool]
-        sets_str = ", ".join(sets)
+        set_types = [p.type for p in pool]
+        all_same_set = len(set(sets)) <= 1
+        is_cube = set(set_types) == {"cube"}
         is_a30 = all(s.upper() == "30A" for s in sets)
         json_pool = [card_json for p in pool for card_json in p.json()]
         rare_list = [
@@ -237,40 +259,61 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             for c in p.cards
             if c.card.rarity in ["rare", "mythic"]
         ]
+        rares_text = "\n".join([c.arena_format() for c in rare_list])
 
         # First send the pool content with a preview for the image
-        title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} packs"
+        title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} boosters"
         name = member.display_name if member else message.author.display_name
-        m = await message.reply(
-            f"**{title}**\n"
-            f"{member.mention if member else ''}\n"
-            f"Content: [{sets_str}]",
-            file=discord.File(
-                pool_file,
-                filename=f"{name}_pool.txt",
-            ),
+        embed = discord.Embed(
+            title=title,
+            description=f"```\n{rares_text}\n```",
+            colour=discord.Colour.dark_gold(),
         )
+        if is_cube:
+            pool_icon_url = CUBE_ICON_URL
+            pool_name = pool[0].name
+        elif all_same_set:
+            pool_icon_url = utils.set_symbol_link(pool[0].set.code)
+            pool_name = pool[0].name
+        else:
+            pool_icon_url = SEALED_ICON_URL
+            pool_name = ", ".join(sets)
+        if pool_icon_url:
+            embed.set_author(name=pool_name, icon_url=pool_icon_url)
+        embed.set_image(url="attachment://rares.jpg")
+        if member:
+            embed.set_footer(
+                text=f"Pack generated for {member.display_name}",
+                icon_url=member.display_avatar,
+            )
+
+        m = await message.reply(
+            embed=embed,
+            file=discord.File(pool_file, filename=f"{name}_pool.txt"),
+        )
+
         back_img = utils.card_backs_img(len(rare_list), a30=is_a30)
         back_img_file = BytesIO()
         iio.imwrite(back_img_file, back_img, extension=".jpg")
         back_img_file.seek(0)
-        await m.add_files(discord.File(back_img_file, filename="backs.jpg"))
+        await m.add_files(discord.File(back_img_file, filename="rares.jpg"))
 
-        content = m.content
         try:
             sealeddeck_id = await utils.pool_to_sealeddeck(json_pool)
         except aiohttp.ClientResponseError as e:
             logger.error(f"Sealeddeck error: {e}")
-            content += "\n\n**Sealeddeck.tech:** Error\n"
+            sealeddeck_link = ":warning: Error"
+            sealeddeck_id = "-"
         else:
-            content += (
-                f"\n\n**Sealeddeck.tech link:** "
-                f"https://sealeddeck.tech/{sealeddeck_id}"
-                f"\n**Sealeddeck.tech ID:** "
-                f"`{sealeddeck_id}`"
-            )
+            sealeddeck_link = f"https://sealeddeck.tech/{sealeddeck_id}"
 
-        await m.edit(content=content)
+        embed.add_field(
+            name="Sealeddeck.tech link", value=sealeddeck_link, inline=True
+        )
+        embed.add_field(
+            name="Sealeddeck.tech ID", value=f"`{sealeddeck_id}`", inline=True
+        )
+        await m.edit(embed=embed)
 
         try:
             # Then generate the image of rares in pool (takes a while)
@@ -280,15 +323,18 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             iio.imwrite(r_file, r_img, extension=".jpg")
             r_file.seek(0)
         except aiohttp.ClientResponseError:
-            pass
+            embed.colour = discord.Colour.dark_red()
+            await m.edit(embed=embed)
         else:
             # Edit the message by embedding the image
+            embed.colour = discord.Colour.dark_green()
             pool_file_from_msg = m.attachments[0]
             await m.edit(
+                embed=embed,
                 attachments=[
                     pool_file_from_msg,
                     discord.File(r_file, filename="rares.jpg"),
-                ]
+                ],
             )
 
     async def send_plist_msg(
