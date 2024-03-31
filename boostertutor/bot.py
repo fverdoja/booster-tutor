@@ -259,16 +259,11 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             for c in p.cards
             if c.card.rarity in ["rare", "mythic"]
         ]
-        rares_text = "\n".join([c.arena_format() for c in rare_list])
 
         # First send the pool content with a preview for the image
         title = "Sealed pool" if len(pool) == 6 else f"{len(pool)} boosters"
         name = member.display_name if member else message.author.display_name
-        embed = discord.Embed(
-            title=title,
-            description=f"```\n{rares_text}\n```",
-            colour=discord.Colour.dark_gold(),
-        )
+        embed = discord.Embed(title=title, colour=discord.Colour.dark_gold())
         if is_cube:
             pool_icon_url = CUBE_ICON_URL
             pool_name = pool[0].name
@@ -825,6 +820,22 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
     async def add_pack(
         self, ctx: commands.Context, sealeddeck_id_or_url: str
     ) -> None:
+
+        async def extract_cards_from_message(
+            m: discord.Message,
+        ) -> Optional[str]:
+            if (
+                m.embeds
+                and m.embeds[0].description
+                and len(m.embeds[0].description.split("```")) >= 2
+            ):
+                cards = m.embeds[0].description.split("```")[1].strip()
+            elif m.attachments:
+                cards = (await m.attachments[0].read()).decode()
+            else:
+                cards = None
+            return cards
+
         assert ctx.message
         message: discord.Message = ctx.message
         if not message.reference:
@@ -837,19 +848,13 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
 
         assert message.reference.message_id
         ref = await message.channel.fetch_message(message.reference.message_id)
-        if ref.author != self.bot.user or (
-            len(ref.content.split("```")) < 2 and not ref.attachments
-        ):
+        ref_pack = await extract_cards_from_message(ref)
+        if ref.author != self.bot.user or ref_pack is None:
             await message.reply(
                 ":warning: The message you are replying to does not contain "
                 "packs I have generated"
             )
             return
-
-        if len(ref.content.split("```")) >= 2:
-            ref_pack = ref.content.split("```")[1].strip()
-        else:
-            ref_pack = (await ref.attachments[0].read()).decode()
 
         pack_json = utils.arena_to_json(ref_pack)
         sealeddeck_id = sealeddeck_id_or_url.replace(
@@ -877,12 +882,12 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await m.edit(content=content)
 
     # Cog error handler
-    async def cog_command_error(
-        self, ctx: commands.Context, error: Exception
-    ) -> None:
-        if isinstance(error, commands.MissingRequiredArgument):
-            message: discord.Message = ctx.message
-            await message.reply(
-                f":warning: {error}\nFor more help, "
-                f"use `{self.bot.prefix_str}help {ctx.invoked_with}`."
-            )
+    # async def cog_command_error(
+    #    self, ctx: commands.Context, error: Exception
+    # ) -> None:
+    #    if isinstance(error, commands.MissingRequiredArgument):
+    #        message: discord.Message = ctx.message
+    #        await message.reply(
+    #            f":warning: {error}\nFor more help, "
+    #            f"use `{self.bot.prefix_str}help {ctx.invoked_with}`."
+    #        )
