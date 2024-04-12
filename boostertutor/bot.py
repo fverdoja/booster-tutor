@@ -113,6 +113,7 @@ class DiscordBot(commands.Bot):
             "woe",
             "lci",
             "a-mkm",
+            "otj",
         ]
         self.explorer_sets = [
             "ktk",
