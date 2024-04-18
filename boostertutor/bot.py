@@ -20,7 +20,7 @@ DEFAULT_INTENTS.message_content = True
 CUBE_ICON_URL = (
     "https://www.slightlymagic.net/forum/download/file.php?id=28613&mode=view"
 )
-SEALED_ICON_URL = "https://i.imgur.com/P7898ue.png"
+SEALED_ICON_URL = "https://i.imgur.com/AGqN1PA.png"
 
 
 def process_num_packs(num_packs: Optional[int]) -> int:
