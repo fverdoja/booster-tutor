@@ -1,6 +1,6 @@
 import logging
 from collections import Counter
-from typing import Any, Optional, Sequence
+from typing import Any, Literal, Optional, Sequence
 
 from numpy.random import choice
 
@@ -353,7 +353,7 @@ class MtgPackGenerator:
     async def get_pack_ev(
         self,
         set: str,
-        currency: str,
+        currency: Literal["eur", "usd"],
         eur_usd_rate: Optional[float] = None,
         bulk_threshold: float = 0.0,
         booster_type: Optional[BoosterType] = None,

@@ -1,6 +1,6 @@
-from contextlib import nullcontext as does_not_raise
+from contextlib import nullcontext as not_raise
 from io import BytesIO
-from typing import ContextManager, Optional, Sequence
+from typing import ContextManager, Literal, Optional, Sequence
 
 import imageio.v3 as iio
 import numpy as np
@@ -8,7 +8,7 @@ import pytest
 from aiohttp import ClientResponseError
 from aioresponses import aioresponses
 
-from boostertutor.models.mtg_card import MtgCard
+from boostertutor.models.mtg_card import CardImageSize, MtgCard
 
 
 @pytest.mark.parametrize(
@@ -117,26 +117,28 @@ def test_pack_sort_key(cards: dict[str, MtgCard]) -> None:
 
 
 @pytest.mark.parametrize(
-    ["card", "currency", "is_none", "rate_none", "expected"],
+    ["card", "currency", "is_none", "rate_none", "expected", "expected_raise"],
     [
-        ("Ghostly Prison", "eur", False, False, 1.0),  # eur
-        ("Electrolyze", "eur", False, False, 3.0),  # eur_foil
-        ("Ghostly Prison", "usd", False, False, 2.6),  # usd
-        ("Electrolyze", "usd", False, False, 5.2),  # usd_foil
-        ("Ghostly Prison", "eur", True, False, 2.0),  # eur converted
-        ("Electrolyze", "eur", True, False, 4.0),  # eur_foil converted
-        ("Ghostly Prison", "usd", True, False, 1.3),  # usd converted
-        ("Electrolyze", "usd", True, False, 3.9),  # usd_foil converted
-        ("Ghostly Prison", "eur", True, True, None),  # no rate
+        ("Ghostly Prison", "eur", False, False, 1.0, not_raise()),  # eur
+        ("Electrolyze", "eur", False, False, 3.0, not_raise()),  # eur_foil
+        ("Ghostly Prison", "usd", False, False, 2.6, not_raise()),  # usd
+        ("Electrolyze", "usd", False, False, 5.2, not_raise()),  # usd_foil
+        ("Ghostly Prison", "eur", True, False, 2.0, not_raise()),  # eur conv
+        ("Electrolyze", "eur", True, False, 4.0, not_raise()),  # eur_foil conv
+        ("Ghostly Prison", "usd", True, False, 1.3, not_raise()),  # usd conv
+        ("Electrolyze", "usd", True, False, 3.9, not_raise()),  # usd_foil conv
+        ("Ghostly Prison", "eur", True, True, None, not_raise()),  # no rate
+        ("Electrolyze", "wrong", False, False, 1.0, pytest.raises(ValueError)),
     ],
 )
 async def test_prices(
     cards: dict[str, MtgCard],
     card: str,
-    currency: str,
+    currency: Literal["eur", "usd"],
     is_none: bool,
     rate_none: bool,
     expected: float,
+    expected_raise: ContextManager,
 ) -> None:
     c = cards[card]
     prices: dict[str, Optional[str]] = {
@@ -153,22 +155,23 @@ async def test_prices(
     card_url = f"https://api.scryfall.com/cards/{scry_id}"
     with aioresponses() as mocked:
         mocked.get(url=card_url, status=200, payload={"prices": prices})
-        price = await c.get_price(currency=currency, eur_usd_rate=rate)
-    assert price == pytest.approx(expected)
+        with expected_raise:
+            price = await c.get_price(currency=currency, eur_usd_rate=rate)
+            assert price == pytest.approx(expected)
 
 
 @pytest.mark.parametrize(
     ["size", "foil", "expected_shape", "expected_raise"],
     [
-        ("large", None, (936, 672, 3), does_not_raise()),
-        ("normal", False, (680, 488, 3), does_not_raise()),
-        ("small", True, (204, 146, 3), does_not_raise()),
-        ("wrong_size", None, (1, 1, 3), pytest.raises(AssertionError)),
+        ("large", None, (936, 672, 3), not_raise()),
+        ("normal", False, (680, 488, 3), not_raise()),
+        ("small", True, (204, 146, 3), not_raise()),
+        ("wrong_size", None, (1, 1, 3), pytest.raises(ValueError)),
     ],
 )
 async def test_image(
     cards: dict[str, MtgCard],
-    size: str,
+    size: CardImageSize,
     foil: Optional[bool],
     expected_shape: tuple[int, int, int],
     expected_raise: ContextManager,
