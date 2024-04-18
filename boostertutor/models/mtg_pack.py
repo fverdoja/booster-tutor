@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-from boostertutor.models.mtg_card import MtgCard
+from boostertutor.models.mtg_card import CardImageSize, MtgCard
 from boostertutor.models.mtgjson_sql import SetProxy
 
 logger = logging.getLogger(__name__)
@@ -109,16 +109,17 @@ class MtgPack:
             "C": [],
         }
         for card in card_list:
-            if len(card.mana()) == 1:
+            card_colors = card.mana()
+            if len(card_colors) == 1:
                 # hybrid cards go in two colors
                 if count_hybrids:
-                    for color in card.mana()[0]:
+                    for color in card_colors[0]:
                         colors[color].append(card)
                 # hybrid cards are considered multicolor and not counted
                 else:
-                    if len(card.mana()[0]) == 1:
-                        colors[card.mana()[0]].append(card)
-            elif len(card.mana()) == 0:
+                    if len(card_colors[0]) == 1:
+                        colors[card_colors[0]].append(card)
+            elif len(card_colors) == 0:
                 colors["C"].append(card)
         counts = {k: len(v) for (k, v) in colors.items()}
         return (colors, counts)
@@ -201,7 +202,7 @@ class MtgPack:
         return False
 
     async def get_images(
-        self, size: str = "normal", foil: Optional[bool] = None
+        self, size: CardImageSize = "normal", foil: Optional[bool] = None
     ) -> Sequence[np.ndarray]:
         img = [await c.get_image(size, foil) for c in self.cards]
         return img

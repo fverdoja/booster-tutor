@@ -7,6 +7,7 @@ from pathlib import Path
 import boostertutor.utils.mtgjson_downloader as mtgjson
 import boostertutor.utils.set_symbols_downloader as symbols
 from boostertutor.bot import DiscordBot
+from boostertutor.models.mtg_card import clear_expired_card_info_cache
 from boostertutor.utils.utils import Config
 
 
@@ -26,6 +27,11 @@ async def main() -> None:
         "--config",
         help="config file path (default: ./config.yaml)",
         default="config.yaml",
+    )
+    parser.add_argument(
+        "--clear_cache",
+        help="clear expired card info cache before starting the bot.",
+        action="store_true",
     )
     subparsers = parser.add_subparsers(
         title="Donwloaders",
@@ -70,6 +76,8 @@ async def main() -> None:
     elif args.downloader == "mtgjson":
         mtgjson.main(config)
     else:
+        if args.clear_cache:
+            await clear_expired_card_info_cache()
         async with DiscordBot(config) as bot:
             await bot.add_boostertutor_cog()
             await bot.start(config.discord_token)
