@@ -43,7 +43,7 @@ class Config:
 async def pool_to_sealeddeck(
     pool: Sequence[dict], sealeddeck_id: Optional[str] = None
 ) -> str:
-    """Upload a sealed pool to sealeddeck.tech and returns the id"""
+    """Upload a sealed pool to SealedDeck.Tech and returns the id"""
 
     deck: dict[str, Union[Sequence[dict], str]] = {"sideboard": pool}
     if sealeddeck_id:

@@ -188,7 +188,7 @@ class MtgCard:
         """Converts the card data to JSON.
 
         This method generates a dictionary representation of the card which can
-        easily be converted into JSON and is compatible with Sealeddeck.tech
+        easily be converted into JSON and is compatible with SealedDeck.Tech
         APIs. Depending on the layout of the card (normal or meld), it uses
         either the card name or the front face name as the name.
 

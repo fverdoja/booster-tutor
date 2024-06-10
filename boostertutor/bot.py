@@ -297,17 +297,17 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         try:
             sealeddeck_id = await utils.pool_to_sealeddeck(json_pool)
         except aiohttp.ClientResponseError as e:
-            logger.error(f"Sealeddeck error: {e}")
+            logger.error(f"SealedDeck.Tech error: {e}")
             sealeddeck_link = ":warning: Error"
             sealeddeck_id = "-"
         else:
             sealeddeck_link = f"https://sealeddeck.tech/{sealeddeck_id}"
 
         embed.add_field(
-            name="Sealeddeck.tech link", value=sealeddeck_link, inline=True
+            name="SealeDeck.Tech link", value=sealeddeck_link, inline=True
         )
         embed.add_field(
-            name="Sealeddeck.tech ID", value=f"`{sealeddeck_id}`", inline=True
+            name="SealedDeck.Tech ID", value=f"`{sealeddeck_id}`", inline=True
         )
         await m.edit(embed=embed)
 
@@ -803,18 +803,18 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
     @commands.command(
         name="addpack",
         help=help_msg(
-            "Adds packs to a previously generated sealeddeck.tech pool",
+            "Adds packs to a previously generated SealedDeck.Tech pool",
             long_description="This command must be issued in reply to a "
             "message by the bot containing one or more generated packs. Those "
             "packs will be added to the indicated pool.",
             has_member=False,
             args={
-                "sealeddeck_id_or_url": "The ID of the sealeddeck.tech pool "
+                "sealeddeck_id_or_url": "The ID of the SealedDeck.Tech pool "
                 "to add the additional packs to"
             },
             examples={
                 "addpack xyz123": "adds packs to the previously generated "
-                "sealeddeck.tech pool with ID xyz123"
+                "SealedDeck.Tech pool with ID xyz123"
             },
         ),
     )
@@ -841,7 +841,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         message: discord.Message = ctx.message
         if not message.reference:
             await message.reply(
-                ":warning: To add packs to the sealeddeck.tech pool `xyz123`, "
+                ":warning: To add packs to the SealedDeck.Tech pool `xyz123`, "
                 "reply to my message with the pack content with the command "
                 f"`{self.bot.prefix_str}addpack xyz123`"
             )
@@ -865,18 +865,18 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         try:
             new_id = await utils.pool_to_sealeddeck(pack_json, sealeddeck_id)
         except aiohttp.ClientResponseError as e:
-            logger.error(f"Sealeddeck error: {e}")
+            logger.error(f"SealedDeck.Tech error: {e}")
             content = (
-                f":warning: The packs could not be added to sealeddeck.tech "
+                f":warning: The packs could not be added to SealedDeck.Tech "
                 f"pool with ID `{sealeddeck_id}`. Please, verify the ID.\n"
-                f"If the ID is correct, sealeddeck.tech might be having some "
+                f"If the ID is correct, SealedDeck.Tech might be having some "
                 f"issues right now, try again later."
             )
 
         else:
             content = (
                 f"The packs have been added to the pool.\n\n"
-                f"**Updated sealeddeck.tech pool**\n"
+                f"**Updated SealedDeck.Tech pool**\n"
                 f"link: https://sealeddeck.tech/{new_id}\n"
                 f"ID: `{new_id}`"
             )
