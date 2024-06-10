@@ -883,12 +883,12 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await m.edit(content=content)
 
     # Cog error handler
-    # async def cog_command_error(
-    #    self, ctx: commands.Context, error: Exception
-    # ) -> None:
-    #    if isinstance(error, commands.MissingRequiredArgument):
-    #        message: discord.Message = ctx.message
-    #        await message.reply(
-    #            f":warning: {error}\nFor more help, "
-    #            f"use `{self.bot.prefix_str}help {ctx.invoked_with}`."
-    #        )
+    async def cog_command_error(
+        self, ctx: commands.Context, error: Exception
+    ) -> None:
+        if isinstance(error, commands.MissingRequiredArgument):
+            message: discord.Message = ctx.message
+            await message.reply(
+                f":warning: {error}\nFor more help, "
+                f"use `{self.bot.prefix_str}help {ctx.invoked_with}`."
+            )
