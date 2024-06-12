@@ -6,7 +6,7 @@
 
 A Discord bot to generate *Magic: the Gathering* (MTG) boosters and sealed pools
 
-![screenshot](screenshot.jpg)
+![screenshot](screenshot.webp)
 
 ## Usage
 
