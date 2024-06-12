@@ -31,6 +31,9 @@ class MtgPackGenerator:
             if set.boosters and set_code not in ["JMP", "J22", "CLU"]
         ]
         self.fix_missing_balance(
+            "mh3", "common", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
             "otj", "common", booster_type=BoosterType.PLAY
         )
         self.fix_missing_balance(
