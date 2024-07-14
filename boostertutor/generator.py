@@ -1,15 +1,17 @@
 import logging
 from collections import Counter
-from typing import Any, Literal, Optional, Sequence
+from typing import Any, Literal, Optional, Sequence, Tuple
 
 from numpy.random import choice
 
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
 from boostertutor.models.mtgjson_sql import (
+    BoosterProxy,
     BoosterType,
     BoosterVariationProxy,
     CardDb,
+    SetProxy,
     SheetCardProxy,
 )
 
@@ -70,6 +72,63 @@ class MtgPackGenerator:
         logger.info("Concluded booster data validation.")
         return num_warnings
 
+    def get_set_booster_meta_pair(
+        self, set: str, booster_type: Optional[BoosterType] = None
+    ) -> Tuple[SetProxy, BoosterProxy]:
+        s = set.upper()
+        b_type = booster_type
+
+        # Validate Arena only sets
+        if s.startswith("A-"):
+            s = s.removeprefix("A-")
+            assert b_type is None or b_type in [
+                BoosterType.DRAFT_ARENA,
+                BoosterType.PLAY_ARENA,
+            ], f"Booster type {b_type} not available for set A-{s}"
+            b_type = BoosterType.DRAFT_ARENA
+
+        # Validate set meta exists
+        set_meta = self.data.sets.get(s)
+        assert set_meta is not None, f"No booster for set code {s} exist."
+
+        # Select correct booster_meta
+        boosters = set_meta.boosters
+        if b_type:
+            if b_type not in boosters:
+                if (
+                    b_type == BoosterType.DRAFT_ARENA
+                    and BoosterType.PLAY_ARENA in boosters
+                ):
+                    b_type = BoosterType.PLAY_ARENA
+                else:
+                    raise ValueError(
+                        f"Booster type {b_type} not available for set {s}"
+                    )
+        elif s == "SIR":
+            b_type = choice(
+                [
+                    BoosterType.SIR_1,
+                    BoosterType.SIR_2,
+                    BoosterType.SIR_3,
+                    BoosterType.SIR_4,
+                ]
+            )
+        elif BoosterType.DRAFT in boosters:
+            b_type = BoosterType.DRAFT
+        elif BoosterType.PLAY in boosters:
+            b_type = BoosterType.PLAY
+        elif BoosterType.DEFAULT in boosters:
+            b_type = BoosterType.DEFAULT
+        else:
+            b_type = next(iter(boosters))
+            logger.warning(
+                f"No expected booster type found for set {s}, {b_type.value} "
+                "used."
+            )
+
+        assert b_type, "Unexpected None booster_type after validation"
+        return (set_meta, boosters[b_type])
+
     def get_packs(
         self,
         set: str,
@@ -100,50 +159,9 @@ class MtgPackGenerator:
         iterations: int,
         booster_type: Optional[BoosterType] = None,
     ) -> MtgPack:
-        if set.upper().startswith("A-"):
-            set = set.upper().removeprefix("A-")
-            assert booster_type is None or booster_type in [
-                BoosterType.DRAFT_ARENA,
-                BoosterType.PLAY_ARENA,
-            ]
-            booster_type = BoosterType.DRAFT_ARENA
-
-        set_meta = self.data.sets.get(set.upper())
-        assert (
-            set_meta is not None
-        ), f"No booster for set code {set.upper()} exist."
-
-        boosters = set_meta.boosters
-        if booster_type:
-            if booster_type not in boosters:
-                if (
-                    booster_type == BoosterType.DRAFT_ARENA
-                    and BoosterType.PLAY_ARENA in boosters
-                ):
-                    booster_type = BoosterType.PLAY_ARENA
-                else:
-                    raise ValueError(
-                        f"Booster type {booster_type} not available for set "
-                        f"{set}"
-                    )
-        elif set.upper() == "SIR":
-            booster_type = choice(
-                [
-                    BoosterType.SIR_1,
-                    BoosterType.SIR_2,
-                    BoosterType.SIR_3,
-                    BoosterType.SIR_4,
-                ]
-            )
-        elif BoosterType.DRAFT in boosters:
-            booster_type = BoosterType.DRAFT
-        elif BoosterType.PLAY in boosters:
-            booster_type = BoosterType.PLAY
-        elif BoosterType.DEFAULT in boosters:
-            booster_type = BoosterType.DEFAULT
-        else:
-            booster_type = next(iter(boosters))
-        booster_meta = boosters[booster_type]  # type: ignore
+        set_meta, booster_meta = self.get_set_booster_meta_pair(
+            set, booster_type
+        )
 
         boosters_p = [
             v.weight / booster_meta.total_weight
@@ -194,7 +212,7 @@ class MtgPackGenerator:
             pack_content,
             set=set_meta,
             name=set_meta.name,
-            type=booster_type.value,  # type: ignore
+            type=booster_meta.name.value,
         )
 
         if not balance:
@@ -203,14 +221,14 @@ class MtgPackGenerator:
 
         if iterations <= 1 or pack.is_balanced(rebalance=True):
             logger.info(
-                f"{set.upper()} {booster_type} pack generated, iterations "
-                f"needed: "
+                f"{set_meta.code} {booster_meta.name} pack generated, "
+                f"iterations needed: "
                 f"{str(self.max_balancing_iterations - iterations + 1)}"
             )
             return pack
         else:
             return self._get_pack_internal(
-                set, iterations - 1, booster_type=booster_type
+                set_meta.code, iterations - 1, booster_type=booster_meta.name
             )
 
     def get_random_packs(
@@ -361,28 +379,7 @@ class MtgPackGenerator:
         bulk_threshold: float = 0.0,
         booster_type: Optional[BoosterType] = None,
     ) -> float:
-        assert set.upper() in self.data.sets
-        booster = self.data.sets[set.upper()].boosters
-        if booster_type:
-            if booster_type in booster:
-                booster_meta = booster[booster_type]
-            else:
-                raise ValueError(
-                    f"Booster type {booster_type} not available for set {set}"
-                )
-        elif BoosterType.DRAFT in booster:
-            booster_meta = booster[BoosterType.DRAFT]
-        elif BoosterType.PLAY in booster:
-            booster_meta = booster[BoosterType.PLAY]
-        elif BoosterType.DEFAULT in booster:
-            booster_meta = booster[BoosterType.DEFAULT]
-        else:
-            logger.warning(
-                f"Requested EV of {set.upper()} booster, but no "
-                f"paper booster metadata found for it. Returning 0."
-            )
-            return 0
-
+        _, booster_meta = self.get_set_booster_meta_pair(set, booster_type)
         sheets_ev: dict[str, float] = {}
         for sheet_meta in booster_meta.sheets:
             sheet_total = 0.0
