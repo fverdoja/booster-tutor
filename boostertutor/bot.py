@@ -106,10 +106,6 @@ class DiscordBot(commands.Bot):
             )
         )
         self.standard_sets = [
-            "mid",
-            "vow",
-            "neo",
-            "snc",
             "dmu",
             "bro",
             "one",
@@ -118,6 +114,7 @@ class DiscordBot(commands.Bot):
             "lci",
             "a-mkm",
             "otj",
+            "blb",
         ]
         self.explorer_sets = [
             "ktk",
@@ -137,6 +134,10 @@ class DiscordBot(commands.Bot):
             "khm",
             "stx",
             "afr",
+            "mid",
+            "vow",
+            "neo",
+            "snc",
         ] + self.standard_sets
         self.historic_sets = [
             "klr",
