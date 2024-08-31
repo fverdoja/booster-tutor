@@ -32,21 +32,6 @@ class MtgPackGenerator:
             for set_code, set in self.data.sets.items()
             if set.boosters and set_code not in ["JMP", "J22", "CLU"]
         ]
-        self.fix_missing_balance(
-            "blb", "common", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "mh3", "common", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "otj", "common", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "mkm", "commonWithShowcase", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "mkm", "common", booster_type=BoosterType.PLAY_ARENA
-        )
         self.sets_with_decks: list[str] = ["JMP", "J22"]
         if validate_data:
             self.validate_booster_data()
