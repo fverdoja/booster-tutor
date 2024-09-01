@@ -147,8 +147,8 @@ not publicly disclosed by Wizards, but in practice the process generates
 boosters which enforce some desirable properties for limited play (like color
 balancing and no duplicates).
 
-To try to produce boosters which *feel* similar to real MTG boosters, Booster
-Tutor uses what is known as *Reuben's algorithm*.
+For draft boosters, to try to produce boosters which *feel* similar to real MTG
+draft boosters, Booster Tutor uses what is known as *Reuben's algorithm*.
 
 > *Reuben's algorithm*
 >
@@ -167,9 +167,9 @@ To avoid infinite loops in presence of corner cases, Booster Tutor attempts at
 balancing packs with *Reuben's algorithm* up to a maximum number of iterations
 (default: 100).
 
-Some packs (for example *Mystery Boosters*) are not balanced. Information on
-whether a pack should be balanced or not is obtained from the metadata by
-[mtgjson](https://mtgjson.com).
+Play boosters, Collector boosters, and some other specific boosters (for example
+*Mystery Boosters*) are not balanced. Information on whether a pack should be
+balanced or not is obtained from the metadata by [mtgjson](https://mtgjson.com).
 
 ## Credits
 
