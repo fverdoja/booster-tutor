@@ -9,10 +9,10 @@ from aioresponses import aioresponses
 
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtgjson_sql import (
-    BoosterProxy,
+    BoosterMeta,
     BoosterType,
-    SetProxy,
-    SheetProxy,
+    SetMeta,
+    SheetMeta,
 )
 
 
@@ -36,12 +36,12 @@ def test_booster_data_validation(
             "mocked_id_1": "mocked_card_1",
         },
     )
-    mocked_sheet: SheetProxy = mock.MagicMock(
+    mocked_sheet: SheetMeta = mock.MagicMock(
         name="mocked_sheet",
         cards=[mock.MagicMock(_uuid=card_id) for card_id in card_ids],
     )
-    mocked_booster: BoosterProxy = mock.MagicMock(sheets=[mocked_sheet])
-    mocked_set: SetProxy = mock.MagicMock(
+    mocked_booster: BoosterMeta = mock.MagicMock(sheets=[mocked_sheet])
+    mocked_set: SetMeta = mock.MagicMock(
         boosters={"mocked_booster": mocked_booster}
     )
     monkeypatch.setitem(generator.data.sets, "mocked_set", mocked_set)
@@ -153,8 +153,8 @@ def test_jumpstart_list(generator: MtgPackGenerator) -> None:
 def test_arena_jumpstart(generator: MtgPackGenerator) -> None:
     all_jmp_decks = generator.get_random_arena_jmp_decks(n=121, replace=False)
     all_cards = [card for deck in all_jmp_decks for card in deck.cards]
-    assert all([c.card.name != "Rhystic Study" for c in all_cards])
-    assert all([c.card.set_code != "AJMP" for c in all_cards])
+    assert all([c.meta.name != "Rhystic Study" for c in all_cards])
+    assert all([c.meta.set_code != "AJMP" for c in all_cards])
 
 
 def test_cube_pack(generator: MtgPackGenerator, cube: dict) -> None:
@@ -231,7 +231,7 @@ def test_cube_pack_custom(
 ) -> None:
     cube["formats"] = [draft_format]
     p = generator.get_cube_pack(cube)
-    copy_count = Counter([c.card.name for c in p.cards])
+    copy_count = Counter([c.meta.name for c in p.cards])
     assert len(p.cards) == expected_len
     assert sum([card.foil for card in p.cards]) == 2
     assert (copy_count["Dega Disciple"] == 2) == expected_dups

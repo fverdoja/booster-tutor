@@ -265,7 +265,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             c
             for p in pool
             for c in p.cards
-            if c.card.rarity in ["rare", "mythic"]
+            if c.meta.rarity in ["rare", "mythic"]
         ]
 
         # First send the pool content with a preview for the image

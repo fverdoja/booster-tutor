@@ -142,13 +142,13 @@ class CardIDs(Base):
         ForeignKey("cards.uuid"), primary_key=True
     )
     scryfall_id: Mapped[str] = mapped_column(name="scryfallId")
-    card: Mapped["CardProxy"] = relationship(
+    card: Mapped["CardMeta"] = relationship(
         back_populates="identifiers", viewonly=True
     )
 
 
 @total_ordering
-class CardProxy(Base):
+class CardMeta(Base):
     __tablename__ = "cards"
 
     uuid: Mapped[str] = mapped_column(primary_key=True)
@@ -161,12 +161,13 @@ class CardProxy(Base):
     face_name: Mapped[Optional[str]] = mapped_column(name="faceName")
     mana_cost: Mapped[Optional[str]] = mapped_column(name="manaCost")
     __colors: Mapped[Optional[str]] = mapped_column(name="colors")
+    __finishes: Mapped[Optional[str]] = mapped_column(name="finishes")
     __promo_types: Mapped[Optional[str]] = mapped_column(name="promoTypes")
     __variations: Mapped[Optional[str]] = mapped_column(name="variations")
     set_code: Mapped[str] = mapped_column(
         ForeignKey("sets.code"), name="setCode"
     )
-    set: Mapped["SetProxy"] = relationship(
+    set: Mapped["SetMeta"] = relationship(
         back_populates="cards", viewonly=True
     )
     identifiers: Mapped[CardIDs] = relationship(
@@ -176,6 +177,10 @@ class CardProxy(Base):
     @property
     def colors(self) -> list[str]:
         return parse_str_list(self.__colors) if self.__colors else []
+
+    @property
+    def finishes(self) -> list[str]:
+        return parse_str_list(self.__finishes) if self.__finishes else []
 
     @property
     def types(self) -> list[str]:
@@ -190,13 +195,13 @@ class CardProxy(Base):
         return parse_str_list(self.__promo_types) if self.__promo_types else []
 
     @property
-    def variations(self) -> list["CardProxy"]:
+    def variations(self) -> list["CardMeta"]:
         v_list = parse_str_list(self.__variations) if self.__variations else []
         s = object_session(self)
         return (
             list(
                 s.scalars(
-                    select(CardProxy).filter(CardProxy.uuid.in_(v_list))
+                    select(CardMeta).filter(CardMeta.uuid.in_(v_list))
                 ).all()
             )
             if s and v_list
@@ -209,12 +214,12 @@ class CardProxy(Base):
         )
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, CardProxy):
+        if not isinstance(other, CardMeta):
             return NotImplemented
         return self.name == other.name
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, CardProxy):
+        if not isinstance(other, CardMeta):
             return NotImplemented
         if self.set != other.set:
             return self.set < other.set
@@ -227,7 +232,7 @@ class CardProxy(Base):
             pass  # not comparable, no valid integer number
 
         # try creating a pseudo collectors number
-        def _getcol(c: "CardProxy") -> str:
+        def _getcol(c: "CardMeta") -> str:
             if c.colors:
                 if len(c.colors) > 1:
                     return "M"
@@ -248,24 +253,24 @@ class CardProxy(Base):
 
 
 @total_ordering
-class SetProxy(Base):
+class SetMeta(Base):
     __tablename__ = "sets"
 
     code: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
     release_date: Mapped[str] = mapped_column(name="releaseDate")
-    cards: Mapped[list[CardProxy]] = relationship(
+    cards: Mapped[list[CardMeta]] = relationship(
         back_populates="set", viewonly=True
     )
-    __boosters: Mapped[list["BoosterProxy"]] = relationship(viewonly=True)
+    __boosters: Mapped[list["BoosterMeta"]] = relationship(viewonly=True)
 
     @property
-    def boosters(self) -> dict[BoosterType, "BoosterProxy"]:
+    def boosters(self) -> dict[BoosterType, "BoosterMeta"]:
         return {b.name: b for b in self.__boosters}
 
     def card_by_name(
         self, name: str, case_sensitive: bool = False
-    ) -> Union[CardProxy, None]:
+    ) -> Union[CardMeta, None]:
         return next(
             (
                 c
@@ -276,7 +281,7 @@ class SetProxy(Base):
             None,
         )
 
-    def card_by_uuid(self, uuid: str) -> Union[CardProxy, None]:
+    def card_by_uuid(self, uuid: str) -> Union[CardMeta, None]:
         return next((c for c in self.cards if c.uuid == uuid), None)
 
     def __repr__(self) -> str:
@@ -286,17 +291,17 @@ class SetProxy(Base):
         )
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, SetProxy):
+        if not isinstance(other, SetMeta):
             return NotImplemented
         return self.release_date < other.release_date
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, SetProxy):
+        if not isinstance(other, SetMeta):
             return NotImplemented
         return self.name == other.name
 
 
-class BoosterProxy(Base):
+class BoosterMeta(Base):
     __tablename__ = booster_table
 
     name: Mapped[BoosterType] = mapped_column(
@@ -307,10 +312,10 @@ class BoosterProxy(Base):
     set_code: Mapped[str] = mapped_column(
         ForeignKey("sets.code"), name="setCode", primary_key=True
     )
-    variations: Mapped[list["BoosterVariationProxy"]] = relationship(
+    variations: Mapped[list["BoosterVariationMeta"]] = relationship(
         viewonly=True
     )
-    sheets: Mapped[list["SheetProxy"]] = relationship(viewonly=True)
+    sheets: Mapped[list["SheetMeta"]] = relationship(viewonly=True)
 
     @property
     def total_weight(self) -> int:
@@ -323,7 +328,7 @@ class BoosterProxy(Base):
         )
 
 
-class SheetCardProxy(Base):
+class SheetCardMeta(Base):
     __tablename__ = "setBoosterSheetCards"
     __table_args__ = (
         ForeignKeyConstraint(
@@ -347,7 +352,7 @@ class SheetCardProxy(Base):
         ForeignKey("cards.uuid"), name="cardUuid", primary_key=True
     )
     weight: Mapped[int] = mapped_column(name="cardWeight")
-    data: Mapped[CardProxy] = relationship(viewonly=True)
+    data: Mapped[CardMeta] = relationship(viewonly=True)
 
     def __repr__(self) -> str:
         return (
@@ -356,12 +361,12 @@ class SheetCardProxy(Base):
         )
 
 
-class SheetProxy(Base):
+class SheetMeta(Base):
     __tablename__ = "setBoosterSheets"
     __table_args__ = (
         ForeignKeyConstraint(
             ["boosterName", "setCode"],
-            [BoosterProxy.name, BoosterProxy.set_code],
+            [BoosterMeta.name, BoosterMeta.set_code],
         ),
     )
 
@@ -372,13 +377,13 @@ class SheetProxy(Base):
     name: Mapped[str] = mapped_column(name="sheetName", primary_key=True)
     is_foil: Mapped[bool] = mapped_column(name="sheetIsFoil")
     balance_colors: Mapped[bool] = mapped_column(name="sheetHasBalanceColors")
-    cards: Mapped[list[SheetCardProxy]] = relationship(viewonly=True)
+    cards: Mapped[list[SheetCardMeta]] = relationship(viewonly=True)
     total_weight: Mapped[int] = column_property(
-        select(func.sum(SheetCardProxy.weight))
+        select(func.sum(SheetCardMeta.weight))
         .where(
-            (SheetCardProxy._booster_name == _booster_name)
-            & (SheetCardProxy._set_code == _set_code)
-            & (SheetCardProxy._sheet_name == name)
+            (SheetCardMeta._booster_name == _booster_name)
+            & (SheetCardMeta._set_code == _set_code)
+            & (SheetCardMeta._sheet_name == name)
         )
         .scalar_subquery()
     )
@@ -390,12 +395,12 @@ class SheetProxy(Base):
         )
 
 
-class BoosterVariationProxy(Base):
+class BoosterVariationMeta(Base):
     __tablename__ = "setBoosterContentWeights"
     __table_args__ = (
         ForeignKeyConstraint(
             ["boosterName", "setCode"],
-            [BoosterProxy.name, BoosterProxy.set_code],
+            [BoosterMeta.name, BoosterMeta.set_code],
         ),
     )
 
@@ -405,7 +410,7 @@ class BoosterVariationProxy(Base):
     )
     _set_code: Mapped[str] = mapped_column(name="setCode", primary_key=True)
     weight: Mapped[int] = mapped_column(name="boosterWeight")
-    content: Mapped[list["BoosterContentProxy"]] = relationship(viewonly=True)
+    content: Mapped[list["BoosterContentMeta"]] = relationship(viewonly=True)
 
     def __repr__(self) -> str:
         return (
@@ -414,15 +419,15 @@ class BoosterVariationProxy(Base):
         )
 
 
-class BoosterContentProxy(Base):
+class BoosterContentMeta(Base):
     __tablename__ = "setBoosterContents"
     __table_args__ = (
         ForeignKeyConstraint(
             ["boosterIndex", "boosterName", "setCode"],
             [
-                BoosterVariationProxy.id,
-                BoosterVariationProxy._booster_name,
-                BoosterVariationProxy._set_code,
+                BoosterVariationMeta.id,
+                BoosterVariationMeta._booster_name,
+                BoosterVariationMeta._set_code,
             ],
         ),
     )
@@ -440,13 +445,13 @@ class BoosterContentProxy(Base):
         primary_key=True,
     )
     num_picks: Mapped[int] = mapped_column(name="sheetPicks")
-    sheet: Mapped["SheetProxy"] = relationship(
+    sheet: Mapped["SheetMeta"] = relationship(
         viewonly=True,
         primaryjoin=(
             "and_("
-            "SheetProxy.name == foreign(BoosterContentProxy._sheet_name), "
-            "SheetProxy._booster_name == BoosterContentProxy._booster_name,"
-            "SheetProxy._set_code == BoosterContentProxy._set_code"
+            "SheetMeta.name == foreign(BoosterContentMeta._sheet_name), "
+            "SheetMeta._booster_name == BoosterContentMeta._booster_name,"
+            "SheetMeta._set_code == BoosterContentMeta._set_code"
             ")"
         ),
     )
@@ -460,32 +465,32 @@ class CardDb:
         self.__engine = create_engine("sqlite:///" + database_file)
         self.__session = Session(self.__engine, autoflush=False)
 
-        sets: list[SetProxy] = list(
-            self.__session.scalars(select(SetProxy)).all()
+        sets: list[SetMeta] = list(
+            self.__session.scalars(select(SetMeta)).all()
         )
         sets.sort()
         self.sets = {s.code: s for s in sets}
 
         cards_with_ids = self.__session.execute(
             select(
-                CardIDs.uuid, CardIDs.scryfall_id, CardProxy.name, CardProxy
-            ).where(CardIDs.uuid == CardProxy.uuid)
+                CardIDs.uuid, CardIDs.scryfall_id, CardMeta.name, CardMeta
+            ).where(CardIDs.uuid == CardMeta.uuid)
         ).all()
-        self.cards_by_id: dict[str, CardProxy] = {}
-        self.cards_by_scryfall_id: dict[str, CardProxy] = {}
-        self.cards_by_name: dict[str, CardProxy] = {}
+        self.cards_by_id: dict[str, CardMeta] = {}
+        self.cards_by_scryfall_id: dict[str, CardMeta] = {}
+        self.cards_by_name: dict[str, CardMeta] = {}
         for uuid, scryfall_id, name, card in cards_with_ids:
             self.cards_by_id[uuid] = card
             self.cards_by_scryfall_id[scryfall_id] = card
             self.cards_by_name[name] = card
 
-    def get_card_by_name(self, name: str) -> Union[CardProxy, None]:
+    def get_card_by_name(self, name: str) -> Union[CardMeta, None]:
         return self.cards_by_name.get(name, None)
 
-    def get_card_by_id(self, uuid: str) -> Union[CardProxy, None]:
+    def get_card_by_id(self, uuid: str) -> Union[CardMeta, None]:
         return self.cards_by_id.get(uuid, None)
 
     def get_card_by_scryfall_id(
         self, scryfall_id: str
-    ) -> Union[CardProxy, None]:
+    ) -> Union[CardMeta, None]:
         return self.cards_by_scryfall_id.get(scryfall_id, None)

@@ -70,7 +70,7 @@ def test_balancing(unbalanced_pack: MtgPack) -> None:
     unbalanced_pack.is_balanced(rebalance=True)
     assert unbalanced_pack.is_balanced()
 
-    cards = [c.card.name for c in unbalanced_pack.cards]
+    cards = [c.meta.name for c in unbalanced_pack.cards]
     assert "Griffin Protector" not in cards
     assert "Fortress Crab" in cards
 

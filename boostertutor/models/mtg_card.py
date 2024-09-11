@@ -1,12 +1,12 @@
 from datetime import timedelta
-from typing import Literal, Optional
+from typing import Literal, Optional, get_args
 
 import imageio.v3 as iio
 import numpy as np
 from aiohttp_client_cache.backends.sqlite import SQLiteBackend
 from aiohttp_client_cache.session import CachedSession
 
-from boostertutor.models.mtgjson_sql import CardProxy
+from boostertutor.models.mtgjson_sql import CardMeta
 from boostertutor.utils.utils import foil_layer
 
 SCRYFALL_CARD_BASE_URL = "https://api.scryfall.com/cards"
@@ -25,26 +25,29 @@ class MtgCard:
     """A Magic: The Gathering card representation.
 
     This class encapsulates all the details and functionalities of an
-    individual MtG card. This class wraps a CardProxy instance, which
-    represents a specific card prototype and contains all card data (e.g.,
-    name, cost, oracle text).
+    individual MtG card. This class wraps a CardMeta instance, which represents
+    a specific card prototype and contains all card data (e.g., name, cost,
+    oracle text).
 
     Attributes:
-        card: A CardProxy instance containing all the card's data.
+        card: A CardMeta instance containing all the card's data.
         foil: A boolean indicating whether the card is foil.
     """
 
-    def __init__(self, card: CardProxy, foil: bool = False) -> None:
+    def __init__(self, meta: CardMeta, foil: Optional[bool] = None) -> None:
         """Initializes the MtgCard instance.
 
         Args:
-            card (CardProxy): An instance of CardProxy that represents a
-            specific card.
+            card (CardMeta): An instance of CardMeta that represents a specific
+            card.
             foil (bool, optional): A boolean value that indicates if the card
             is foil. Defaults to False
         """
-        self.card = card
-        self.foil = foil
+        self.meta = meta
+        if foil is None:
+            self.foil = "nonfoil" not in meta.finishes
+        else:
+            self.foil = foil
 
     def mana(self) -> list[str]:
         """Determines the color(s) of the card.
@@ -60,8 +63,8 @@ class MtgCard:
         """
         colors = ["W", "U", "B", "R", "G"]
 
-        if self.card.mana_cost:
-            cost = self.card.mana_cost.lstrip("{").rstrip("}").split("}{")
+        if self.meta.mana_cost:
+            cost = self.meta.mana_cost.lstrip("{").rstrip("}").split("}{")
             mana = [c for c in colors if c in cost]
             if not mana:
                 hybrid = []
@@ -74,7 +77,7 @@ class MtgCard:
                 else:
                     mana = hybrid_colors
         else:
-            mana = self.card.colors
+            mana = self.meta.colors
         return mana
 
     async def get_price(
@@ -114,7 +117,7 @@ class MtgCard:
             pref_currency += "_foil"
             alt_currency += "_foil"
 
-        scry_id = self.card.identifiers.scryfall_id
+        scry_id = self.meta.identifiers.scryfall_id
         card_url = f"{SCRYFALL_CARD_BASE_URL}/{scry_id}"
 
         async with CachedSession(cache=cache) as session:
@@ -158,19 +161,15 @@ class MtgCard:
             ValueError: If the specified size is not one of the acceptable
             values.
         """
-        sizes = ["large", "normal", "small", "png", "border_crop"]
-        if size not in sizes:
+        if size not in get_args(CardImageSize):
             raise ValueError(
                 "The specified size is not one of the acceptable values."
             )
 
-        scry_id = self.card.identifiers.scryfall_id
+        scry_id = self.meta.identifiers.scryfall_id
         img_url = (
             f"{SCRYFALL_CARD_BASE_URL}/{scry_id}?format=image&version={size}"
         )
-        if foil is None:
-            foil = self.foil
-
         async with CachedSession(cache=cache) as session:
             async with session.get(img_url) as resp:
                 resp.raise_for_status()
@@ -178,7 +177,7 @@ class MtgCard:
 
         im: np.ndarray = iio.imread(resp_bytes)
 
-        if foil:
+        if (foil is not None and foil) or (foil is None and self.foil):
             foil_im = foil_layer(size=im.shape[0:2])
             im[..., 0:3] = (im[..., 0:3] * 0.7 + foil_im * 0.3).astype("uint8")
 
@@ -197,28 +196,28 @@ class MtgCard:
             representing the card's name, set code, and count respectively.
         """
         name = (
-            self.card.name
-            if self.card.layout != "meld"
-            else self.card.face_name
+            self.meta.name
+            if self.meta.layout != "meld"
+            else self.meta.face_name
         )
-        return {"name": name, "set": self.card.set.code, "count": 1}
+        return {"name": name, "set": self.meta.set.code, "count": 1}
 
     def arena_format(self) -> str:
         """Returns the card information into MTG Arena format"""
         if (
-            self.card.set_code != "STA"
-            and self.card.promo_types
-            and self.card.variations
+            self.meta.set_code != "STA"
+            and self.meta.promo_types
+            and self.meta.variations
         ):
-            number = self.card.variations[0].number
+            number = self.meta.variations[0].number
         else:
-            number = self.card.number
+            number = self.meta.number
         name = (
-            self.card.name
-            if self.card.layout != "meld"
-            else self.card.face_name
+            self.meta.name
+            if self.meta.layout != "meld"
+            else self.meta.face_name
         )
-        return f"1 {name} ({self.card.set_code}) {number}"
+        return f"1 {name} ({self.meta.set_code}) {number}"
 
     def pack_sort_key(self) -> tuple[int, bool, int]:
         """Generates a sorting key for ordering cards in a pack.
@@ -234,30 +233,30 @@ class MtgCard:
         """
         r = ["mythic", "rare", "uncommon", "common", "special", "bonus"]
         is_common_land = (
-            "Land" in self.card.types and self.card.rarity == "common"
+            "Land" in self.meta.types and self.meta.rarity == "common"
         )
         is_basic_land = (
-            "Land" in self.card.types and "Basic" in self.card.supertypes
+            "Land" in self.meta.types and "Basic" in self.meta.supertypes
         )
         return (
             is_common_land + is_basic_land,
             self.foil,
-            r.index(self.card.rarity),
+            r.index(self.meta.rarity),
         )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, MtgCard):
             return NotImplemented
-        return self.card == other.card
+        return self.meta == other.meta
 
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, MtgCard):
             return NotImplemented
-        return self.card < other.card
+        return self.meta < other.meta
 
     def __str__(self) -> str:
         foil_str = " (foil)" if self.foil else ""
-        return f"{self.card.name} ({self.card.set_code}){foil_str}"
+        return f"{self.meta.name} ({self.meta.set_code}){foil_str}"
 
     def __repr__(self) -> str:
         return f"<boostertutor.models.mtg_card.MtgCard: {str(self)}>"

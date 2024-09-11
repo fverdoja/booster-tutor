@@ -93,14 +93,14 @@ def test_arena(cards: dict[str, MtgCard], card: str, expected: str) -> None:
 
 def test_arena_promo(cards: dict[str, MtgCard]) -> None:
     promo = cards["Mysterious Egg"]
-    assert promo.card.number == "385"  # check that it's the promo version
+    assert promo.meta.number == "385"  # check that it's the promo version
     assert promo.arena_format() == "1 Mysterious Egg (IKO) 3"
 
 
 def test_pack_sort_key(cards: dict[str, MtgCard]) -> None:
     card_list = list(cards.values())
     card_list.sort(key=lambda x: x.pack_sort_key())
-    names = [card.card.name for card in card_list]
+    names = [card.meta.name for card in card_list]
     assert names == [
         "Clever Impersonator",
         "Urza, Lord Protector // Urza, Planeswalker",
@@ -151,7 +151,7 @@ async def test_prices(
         prices[currency] = None
         prices[currency + "_foil"] = None
     rate = None if rate_none else 1.3
-    scry_id = c.card.identifiers.scryfall_id
+    scry_id = c.meta.identifiers.scryfall_id
     card_url = f"https://api.scryfall.com/cards/{scry_id}"
     with aioresponses() as mocked:
         mocked.get(url=card_url, status=200, payload={"prices": prices})
@@ -177,7 +177,7 @@ async def test_image(
     expected_raise: ContextManager,
 ) -> None:
     c = cards["Electrolyze"]  # foil card, produces a foil image by default
-    scry_id = c.card.identifiers.scryfall_id
+    scry_id = c.meta.identifiers.scryfall_id
     img_url = (
         f"https://api.scryfall.com/cards/{scry_id}"
         f"?format=image&version={size}"
@@ -200,7 +200,7 @@ async def test_image(
 
 async def test_image_400(cards: dict[str, MtgCard]) -> None:
     c = cards["Electrolyze"]
-    scry_id = c.card.identifiers.scryfall_id
+    scry_id = c.meta.identifiers.scryfall_id
     img_url = (
         f"https://api.scryfall.com/cards/{scry_id}"
         f"?format=image&version=large"

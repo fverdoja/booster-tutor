@@ -54,7 +54,7 @@ async def main() -> None:
     args = parser.parse_args()
     config = Config.from_file(Path(args.config))
     file_handler = RotatingFileHandler(
-        "boostertutor.log", maxBytes=1024 * 1024 * 50
+        "boostertutor.log", maxBytes=1024 * 1024 * 10
     )
     console_handler = logging.StreamHandler()
     logging.basicConfig(

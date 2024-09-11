@@ -7,12 +7,12 @@ from numpy.random import choice
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
 from boostertutor.models.mtgjson_sql import (
-    BoosterProxy,
+    BoosterMeta,
     BoosterType,
-    BoosterVariationProxy,
+    BoosterVariationMeta,
     CardDb,
-    SetProxy,
-    SheetCardProxy,
+    SetMeta,
+    SheetCardMeta,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ class MtgPackGenerator:
 
     def get_set_booster_meta_pair(
         self, set: str, booster_type: Optional[BoosterType] = None
-    ) -> Tuple[SetProxy, BoosterProxy]:
+    ) -> Tuple[SetMeta, BoosterMeta]:
         s = set.upper()
         b_type = booster_type
 
@@ -172,7 +172,7 @@ class MtgPackGenerator:
 
             cards_p = [x.weight / sheet.total_weight for x in sheet.cards]
 
-            picks: list[SheetCardProxy] = choice(
+            picks: list[SheetCardMeta] = choice(
                 sheet.cards,
                 size=content.num_picks + num_of_backups,
                 replace=False,
@@ -269,8 +269,8 @@ class MtgPackGenerator:
         p_list = self.get_random_decks(set="JMP", n=n, replace=replace)
         for p in p_list:
             for i, c in enumerate(p.content["deck"]["cards"]):
-                if c.card.name in replacements:
-                    r = replacements[c.card.name]
+                if c.meta.name in replacements:
+                    r = replacements[c.meta.name]
                     r_card = (
                         m21.card_by_name(r)
                         if m21.card_by_name(r)
@@ -278,7 +278,7 @@ class MtgPackGenerator:
                     )
                     assert r_card
                     card = MtgCard(r_card, foil=c.foil)
-                    card.card.set_code = "JMP"
+                    card.meta.set_code = "JMP"
                     p.content["deck"]["cards"][i] = card
 
         return p_list
@@ -290,7 +290,7 @@ class MtgPackGenerator:
         set_meta = self.data.sets.get(set.upper())
         assert set_meta is not None
         all_decks = set_meta.boosters[BoosterType.JUMPSTART].variations
-        decks: list[BoosterVariationProxy] = choice(
+        decks: list[BoosterVariationMeta] = choice(
             all_decks, size=n, replace=replace
         )
         packs = []

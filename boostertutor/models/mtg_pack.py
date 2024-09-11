@@ -5,7 +5,7 @@ from typing import Optional, Sequence
 import numpy as np
 
 from boostertutor.models.mtg_card import CardImageSize, MtgCard
-from boostertutor.models.mtgjson_sql import SetProxy
+from boostertutor.models.mtgjson_sql import SetMeta
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ class MtgPack:
     def __init__(
         self,
         content: dict,
-        set: Optional[SetProxy] = None,
+        set: Optional[SetMeta] = None,
         name: Optional[str] = None,
         type: Optional[str] = None,
     ):
@@ -22,7 +22,7 @@ class MtgPack:
         if set:
             self.set = set
         else:
-            self.set = self.cards[0].card.set
+            self.set = self.cards[0].meta.set
         if name:
             self.name = name
         else:
@@ -50,7 +50,7 @@ class MtgPack:
 
     def is_balanced(self, rebalance: bool = False) -> bool:
         for slot_name, slot in self.content.items():
-            card_names = [c.card.name for c in slot["cards"]]
+            card_names = [c.meta.name for c in slot["cards"]]
 
             if slot["balance"]:  # commons
                 # Pack must have at least 1 common card of each color
@@ -76,7 +76,7 @@ class MtgPack:
                     return False
             elif (
                 not slot["cards"][0].foil
-                and slot["cards"][0].card.rarity == "uncommon"
+                and slot["cards"][0].meta.rarity == "uncommon"
             ):
                 # Pack must never have more than 2 uncommons of the same color
                 if self.max_cards_per_color(slot_name) > 2:
@@ -94,7 +94,7 @@ class MtgPack:
         return True
 
     def has_duplicates(self) -> bool:
-        cards_names = [c.card.name for c in self.cards if not c.foil]
+        cards_names = [c.meta.name for c in self.cards if not c.foil]
         return len(cards_names) != len(set(cards_names))
 
     def count_cards_colors(
@@ -197,7 +197,7 @@ class MtgPack:
             cards = self.cards
 
         for card in cards:
-            if "Creature" in card.card.types:
+            if "Creature" in card.meta.types:
                 return True
         return False
 
