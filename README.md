@@ -25,17 +25,20 @@ The bot responds to the following commands:
 
 ### Set-specific packs
 
-* `!{setcode}`: generates a pack from the indicated set (e.g., `!znr` generates
-  a *Zendikar Rising* pack)
-* `!{setcode}sealed`: generates 6 packs from the indicated set (e.g.,
-  `!znrsealed` generates 6 *Zendikar Rising* packs)
-* `!{setcode}box`: generates a draft boooster box from the indicated set (e.g.,
-  `!znrbox` generates 36 *Zendikar Rising* packs)
+* `!set {setcode}` or `!{setcode}`: generates a pack from the indicated set
+  (e.g., `!znr` generates a *Zendikar Rising* pack)
+* `!sealed {setcode}` or `!{setcode}sealed`: generates 6 packs from the
+  indicated set (e.g., `!znrsealed` generates 6 *Zendikar Rising* packs)
+* `!box {setcode}` or `!{setcode}box`: generates a draft boooster box from the
+  indicated set (e.g., `!znrbox` generates 36 *Zendikar Rising* packs)
 * `!collector {setcode}`: generates a collector pack from the indicated set
   (e.g., `!collector znr` generates a *Zendikar Rising* collector booster)
 * `!arena {setcode}` or `!a-{setcode}`: generates an arena draft pack from the
   indicated set (e.g., `!arena znr` generates a *Zendikar Rising* arena draft
   booster)
+* `!pool {setcodes}`: Generates a a pack each from a list of sets separated by
+  "|" (e.g., `!pool inv|pls|apc` generates one pack each from *Invasion*,
+  *Planeshift*, or *Apocalypse*).
 
 ### *Jumpstart* decks
 

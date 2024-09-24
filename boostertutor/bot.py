@@ -159,8 +159,10 @@ class DiscordBot(commands.Bot):
         )
 
     async def on_message(self, message: discord.Message) -> None:
-        if message.author != self.user and message.content.startswith(
-            self.prefix_str
+        if (
+            message.author != self.user
+            and message.content.startswith(self.prefix_str)
+            and len(message.content) > len(self.prefix_str)
         ):
             command = (
                 message.content.removeprefix(self.prefix_str)
@@ -501,6 +503,65 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             error.original, AssertionError
         ):
             await message.reply(f":warning: {error.original}")
+        else:
+            logger.error(error)
+
+    @commands.command(
+        name="pool",
+        help=help_msg(
+            "Generates a a pack each from a list of sets",
+            args={
+                "sets": "A list of set codes separated only by '|', no "
+                "spaces. If a set code is preceeded by 'a-' an Arena pack of "
+                "that set is generated instead. If a set code is preceeded by "
+                "'cube-' then it is interpreted as a CubeCobra cube_id and a "
+                "pack from the corresponding cube is generated"
+            },
+            examples={
+                "pool inv|pls|apc": (
+                    "generates one pack each from *Invasion*, "
+                    "*Planeshift*, or *Apocalypse*"
+                ),
+                "pool a-mkm|cube-modovintage|cube-modovintage": (
+                    "generates one Arena pack from *Murders at Karlov Manor* "
+                    "and two *MTGO Vintage Cube* packs "
+                ),
+            },
+        ),
+    )
+    async def pool(
+        self,
+        ctx: commands.Context,
+        sets: str,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        set_list = sets.split("|")
+        p_list = []
+        for set in set_list:
+            if set.startswith("cube-"):
+                cube = await utils.get_cube(set.lstrip("cube-"))
+                p = self.generator.get_cube_pack(cube)
+            else:
+                p = self.generator.get_pack(set)
+            p_list.append(p)
+        await self.send_plist_msg(p_list, ctx, member)
+
+    @pool.error
+    async def pool_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ) -> None:
+        assert ctx.message
+        message: discord.Message = ctx.message
+        if isinstance(error, commands.CommandInvokeError) and isinstance(
+            error.original, AssertionError
+        ):
+            await message.reply(f":warning: {error.original}")
+        elif isinstance(error, commands.CommandInvokeError) and isinstance(
+            error.original, aiohttp.ClientResponseError
+        ):
+            await message.reply(
+                ":warning: The provided Cube ID cannot be found on CubeCobra."
+            )
         else:
             logger.error(error)
 
