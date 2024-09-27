@@ -115,6 +115,7 @@ class DiscordBot(commands.Bot):
             "a-mkm",
             "otj",
             "blb",
+            "dsk",
         ]
         self.explorer_sets = [
             "ktk",
