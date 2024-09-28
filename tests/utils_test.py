@@ -209,3 +209,19 @@ def test_foil_layer() -> None:
     foil = utils.foil_layer(size=(10, 20))
     assert foil.shape == (10, 20, 3)
     assert foil.dtype == np.uint8
+
+
+@pytest.mark.parametrize(
+    ["deck_name", "expected_str"],
+    [
+        ("angels2", "Angels 2"),
+        ("phyrexian", "Phyrexian"),
+        ("underTheSea1", "Under The Sea 1"),
+        ("wellRead2", "Well-Read 2"),
+        ("treeHugging3", "Tree-Hugging 3"),
+        ("multiHeaded2", "Multi-Headed 2"),
+        ("urzas", "Urza's"),
+    ],
+)
+def test_jmp_deck_name_to_str(deck_name: str, expected_str: str) -> None:
+    assert utils.jmp_deck_name_to_str(deck_name) == expected_str

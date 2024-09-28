@@ -26,6 +26,7 @@ SCRYFALL_CARD_BASE_URL = "https://api.scryfall.com/cards"
 
 
 class BoosterType(enum.Enum):
+    CUBE = "cube"
     DEFAULT = "default"
     DRAFT = "draft"
     DRAFT_ARENA = "arena"

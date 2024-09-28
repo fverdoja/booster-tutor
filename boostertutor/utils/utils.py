@@ -156,3 +156,25 @@ def foil_layer(size: tuple[int, int]) -> np.ndarray:
         * 255
     ).astype("uint8")
     return foil
+
+
+def jmp_deck_name_to_str(deck_name: str) -> str:
+    name = deck_name.rstrip("0123456789")
+    number = deck_name.removeprefix(name)
+    if name == "urzas":
+        name = "Urza's"
+    elif name == "wellRead":
+        name = "Well-Read"
+    elif name == "treeHugging":
+        name = "Tree-Hugging"
+    elif name == "multiHeaded":
+        name = "Multi-Headed"
+    else:  # add a space in between camel cases and capitalize each word
+        name = (
+            "".join(
+                " " + char if char.isupper() else char.strip() for char in name
+            )
+            .strip()
+            .title()
+        )
+    return name + (" " + number if number else "")

@@ -5,7 +5,7 @@ from typing import Optional, Sequence
 import numpy as np
 
 from boostertutor.models.mtg_card import CardImageSize, MtgCard
-from boostertutor.models.mtgjson_sql import SetMeta
+from boostertutor.models.mtgjson_sql import BoosterType, SetMeta
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class MtgPack:
         content: dict,
         set: Optional[SetMeta] = None,
         name: Optional[str] = None,
-        type: Optional[str] = None,
+        type: Optional[BoosterType] = None,
     ):
         self.content = content
         if set:
@@ -34,8 +34,12 @@ class MtgPack:
         product = (
             "deck" if self.set.code.upper() in ["JMP", "J22"] else "booster"
         )
-        res = self.type + " " + product if self.type else product
-        return res.capitalize()
+        res = (
+            self.type.value.replace("-", " ") + " " + product
+            if self.type
+            else product
+        )
+        return res.title()
 
     @property
     def cards(self) -> Sequence[MtgCard]:

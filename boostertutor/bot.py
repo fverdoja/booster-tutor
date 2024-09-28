@@ -210,7 +210,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
             description=f"```\n{p.arena_format()}\n```",
             colour=discord.Colour.dark_gold(),
         )
-        if p.type == "cube":
+        if p.type == BoosterType.CUBE:
             set_icon_url = CUBE_ICON_URL
         else:
             set_icon_url = utils.set_symbol_link(p.set.code)
@@ -261,7 +261,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         sets = [p.set.code for p in pool]
         set_types = [p.type for p in pool]
         all_same_set = len(set(sets)) <= 1
-        is_cube = set(set_types) == {"cube"}
+        is_cube = set(set_types) == {BoosterType.CUBE}
         is_a30 = all(s.upper() == "30A" for s in sets)
         json_pool = [card_json for p in pool for card_json in p.json()]
         rare_list = [

@@ -14,6 +14,7 @@ from boostertutor.models.mtgjson_sql import (
     SetMeta,
     SheetCardMeta,
 )
+from boostertutor.utils.utils import jmp_deck_name_to_str
 
 logger = logging.getLogger(__name__)
 
@@ -32,25 +33,8 @@ class MtgPackGenerator:
             for set_code, set in self.data.sets.items()
             if set.boosters and set_code not in ["JMP", "J22", "CLU"]
         ]
-        self.fix_missing_balance(
-            "dsk", "common", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "blb", "common", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "mh3", "common", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "otj", "common", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "mkm", "commonWithShowcase", booster_type=BoosterType.PLAY
-        )
-        self.fix_missing_balance(
-            "mkm", "common", booster_type=BoosterType.PLAY_ARENA
-        )
         self.sets_with_decks: list[str] = ["JMP", "J22"]
+        self.override_play_booster_balance()
         if validate_data:
             self.validate_booster_data()
 
@@ -218,7 +202,7 @@ class MtgPackGenerator:
             pack_content,
             set=set_meta,
             name=set_meta.name,
-            type=booster_meta.name.value,
+            type=booster_meta.name,
         )
 
         if not balance:
@@ -322,7 +306,10 @@ class MtgPackGenerator:
             content = {"deck": {"cards": cards, "balance": False}}
             packs.append(
                 MtgPack(
-                    content, set=set_meta, name=set_meta.name, type=sheet.name
+                    content,
+                    set=set_meta,
+                    name=jmp_deck_name_to_str(sheet.name),
+                    type=BoosterType.JUMPSTART,
                 )
             )
             logger.info(f"{sheet.name} ({set.upper()}) deck generated")
@@ -374,7 +361,7 @@ class MtgPackGenerator:
         return MtgPack(
             {"pack": {"cards": pack_cards, "balance": False}},
             name=cube_name,
-            type="cube",
+            type=BoosterType.CUBE,
         )
 
     async def get_pack_ev(
@@ -437,4 +424,24 @@ class MtgPackGenerator:
         self.sets_with_boosters.remove(set.upper())
         logger.warning(
             f"Removed {set.upper()} from available sets because broken."
+        )
+
+    def override_play_booster_balance(self) -> None:
+        self.fix_missing_balance(
+            "dsk", "common", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
+            "blb", "common", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
+            "mh3", "common", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
+            "otj", "common", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
+            "mkm", "commonWithShowcase", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
+            "mkm", "common", booster_type=BoosterType.PLAY_ARENA
         )
