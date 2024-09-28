@@ -142,7 +142,9 @@ def unbalanced_pack(generator: MtgPackGenerator) -> MtgPack:
 @pytest.fixture
 def unbalanced_play_pack(unbalanced_pack: MtgPack) -> MtgPack:
     content = unbalanced_pack.content.copy()
+    green_common = content["nonlandCommon"]["cards"][0]  # Thicket Crasher
     content["nonlandCommon"]["cards"] = content["nonlandCommon"]["cards"][1:]
+    content["nonlandCommon"]["backups"].append(green_common)
     p = MtgPack(content, type=BoosterType.PLAY)
     return p
 

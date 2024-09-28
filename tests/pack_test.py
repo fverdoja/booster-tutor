@@ -94,7 +94,7 @@ def test_play_balancing(unbalanced_play_pack: MtgPack) -> None:
 
     cards = [c.meta.name for c in unbalanced_play_pack.cards]
     assert "Griffin Protector" not in cards
-    assert "Fortress Crab" in cards
+    assert "Fortress Crab" in cards or "Thicket Crasher" in cards
 
 
 async def test_image(

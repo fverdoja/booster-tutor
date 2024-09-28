@@ -163,7 +163,7 @@ class MtgPack:
         ]
 
         if len(missing_colors) > self.max_allowed_missing_colors():
-            color = missing_colors[0]
+            color = choice(missing_colors)
             if bkp_counts[color]:
                 max_count = max(common_counts.items(), key=lambda x: x[1])[1]
                 swap_colors = [
