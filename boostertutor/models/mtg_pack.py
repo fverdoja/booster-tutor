@@ -97,6 +97,15 @@ class MtgPack:
 
         return True
 
+    def max_allowed_missing_colors(self) -> int:
+        if (
+            self.type == BoosterType.PLAY
+            or self.type == BoosterType.PLAY_ARENA
+        ):
+            return 1
+        else:
+            return 0
+
     def has_duplicates(self) -> bool:
         cards_names = [c.meta.name for c in self.cards if not c.foil]
         return len(cards_names) != len(set(cards_names))
@@ -137,7 +146,7 @@ class MtgPack:
         (_, common_counts) = self.count_cards_colors(slot["cards"])
 
         missing = sum([v == 0 for v in list(common_counts.values())[:5]])
-        if missing:
+        if missing > self.max_allowed_missing_colors():
             if rebalance:
                 logger.debug(f"Rebalancing: commons {common_counts}")
                 return self.rebalance_commons(slot)
@@ -153,7 +162,7 @@ class MtgPack:
             c for (c, v) in common_counts.items() if c != "C" and v == 0
         ]
 
-        if missing_colors:
+        if len(missing_colors) > self.max_allowed_missing_colors():
             color = missing_colors[0]
             if bkp_counts[color]:
                 max_count = max(common_counts.items(), key=lambda x: x[1])[1]

@@ -2,6 +2,7 @@ import pytest
 
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
+from boostertutor.models.mtgjson_sql import BoosterType
 
 
 def test_duplicates(unbalanced_pack: MtgPack) -> None:
@@ -16,6 +17,17 @@ def test_duplicates_in_foil(unbalanced_pack: MtgPack) -> None:
     card.foil = True
     unbalanced_pack.content["foil"] = {"cards": [card], "balance": False}
     assert not unbalanced_pack.has_duplicates()
+
+
+def test_max_allowed_missing_colors(
+    unbalanced_pack: MtgPack, unbalanced_play_pack: MtgPack
+) -> None:
+    assert unbalanced_pack.max_allowed_missing_colors() == 0
+    assert unbalanced_play_pack.max_allowed_missing_colors() == 1
+    play_arena_pack = MtgPack(
+        content=unbalanced_play_pack.content, type=BoosterType.PLAY_ARENA
+    )
+    assert play_arena_pack.max_allowed_missing_colors() == 1
 
 
 @pytest.mark.parametrize("count_hybrids", [True, False])
@@ -71,6 +83,16 @@ def test_balancing(unbalanced_pack: MtgPack) -> None:
     assert unbalanced_pack.is_balanced()
 
     cards = [c.meta.name for c in unbalanced_pack.cards]
+    assert "Griffin Protector" not in cards
+    assert "Fortress Crab" in cards
+
+
+def test_play_balancing(unbalanced_play_pack: MtgPack) -> None:
+    assert not unbalanced_play_pack.is_balanced()
+    unbalanced_play_pack.is_balanced(rebalance=True)
+    assert unbalanced_play_pack.is_balanced()
+
+    cards = [c.meta.name for c in unbalanced_play_pack.cards]
     assert "Griffin Protector" not in cards
     assert "Fortress Crab" in cards
 

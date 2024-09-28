@@ -14,6 +14,7 @@ from boostertutor.bot import DiscordBot
 from boostertutor.generator import MtgPackGenerator
 from boostertutor.models.mtg_card import MtgCard
 from boostertutor.models.mtg_pack import MtgPack
+from boostertutor.models.mtgjson_sql import BoosterType
 from boostertutor.utils.utils import CUBECOBRA_URL, SEALEDDECK_URL, Config
 
 T = TypeVar("T")
@@ -135,6 +136,14 @@ def unbalanced_pack(generator: MtgPackGenerator) -> MtgPack:
         },
     }
     p = MtgPack(content)
+    return p
+
+
+@pytest.fixture
+def unbalanced_play_pack(unbalanced_pack: MtgPack) -> MtgPack:
+    content = unbalanced_pack.content.copy()
+    content["nonlandCommon"]["cards"] = content["nonlandCommon"]["cards"][1:]
+    p = MtgPack(content, type=BoosterType.PLAY)
     return p
 
 
