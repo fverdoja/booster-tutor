@@ -45,6 +45,7 @@ class BoosterType(enum.Enum):
     JUMPSTART = "jumpstart"
     JUMPSTART_V2 = "jumpstart-v2"
     STARTER = "starter"
+    BEGINNER = "beginner"
     TOURNAMENT = "tournament"
     FAT_PACK = "fat-pack"
     MTGO = "mtgo"

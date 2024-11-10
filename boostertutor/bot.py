@@ -116,6 +116,7 @@ class DiscordBot(commands.Bot):
             "otj",
             "blb",
             "dsk",
+            "fdn",
         ]
         self.explorer_sets = [
             "ktk",
@@ -607,6 +608,28 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_decks(
             set="J22", n=num_packs, replace=True
+        )
+        await self.send_plist_msg(p_list, ctx, member)
+
+    @commands.command(
+        help=help_msg(
+            "Generates ramdom *Foundations Jumpstart* decks",
+            has_num_packs=True,
+            examples={
+                "j25": "generates one deck",
+                "j25 3": "generates three decks",
+            },
+        )
+    )
+    async def j25(
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = process_num_packs(num_packs)
+        p_list = self.generator.get_random_decks(
+            set="J25", n=num_packs, replace=True
         )
         await self.send_plist_msg(p_list, ctx, member)
 

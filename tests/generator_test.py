@@ -137,6 +137,13 @@ def test_has_jumpstart(generator: MtgPackGenerator) -> None:
         assert deck.weight == 1
         assert len(deck.content) == 1
         assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20
+    assert len(generator.data.sets["J25"].boosters) == 1
+    for deck in (
+        generator.data.sets["J25"].boosters[BoosterType.JUMPSTART].variations
+    ):
+        assert deck.weight == 1
+        assert len(deck.content) == 1
+        assert sum([c.weight for c in deck.content[0].sheet.cards]) == 20
 
 
 def test_jumpstart(generator: MtgPackGenerator) -> None:

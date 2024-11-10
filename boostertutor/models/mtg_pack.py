@@ -32,7 +32,9 @@ class MtgPack:
     @property
     def type_str(self) -> str:
         product = (
-            "deck" if self.set.code.upper() in ["JMP", "J22"] else "booster"
+            "deck"
+            if self.set.code.upper() in ["JMP", "J22", "J25"]
+            else "booster"
         )
         res = (
             self.type.value.replace("-", " ") + " " + product

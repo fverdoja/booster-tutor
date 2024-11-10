@@ -31,9 +31,9 @@ class MtgPackGenerator:
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
-            if set.boosters and set_code not in ["JMP", "J22", "CLU"]
+            if set.boosters and set_code not in ["JMP", "J22", "J25", "CLU"]
         ]
-        self.sets_with_decks: list[str] = ["JMP", "J22"]
+        self.sets_with_decks: list[str] = ["JMP", "J22", "J25"]
         self.override_play_booster_balance()
         if validate_data:
             self.validate_booster_data()
@@ -427,6 +427,9 @@ class MtgPackGenerator:
         )
 
     def override_play_booster_balance(self) -> None:
+        self.fix_missing_balance(
+            "fdn", "common", booster_type=BoosterType.PLAY
+        )
         self.fix_missing_balance(
             "dsk", "common", booster_type=BoosterType.PLAY
         )

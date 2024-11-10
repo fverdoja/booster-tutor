@@ -45,6 +45,7 @@ The bot responds to the following commands:
 * `!jmp`: generates a ramdom *Jumpstart* deck (without Arena replacements)
 * `!a-jmp`: generates a ramdom *Jumpstart* deck (with Arena replacements)
 * `!j22`: generates a ramdom *Jumpstart 2022* deck
+* `!j25`: generates a ramdom *Foundations Jumpstart* deck
 
 ### CubeCobra cube packs
 
