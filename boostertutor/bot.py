@@ -119,6 +119,7 @@ class DiscordBot(commands.Bot):
             "fdn",
         ]
         self.explorer_sets = [
+            "pio",
             "ktk",
             "xln",
             "rix",

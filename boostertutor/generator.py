@@ -97,10 +97,18 @@ class MtgPackGenerator:
         elif s == "SIR":
             b_type = choice(
                 [
-                    BoosterType.SIR_1,
-                    BoosterType.SIR_2,
-                    BoosterType.SIR_3,
-                    BoosterType.SIR_4,
+                    BoosterType.ARENA_1,
+                    BoosterType.ARENA_2,
+                    BoosterType.ARENA_3,
+                    BoosterType.ARENA_4,
+                ]
+            )
+        elif s == "PIO":
+            b_type = choice(
+                [
+                    BoosterType.ARENA_1,
+                    BoosterType.ARENA_2,
+                    BoosterType.ARENA_3,
                 ]
             )
         elif BoosterType.DRAFT in boosters:
@@ -427,6 +435,15 @@ class MtgPackGenerator:
         )
 
     def override_play_booster_balance(self) -> None:
+        self.fix_missing_balance(
+            "pio", "common", booster_type=BoosterType.ARENA_1
+        )
+        self.fix_missing_balance(
+            "pio", "common", booster_type=BoosterType.ARENA_2
+        )
+        self.fix_missing_balance(
+            "pio", "common", booster_type=BoosterType.ARENA_3
+        )
         self.fix_missing_balance(
             "fdn", "common", booster_type=BoosterType.PLAY
         )

@@ -32,10 +32,10 @@ class BoosterType(enum.Enum):
     DRAFT_ARENA = "arena"
     PLAY = "play"
     PLAY_ARENA = "play-arena"
-    SIR_1 = "arena-1"
-    SIR_2 = "arena-2"
-    SIR_3 = "arena-3"
-    SIR_4 = "arena-4"
+    ARENA_1 = "arena-1"
+    ARENA_2 = "arena-2"
+    ARENA_3 = "arena-3"
+    ARENA_4 = "arena-4"
     SET = "set"
     SET_JP = "set-jp"
     COLLECTOR = "collector"
@@ -125,6 +125,7 @@ class BoosterType(enum.Enum):
     STAINEDGLASS_IWD = "stainedglass-iwd"
     STAINEDGLASS_TATTOO = "stainedglass-tattoo"
     STAINEDGLASS_UNCOMMON = "stainedglass-uncommon"
+    TREASURE_CHEST = "treasure-chest"
 
 
 class Base(DeclarativeBase):
