@@ -117,6 +117,7 @@ class DiscordBot(commands.Bot):
             "blb",
             "dsk",
             "fdn",
+            "dft",
         ]
         self.explorer_sets = [
             "pio",
