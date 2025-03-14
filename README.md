@@ -64,7 +64,7 @@ The bot is also able to generate different pack formats, by using tags and the
 *custom draft format* feature on CubeCobra. If your cube has a custom draft
 format, configured on CubeCobra using **only tags**, and you have tagged all
 cards in the cube accordingly, the bot will create a pack with slots following
-the given tag. Morevover, if you set up the custom draft format to allow any
+the given tags. Morevover, if you set up the custom draft format to allow any
 number of copies of a card, the bot will respect that setting as well. **Note:**
 the bot will only follow the first pack of the first custom draft format setup
 on CubeCobra.
