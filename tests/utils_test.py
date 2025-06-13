@@ -163,7 +163,12 @@ def test_arena_to_json() -> None:
 
 
 def test_set_symbol_link() -> None:
-    assert utils.set_symbol_link(code="ALA", size="medium", rarity="C") == (
+    assert utils.set_symbol_link(code="ALA", rarity="C") == (
+        "https://www.mtgpics.com/graph/sets/symbols/ala-C.png"
+    )
+    assert utils.set_symbol_link(
+        code="ALA", size="medium", rarity="C", use_gatherer=True
+    ) == (
         "https://gatherer.wizards.com/Handlers/Image.ashx?"
         "type=symbol&size=medium&rarity=C&set=ala"
     )

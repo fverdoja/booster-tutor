@@ -21,22 +21,30 @@ def download_mtgjson_data(
     file: str, url: str = MTGJSON_URL, backup: bool = True
 ) -> None:
     fp = Path(file)
+    temp_fp = Path(file + ".temp")
     backup_fp = Path(fp.parent, "AllPrintings_last.sqlite")
+    try:
+        download_file(url, temp_fp)
+    except (requests.HTTPError, KeyboardInterrupt) as e:
+        if temp_fp.exists():
+            temp_fp.unlink()
+        raise e
     if backup and fp.is_file():
         fp.rename(backup_fp)
-    try:
-        download_file(url, fp)
-    except requests.HTTPError as e:
-        if backup and backup_fp.is_file():
-            backup_fp.rename(fp)
-        raise e
+    temp_fp.rename(fp)
 
 
 def main(config: Config) -> None:
     print(f"MTGjson data will be downloaded in: {config.mtgjson_path}")
     if Path(config.mtgjson_path).parent.is_dir():
         print("\nBeginning MTGjson data download...")
-        download_mtgjson_data(file=config.mtgjson_path)
+        try:
+            download_mtgjson_data(file=config.mtgjson_path)
+        except KeyboardInterrupt:
+            print(
+                f"Aborted by user. File {config.mtgjson_path} untouched, and"
+                "temporary file deleted."
+            )
     else:
         print(
             f"The directory {Path(config.mtgjson_path).parent.as_posix()} "

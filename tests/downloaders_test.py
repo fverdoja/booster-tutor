@@ -30,6 +30,7 @@ def test_download_mtgjson_data(
     tmp_path: Path, requests_mock: Mocker, backup: bool
 ) -> None:
     mtgjson_file = tmp_path / "AllPrintings.sqlite"
+    temp_file = tmp_path / "AllPrintings.sqlite.temp"
     backup_file = tmp_path / "AllPrintings_last.sqlite"
 
     requests_mock.get(mtgjson_downloader.MTGJSON_URL, text="FIRST")
@@ -37,6 +38,7 @@ def test_download_mtgjson_data(
         file=mtgjson_file.as_posix(), backup=False
     )
     assert mtgjson_file.is_file()
+    assert not temp_file.exists()
     assert not backup_file.exists()
 
     requests_mock.get(mtgjson_downloader.MTGJSON_URL, text="SECOND")
@@ -44,6 +46,7 @@ def test_download_mtgjson_data(
         file=mtgjson_file.as_posix(), backup=backup
     )
     assert mtgjson_file.is_file()
+    assert not temp_file.exists()
     assert backup_file.is_file() == backup
     with open(mtgjson_file) as f:
         assert f.read() == "SECOND"
@@ -57,6 +60,7 @@ def test_download_mtgjson_data_400(
     tmp_path: Path, requests_mock: Mocker, backup: bool
 ) -> None:
     mtgjson_file = tmp_path / "AllPrintings.sqlite"
+    temp_file = tmp_path / "AllPrintings.sqlite.temp"
     backup_file = tmp_path / "AllPrintings_last.sqlite"
     with open(mtgjson_file, "w") as f:
         f.write("FIRST")
@@ -67,6 +71,7 @@ def test_download_mtgjson_data_400(
             file=mtgjson_file.as_posix(), backup=backup
         )
     assert mtgjson_file.exists()
+    assert not temp_file.exists()
     assert not backup_file.exists()
     with open(mtgjson_file) as f:
         assert f.read() == "FIRST"

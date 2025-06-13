@@ -119,6 +119,7 @@ class DiscordBot(commands.Bot):
             "fdn",
             "dft",
             "tdm",
+            "fin",
         ]
         self.explorer_sets = [
             "pio",

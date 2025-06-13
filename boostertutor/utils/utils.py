@@ -15,9 +15,12 @@ logger = logging.getLogger(__name__)
 SEALEDDECK_URL = "https://sealeddeck.tech/api/pools"
 CUBECOBRA_URL = "https://cubecobra.com/cube/api/cubeJSON/"
 EXCHANGE_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
-SET_SYMBOL_URL = (
+GATHERER_SET_SYMBOL_URL = (
     "https://gatherer.wizards.com/Handlers/Image.ashx?type=symbol&"
     "size={size}&rarity={rarity}&set={code}"
+)
+SET_SYMBOL_URL = (
+    "https://www.mtgpics.com/graph/sets/symbols/{code}-{rarity}.png"
 )
 MTG_CARD_BACK = iio.imread("boostertutor/img/magic_back.webp")
 A30_CARD_BACK = iio.imread("boostertutor/img/a30_back.webp")
@@ -107,8 +110,23 @@ def arena_to_json(arena_list: str) -> Sequence[dict]:
     return json_list
 
 
-def set_symbol_link(code: str, size: str = "large", rarity: str = "M") -> str:
-    return SET_SYMBOL_URL.format(size=size, rarity=rarity, code=code.lower())
+def set_symbol_link(
+    code: str,
+    size: str = "large",
+    rarity: str = "m",
+    use_gatherer: bool = False,
+) -> str:
+    return (
+        GATHERER_SET_SYMBOL_URL.format(
+            size=size, rarity=rarity, code=code.lower()
+        )
+        if use_gatherer
+        else SET_SYMBOL_URL.format(rarity=rarity, code=code.lower())
+    )
+
+
+def set_symbol_img(code: str) -> np.ndarray:
+    return iio.imread(f"boostertutor/img/sets/{code.lower()}.png")
 
 
 async def get_eur_usd_rate() -> float:
