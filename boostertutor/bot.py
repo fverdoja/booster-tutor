@@ -106,10 +106,6 @@ class DiscordBot(commands.Bot):
             )
         )
         self.standard_sets = [
-            "dmu",
-            "bro",
-            "one",
-            "mom",
             "woe",
             "lci",
             "a-mkm",
@@ -120,6 +116,7 @@ class DiscordBot(commands.Bot):
             "dft",
             "tdm",
             "fin",
+            "eoe",
         ]
         self.explorer_sets = [
             "pio",
@@ -144,6 +141,10 @@ class DiscordBot(commands.Bot):
             "vow",
             "neo",
             "snc",
+            "dmu",
+            "bro",
+            "one",
+            "mom",
         ] + self.standard_sets
         self.historic_sets = [
             "klr",
