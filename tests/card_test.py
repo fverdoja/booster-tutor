@@ -83,7 +83,7 @@ def test_json(cards: dict[str, MtgCard], card: str, expected: dict) -> None:
         ("Urza, Lord Protector", "1 Urza, Lord Protector (BRO) 225"),
         (
             "The Mightstone and Weakstone",
-            "1 The Mightstone and Weakstone (BRO) 238a",
+            "1 The Mightstone and Weakstone (BRO) 238",
         ),
     ],
 )

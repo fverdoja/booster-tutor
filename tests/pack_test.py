@@ -57,7 +57,7 @@ def test_arena(cards: dict[str, MtgCard]) -> None:
     ]
     pack = MtgPack({"slot": {"cards": card_list}})
     assert pack.arena_format() == (
-        "1 The Mightstone and Weakstone (BRO) 238a\n"
+        "1 The Mightstone and Weakstone (BRO) 238\n"
         "1 Mysterious Egg (IKO) 3\n"
         "1 Electrolyze (STA) 123"
     )
