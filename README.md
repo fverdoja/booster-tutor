@@ -16,7 +16,7 @@ The bot responds to the following commands:
 
 * `!random`: generates a random pack from the whole history of Magic
 * `!standard`: generates a random standard pack
-* `!explorer`: generates a random explorer pack
+* `!pioneer`: generates a random pioneer pack
 * `!historic`: generates a random (non-alchemy) historic pack
 * `!chaossealed`: generates 6 random (non-alchemy) historic packs
 * `!from {setcodes}`: generates random packs from a list of sets separated by

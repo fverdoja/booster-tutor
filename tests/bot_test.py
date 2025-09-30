@@ -20,8 +20,8 @@ async def test_process_num_packs(num: int, expected: int) -> None:
 
 
 def test_set_lists(bot: DiscordBot) -> None:
-    assert set(bot.standard_sets).issubset(set(bot.explorer_sets))
-    assert set(bot.explorer_sets).issubset(set(bot.historic_sets))
+    assert set(bot.standard_sets).issubset(set(bot.pioneer_sets))
+    assert set(bot.pioneer_sets).issubset(set(bot.historic_sets))
     assert set(bot.historic_sets).issubset(set(bot.all_sets + ["a-mkm"]))
 
 

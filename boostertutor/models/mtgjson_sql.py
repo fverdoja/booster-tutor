@@ -126,6 +126,11 @@ class BoosterType(enum.Enum):
     STAINEDGLASS_TATTOO = "stainedglass-tattoo"
     STAINEDGLASS_UNCOMMON = "stainedglass-uncommon"
     TREASURE_CHEST = "treasure-chest"
+    BASEBALL_SIGNED = "baseball-signed"
+    CHAOS_EMERALDS = "chaos-emeralds"
+    DECEPTIVE_DISTRICTS = "deceptive-districts"
+    DND_50TH_ANNIVERSARY = "dnd-50th-anniversary"
+    FIN_ELEMENTALS = "fin-elementals"
 
 
 class Base(DeclarativeBase):

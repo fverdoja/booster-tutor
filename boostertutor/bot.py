@@ -117,8 +117,9 @@ class DiscordBot(commands.Bot):
             "tdm",
             "fin",
             "eoe",
+            "spm",
         ]
-        self.explorer_sets = [
+        self.pioneer_sets = [
             "pio",
             "ktk",
             "xln",
@@ -152,7 +153,7 @@ class DiscordBot(commands.Bot):
             "sir",
             "ltr",
             "mh3",
-        ] + self.explorer_sets
+        ] + self.pioneer_sets
         self.all_sets = [s.lower() for s in self.generator.sets_with_boosters]
         self.add_command(donate)
 
@@ -444,15 +445,15 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
 
     @commands.command(
         help=help_msg(
-            "Generates random explorer packs",
+            "Generates random pioneer packs",
             has_num_packs=True,
             examples={
-                "explorer": "generates one pack",
-                "explorer 4": "generates four packs",
+                "pioneer": "generates one pack",
+                "pioneer 4": "generates four packs",
             },
         )
     )
-    async def explorer(
+    async def pioneer(
         self,
         ctx: commands.Context,
         num_packs: Optional[int] = None,
@@ -460,7 +461,7 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
     ) -> None:
         num_packs = process_num_packs(num_packs)
         p_list = self.generator.get_random_packs(
-            self.bot.explorer_sets, n=num_packs, replace=True
+            self.bot.pioneer_sets, n=num_packs, replace=True
         )
         await self.send_plist_msg(p_list, ctx, member)
 
