@@ -131,6 +131,7 @@ class BoosterType(enum.Enum):
     DECEPTIVE_DISTRICTS = "deceptive-districts"
     DND_50TH_ANNIVERSARY = "dnd-50th-anniversary"
     FIN_ELEMENTALS = "fin-elementals"
+    SPIDER_MAN = "spider-man"
 
 
 class Base(DeclarativeBase):
