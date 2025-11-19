@@ -118,6 +118,7 @@ class DiscordBot(commands.Bot):
             "fin",
             "eoe",
             "spm",
+            "tla",
         ]
         self.pioneer_sets = [
             "pio",

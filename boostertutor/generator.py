@@ -438,6 +438,12 @@ class MtgPackGenerator:
 
     def override_play_booster_balance(self) -> None:
         self.fix_missing_balance(
+            "tla", "common", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
+            "spm", "common", booster_type=BoosterType.PLAY
+        )
+        self.fix_missing_balance(
             "eoe", "common", booster_type=BoosterType.PLAY
         )
         self.fix_missing_balance(
