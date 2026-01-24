@@ -28,12 +28,12 @@ class MtgPackGenerator:
     ) -> None:
         self.max_balancing_iterations = max_balancing_iterations
         self.data = CardDb(path_to_mtgjson)
+        self.sets_with_decks: list[str] = ["JMP", "J22", "J25", "TLE"]
         self.sets_with_boosters: list[str] = [
             set_code
             for set_code, set in self.data.sets.items()
-            if set.boosters and set_code not in ["JMP", "J22", "J25", "CLU"]
+            if set.boosters and set_code not in self.sets_with_decks + ["CLU"]
         ]
-        self.sets_with_decks: list[str] = ["JMP", "J22", "J25"]
         self.override_play_booster_balance()
         if validate_data:
             self.validate_booster_data()

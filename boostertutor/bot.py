@@ -642,6 +642,28 @@ class BotCommands(commands.Cog, name="Bot"):  # type: ignore
         await self.send_plist_msg(p_list, ctx, member)
 
     @commands.command(
+        help=help_msg(
+            "Generates ramdom *Avatar: The Last Airbender Jumpstart* decks",
+            has_num_packs=True,
+            examples={
+                "tle": "generates one deck",
+                "tle 3": "generates three decks",
+            },
+        )
+    )
+    async def tle(
+        self,
+        ctx: commands.Context,
+        num_packs: Optional[int] = None,
+        member: Optional[discord.Member] = None,
+    ) -> None:
+        num_packs = process_num_packs(num_packs)
+        p_list = self.generator.get_random_decks(
+            set="TLE", n=num_packs, replace=True
+        )
+        await self.send_plist_msg(p_list, ctx, member)
+
+    @commands.command(
         name="a-jmp",
         help=help_msg(
             "Generates ramdom *Jumpstart* decks (with Arena replacements)",
