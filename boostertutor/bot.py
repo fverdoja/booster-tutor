@@ -120,6 +120,7 @@ class DiscordBot(commands.Bot):
             "spm",
             "tla",
             "ecl",
+            "tmt",
         ]
         self.pioneer_sets = [
             "pio",
