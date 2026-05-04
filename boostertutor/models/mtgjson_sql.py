@@ -132,6 +132,9 @@ class BoosterType(enum.Enum):
     DND_50TH_ANNIVERSARY = "dnd-50th-anniversary"
     FIN_ELEMENTALS = "fin-elementals"
     SPIDER_MAN = "spider-man"
+    FATE = "fate"
+    CHOCOBO_BUNDLE = "chocobo-bundle"
+    CHOCOBO_BUNDLE_SCENE = "chocobo-bundle-scene"
 
 
 class Base(DeclarativeBase):
