@@ -85,7 +85,7 @@ def cards(generator: MtgPackGenerator) -> dict[str, MtgCard]:
 
 @pytest.fixture
 def four_set_list() -> list[str]:
-    return ["MB1", "APC", "MIR", "AKR"]
+    return ["FIN", "APC", "MIR", "AKR"]
 
 
 @pytest.fixture
