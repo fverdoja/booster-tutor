@@ -179,11 +179,11 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict) -> None:
                 "packs": [
                     {
                         "slots": [
-                            't:"Foil"',
-                            't:"Etched"',
-                            't:"Non-foil"',
-                            't:"Non-foil"',
-                            't:"Double"',
+                            {"filter": 't:"Foil"'},
+                            {"filter": 't:"Etched"'},
+                            {"filter": 't:"Non-foil"'},
+                            {"filter": 't:"Non-foil"'},
+                            {"filter": 't:"Double"'},
                         ]
                     }
                 ],
@@ -197,12 +197,12 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict) -> None:
                 "packs": [
                     {
                         "slots": [
-                            "tag:Foil",
-                            "tag:Etched",
-                            "tag:Non-foil",
-                            "tag:Non-foil",
-                            "tag:Double",
-                            "tag:Double",
+                            {"filter": "tag:Foil"},
+                            {"filter": "tag:Etched"},
+                            {"filter": "tag:Non-foil"},
+                            {"filter": "tag:Non-foil"},
+                            {"filter": "tag:Double"},
+                            {"filter": "tag:Double"},
                         ]
                     }
                 ],
@@ -213,7 +213,14 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict) -> None:
         ),
         (
             {
-                "packs": [{"slots": ["tag:Foil", "tag:Etched"]}],
+                "packs": [
+                    {
+                        "slots": [
+                            {"filter": "tag:Foil"},
+                            {"filter": "tag:Etched"},
+                        ]
+                    }
+                ],
                 "multiples": False,
             },
             2,
@@ -221,7 +228,7 @@ def test_cube_pack(generator: MtgPackGenerator, cube: dict) -> None:
         ),
         (
             {
-                "packs": [{"slots": ["rarity:Rare"]}],
+                "packs": [{"slots": [{"filter": "rarity:Rare"}]}],
                 "multiples": False,
             },
             15,

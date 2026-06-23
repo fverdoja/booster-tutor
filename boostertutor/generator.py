@@ -332,7 +332,9 @@ class MtgPackGenerator:
         try:
             slots = []
             for slot in cube["formats"][0]["packs"][0]["slots"]:
-                assert slot["filter"].startswith("tag:") or slot["filter"].startswith("t:")
+                assert slot["filter"].startswith("tag:") or slot[
+                    "filter"
+                ].startswith("t:")
                 slots.append(slot["filter"].split(":")[1].strip('"'))
             pack_format: dict[str, int] = Counter(slots)
             logger.debug(f"Pack format: {pack_format}")
