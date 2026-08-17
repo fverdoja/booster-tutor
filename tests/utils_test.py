@@ -156,7 +156,7 @@ def test_card_backs_img_empty() -> None:
 
 
 def test_arena_to_json() -> None:
-    arena = "1 Opt (INV) 000\n3 Ponder (C18) 001\n "
+    arena = "1 Opt (INV) 000\n3 Ponder (C18) 001b\n "
     json_list = utils.arena_to_json(arena)
     assert json_list[0] == {"name": "Opt", "count": 1, "set": "INV"}
     assert json_list[1] == {"name": "Ponder", "count": 3, "set": "C18"}

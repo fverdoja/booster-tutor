@@ -8,7 +8,7 @@ import aiohttp
 import imageio.v3 as iio
 import numpy as np
 import yaml
-from parse import compile
+from parse import compile, Result
 
 logger = logging.getLogger(__name__)
 
@@ -103,10 +103,11 @@ def card_backs_img(
 def arena_to_json(arena_list: str) -> Sequence[dict]:
     """Convert a list of cards in arena format to a list of json cards"""
     json_list = []
-    p = compile("{count:d} {name} ({set}) {:d}")
+    p = compile("{count:d} {name} ({set}) {}")
     for line in arena_list.rstrip("\n ").split("\n"):
         card = p.parse(line)
-        json_list.append(card.named)  # type: ignore
+        if isinstance(card, Result):
+            json_list.append(card.named)
     return json_list
 
 
