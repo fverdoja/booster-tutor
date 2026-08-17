@@ -174,6 +174,7 @@ class BoosterType(enum.Enum):
     HANDSOME_HUMANS_MAY = "handsome-humans-may"
     JUMPSTART_LANDS = "jumpstart-lands"
     SURPRISE_SLIVERS = "surprise-slivers"
+    SURPRISE_SLIVERS_EARLY = "surprise-slivers-early"
     ZIPPY_ZOMBIES_FEB = "zippy-zombies-feb"
     ZIPPY_ZOMBIES_MAR = "zippy-zombies-mar"
     ZIPPY_ZOMBIES_MAY = "zippy-zombies-may"
@@ -192,7 +193,8 @@ class BoosterType(enum.Enum):
     PRERELEASE_TOPH = "prerelease-toph"
     PRERELEASE_ZUKO = "prerelease-zuko"
     CODEX_BUNDLE = "codex-bundle"
-
+    GIFT_BUNDLE_TRANSFORMERS = "gift-bundle-transformers"
+    PIZZA_BUNDLE = "pizza-bundle"
 
 class Base(DeclarativeBase):
     pass
