@@ -196,6 +196,7 @@ class BoosterType(enum.Enum):
     GIFT_BUNDLE_TRANSFORMERS = "gift-bundle-transformers"
     PIZZA_BUNDLE = "pizza-bundle"
 
+
 class Base(DeclarativeBase):
     pass
 
