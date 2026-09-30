@@ -3,7 +3,6 @@ from functools import total_ordering
 from typing import Optional, Union
 
 from sqlalchemy import (
-    Enum,
     ForeignKey,
     ForeignKeyConstraint,
     column,
@@ -36,165 +35,9 @@ class BoosterType(enum.Enum):
     ARENA_2 = "arena-2"
     ARENA_3 = "arena-3"
     ARENA_4 = "arena-4"
-    SET = "set"
-    SET_JP = "set-jp"
     COLLECTOR = "collector"
-    COLLECTOR_SAMPLE = "collector-sample"
-    COLLECTOR_SPECIAL = "collector-special"
-    COLLECTOR_JP = "collector-jp"
     JUMPSTART = "jumpstart"
-    JUMPSTART_V2 = "jumpstart-v2"
-    STARTER = "starter"
-    BEGINNER = "beginner"
-    TOURNAMENT = "tournament"
-    FAT_PACK = "fat-pack"
-    MTGO = "mtgo"
-    PREMIUM = "premium"
-    SIX = "six"
-    PRERELEASE = "prerelease"
-    PRERELEASE_BROKERS = "prerelease-brokers"
-    PRERELEASE_CABARETTI = "prerelease-cabaretti"
-    PRERELEASE_MAESTROS = "prerelease-maestros"
-    PRERELEASE_OBSCURA = "prerelease-obscura"
-    PRERELEASE_RIVETEERS = "prerelease-riveteers"
-    PRERELEASE_AZORIUS = "prerelease-azorius"
-    PRERELEASE_BOROS = "prerelease-boros"
-    PRERELEASE_DIMIR = "prerelease-dimir"
-    PRERELEASE_GOLGARI = "prerelease-golgari"
-    PRERELEASE_GRUUL = "prerelease-gruul"
-    PRERELEASE_IZZET = "prerelease-izzet"
-    PRERELEASE_ORZHOV = "prerelease-orzhov"
-    PRERELEASE_RAKDOS = "prerelease-rakdos"
-    PRERELEASE_SELESNYA = "prerelease-selesnya"
-    PRERELEASE_SIMIC = "prerelease-simic"
-    PRERELEASE_ATARKA = "prerelease-atarka"
-    PRERELEASE_DROMOKA = "prerelease-dromoka"
-    PRERELEASE_KOLAGHAN = "prerelease-kolaghan"
-    PRERELEASE_OJUTAI = "prerelease-ojutai"
-    PRERELEASE_SILUMGAR = "prerelease-silumgar"
-    BOX_TOPPER = "box-topper"
-    BOX_TOPPER_FOIL = "box-topper-foil"
-    BOX_TOPPER_JP = "box-topper-jp"
-    BUNDLE_PROMO = "bundle-promo"
-    GIFT_BUNDLE_PROMO = "gift-bundle-promo"
-    CONVENTION = "convention"
-    CONVENTION_2021 = "convention-2021"
-    THEME_W = "theme-w"
-    THEME_U = "theme-u"
-    THEME_B = "theme-b"
-    THEME_R = "theme-r"
-    THEME_G = "theme-g"
-    THEME_AZORIUS = "theme-azorius"
-    THEME_BOROS = "theme-boros"
-    THEME_DIMIR = "theme-dimir"
-    THEME_GOLGARI = "theme-golgari"
-    THEME_GRUUL = "theme-gruul"
-    THEME_IZZET = "theme-izzet"
-    THEME_ORZHOV = "theme-orzhov"
-    THEME_RAKDOS = "theme-rakdos"
-    THEME_SELESNYA = "theme-selesnya"
-    THEME_SIMIC = "theme-simic"
-    THEME_MONSTERS = "theme-monsters"
-    THEME_PARTY = "theme-party"
-    THEME_VIKINGS = "theme-vikings"
-    THEME_LOREHOLD = "theme-lorehold"
-    THEME_PRISMARI = "theme-prismari"
-    THEME_QUANDRIX = "theme-quandrix"
-    THEME_SILVERQUILL = "theme-silverquill"
-    THEME_WITHERBLOOM = "theme-witherbloom"
-    THEME_DUNGEONS = "theme-dungeons"
-    THEME_WEREWOLVES = "theme-werewolves"
-    THEME_VAMPIRES = "theme-vampires"
-    THEME_NINJAS = "theme-ninjas"
-    THEME_BROKERS = "theme-brokers"
-    THEME_CABARETTI = "theme-cabaretti"
-    THEME_MAESTROS = "theme-maestros"
-    THEME_OBSCURA = "theme-obscura"
-    THEME_RIVETEERS = "theme-riveteers"
-    JP = "jp"
-    VIP = "vip"
-    COMPLEAT = "compleat"
-    DUELS_PROMO = "duelspromo"
-    BLUEPRINT_MK1 = "blueprint-mk1"
-    BLUEPRINT_MK2 = "blueprint-mk2"
-    STAINEDGLASS_W = "stainedglass-w"
-    STAINEDGLASS_U = "stainedglass-u"
-    STAINEDGLASS_B = "stainedglass-b"
-    STAINEDGLASS_R = "stainedglass-r"
-    STAINEDGLASS_G = "stainedglass-g"
-    STAINEDGLASS_C = "stainedglass-c"
-    STAINEDGLASS_IWD = "stainedglass-iwd"
-    STAINEDGLASS_TATTOO = "stainedglass-tattoo"
-    STAINEDGLASS_UNCOMMON = "stainedglass-uncommon"
-    TREASURE_CHEST = "treasure-chest"
-    BASEBALL_SIGNED = "baseball-signed"
-    CHAOS_EMERALDS = "chaos-emeralds"
-    DECEPTIVE_DISTRICTS = "deceptive-districts"
-    DND_50TH_ANNIVERSARY = "dnd-50th-anniversary"
-    FIN_ELEMENTALS = "fin-elementals"
-    SPIDER_MAN = "spider-man"
-    FATE = "fate"
-    CHOCOBO_BUNDLE = "chocobo-bundle"
-    CHOCOBO_BUNDLE_SCENE = "chocobo-bundle-scene"
-    MIRRAN = "mirran"
-    PHYREXIAN = "phyrexian"
-    PRERELEASE_AMBITION = "prerelease-ambition"
-    PRERELEASE_BATTLE = "prerelease-battle"
-    PRERELEASE_HONOR = "prerelease-honor"
-    PRERELEASE_MIGHT = "prerelease-might"
-    PRERELEASE_WISDOM = "prerelease-wisdom"
-    PRERELEASE_CONQUER = "prerelease-conquer"
-    PRERELEASE_DOMINATE = "prerelease-dominate"
-    PRERELEASE_LEAD = "prerelease-lead"
-    PRERELEASE_OUTWIT = "prerelease-outwit"
-    PRERELEASE_THRIVE = "prerelease-thrive"
-    PRERELEASE_GLORY = "prerelease-glory"
-    PRERELEASE_INTELLECT = "prerelease-intellect"
-    PRERELEASE_PURSUIT = "prerelease-pursuit"
-    PRERELEASE_TYRRANY = "prerelease-tyranny"
-    PRERELEASE_WAR = "prerelease-war"
-    PRERELEASE_FEROCITY = "prerelease-ferocity"
-    PRERELEASE_GUILE = "prerelease-guile"
-    PRERELEASE_STRENGTH = "prerelease-strength"
-    PRERELEASE_VALOR = "prerelease-valor"
-    PRERELEASE_ABZAN = "prerelease-abzan"
-    PRERELEASE_JESKAI = "prerelease-jeskai"
-    PRERELEASE_MARDU = "prerelease-mardu"
-    PRERELEASE_SULTAI = "prerelease-sultai"
-    PRERELEASE_TEMUR = "prerelease-temur"
-    PRERELEASE_CHANDRA = "prerelease-chandra"
-    PRERELEASE_GIDEON = "prerelease-gideon"
-    PRERELEASE_JACE = "prerelease-jace"
-    PRERELEASE_LILIANA = "prerelease-liliana"
-    PRERELEASE_NISSA = "prerelease-nissa"
-    BUYABOX = "buyabox"
-    ELUSIVE_ELVES_EARLY = "elusive-elves-early"
-    ELUSIVE_ELVES_LATE = "elusive-elves-late"
-    HANDSOME_HUMANS_JUN = "handsome-humans-jun"
-    HANDSOME_HUMANS_MAY = "handsome-humans-may"
-    JUMPSTART_LANDS = "jumpstart-lands"
-    SURPRISE_SLIVERS = "surprise-slivers"
-    SURPRISE_SLIVERS_EARLY = "surprise-slivers-early"
-    ZIPPY_ZOMBIES_FEB = "zippy-zombies-feb"
-    ZIPPY_ZOMBIES_MAR = "zippy-zombies-mar"
-    ZIPPY_ZOMBIES_MAY = "zippy-zombies-may"
-    ZIPPY_ZOMBIES_JUN = "zippy-zombies-jun"
-    PRERELEASE_LOREHOLD = "prerelease-lorehold"
-    PRERELEASE_PRISMARI = "prerelease-prismari"
-    PRERELEASE_SILVERQUILL = "prerelease-silverquill"
-    PRERELEASE_QUANDRIX = "prerelease-quandrix"
-    PRERELEASE_WITHERBLOOM = "prerelease-witherbloom"
-    VALUE = "value"
-    NIGHTMARE = "nightmare"
-    COMMANDER_BUNDLE = "commander-bundle"
-    PRERELEASE_AANG = "prerelease-aang"
-    PRERELEASE_AZULA = "prerelease-azula"
-    PRERELEASE_KATARA = "prerelease-katara"
-    PRERELEASE_TOPH = "prerelease-toph"
-    PRERELEASE_ZUKO = "prerelease-zuko"
-    CODEX_BUNDLE = "codex-bundle"
-    GIFT_BUNDLE_TRANSFORMERS = "gift-bundle-transformers"
-    PIZZA_BUNDLE = "pizza-bundle"
+    UNUSED = "unused"
 
 
 class Base(DeclarativeBase):
@@ -381,11 +224,7 @@ class SetMeta(Base):
 class BoosterMeta(Base):
     __tablename__ = booster_table
 
-    name: Mapped[BoosterType] = mapped_column(
-        Enum(BoosterType, values_callable=lambda x: [i.value for i in x]),
-        name="boosterName",
-        primary_key=True,
-    )
+    name_raw: Mapped[str] = mapped_column("boosterName", primary_key=True)
     set_code: Mapped[str] = mapped_column(
         ForeignKey("sets.code"), name="setCode", primary_key=True
     )
@@ -393,6 +232,13 @@ class BoosterMeta(Base):
         viewonly=True
     )
     sheets: Mapped[list["SheetMeta"]] = relationship(viewonly=True)
+
+    @property
+    def name(self) -> BoosterType:
+        try:
+            return BoosterType(self.name_raw)
+        except ValueError:
+            return BoosterType("unused")
 
     @property
     def total_weight(self) -> int:
@@ -443,7 +289,7 @@ class SheetMeta(Base):
     __table_args__ = (
         ForeignKeyConstraint(
             ["boosterName", "setCode"],
-            [BoosterMeta.name, BoosterMeta.set_code],
+            [BoosterMeta.name_raw, BoosterMeta.set_code],
         ),
     )
 
@@ -477,7 +323,7 @@ class BoosterVariationMeta(Base):
     __table_args__ = (
         ForeignKeyConstraint(
             ["boosterName", "setCode"],
-            [BoosterMeta.name, BoosterMeta.set_code],
+            [BoosterMeta.name_raw, BoosterMeta.set_code],
         ),
     )
 
