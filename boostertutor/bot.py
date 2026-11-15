@@ -125,6 +125,7 @@ class DiscordBot(commands.Bot):
             "msh",
             "hob",
             "fra",
+            "trk",
         ]
         self.pioneer_sets = [
             "pio",
