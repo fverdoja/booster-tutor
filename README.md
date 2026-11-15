@@ -8,6 +8,11 @@ A Discord bot to generate *Magic: the Gathering* (MTG) boosters and sealed pools
 
 ![screenshot](screenshot.webp)
 
+## AI disclosure
+
+**This software is 100% human-made.** No generative AI has been used in this
+codebase for any purpose.
+
 ## Usage
 
 The bot responds to the following commands:
